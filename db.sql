@@ -1,0 +1,14 @@
+CREATE DATABASE IF NOT EXISTS kb_erros CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE kb_erros;
+
+CREATE TABLE IF NOT EXISTS erros (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titulo VARCHAR(255) NOT NULL,
+    categoria VARCHAR(100) DEFAULT 'Geral',
+    descricao TEXT NOT NULL,
+    solucao TEXT NOT NULL,
+    tags VARCHAR(255),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FULLTEXT KEY ft_busca (titulo, descricao, solucao, tags)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
