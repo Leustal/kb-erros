@@ -4,113 +4,142 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Base de Conhecimento - Erros & Soluções</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .pre-wrap { white-space: pre-wrap; font-family: monospace; background: #f8f9fa; padding: 10px; border-radius: 5px; }
+        .pre-wrap { 
+            white-space: pre-wrap; 
+            font-family: 'Courier New', Courier, monospace; 
+            background: #f8f9fa; 
+            padding: 12px; 
+            border-radius: 6px; 
+            border: 1px solid #e9ecef;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .card-title { font-weight: 600; }
     </style>
 </head>
 <body class="bg-light">
 
 <div class="container py-4">
+    <!-- Cabeçalho -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Base de Conhecimento de Erros</h2>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovoErro">+ Novo Erro</button>
+        <div>
+            <h2 class="mb-0">Base de Conhecimento DEVOPS/INFRA</h2>
+            <small class="text-muted">Registro de erros, diagnósticos e soluções</small>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovoErro">+ Cadastrar Erro</button>
     </div>
 
+    <!-- Barra de Pesquisa -->
     <div class="mb-4">
-        <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Digite para buscar erros, comandos ou soluções (busca em tempo real)...">
+        <input type="text" id="searchInput" class="form-control form-control-lg shadow-sm" placeholder="Digite para buscar por erro, comandos, palavras-chave ou tags (busca em tempo real)...">
     </div>
 
+    <!-- Lista Dinâmica de Erros -->
     <div id="listaErros" class="row g-3">
-        <!-- Itens carregados via JS -->
+        <!-- Os registros serão carregados aqui via JS -->
     </div>
 </div>
 
-<!-- Modal Adicionar -->
-<div class="modal fade" id="modalNovoErro" tabindex="-1">
+<!-- Modal: Novo Erro -->
+<div class="modal fade" id="modalNovoErro" tabindex="-1" aria-labelledby="modalNovoErroLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Cadastrar Novo Erro</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title" id="modalNovoErroLabel">Cadastrar Novo Erro</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
       </div>
       <div class="modal-body">
         <form id="formErro">
             <div class="mb-3">
-                <label class="form-label">Título / Mensagem de Erro</label>
-                <input type="text" id="titulo" class="form-control" required placeholder="Ex: Firebird 5.0 connection failed">
+                <label for="titulo" class="form-label">Título / Mensagem de Erro *</label>
+                <input type="text" id="titulo" class="form-control" required placeholder="Ex: Firebird 5.0 connection failed or socket timeout">
             </div>
             <div class="row mb-3">
-                <div class="col">
-                    <label class="form-label">Categoria</label>
-                    <input type="text" id="categoria" class="form-control" placeholder="Ex: Database, Nginx, PHP">
+                <div class="col-md-6">
+                    <label for="categoria" class="form-label">Categoria</label>
+                    <input type="text" id="categoria" class="form-control" placeholder="Ex: Database, Nginx, MariaDB, SaveInCloud">
                 </div>
-                <div class="col">
-                    <label class="form-label">Tags (separadas por vírgula)</label>
+                <div class="col-md-6">
+                    <label for="tags" class="form-label">Tags (separadas por vírgula)</label>
                     <input type="text" id="tags" class="form-control" placeholder="Ex: firebird, port-3050, timeout">
                 </div>
             </div>
             <div class="mb-3">
-                <label class="form-label">Descrição / Contexto</label>
-                <textarea id="descricao" class="form-control" rows="3"></textarea>
+                <label for="descricao" class="form-label">Descrição / Contexto</label>
+                <textarea id="descricao" class="form-control" rows="2" placeholder="Descreva brevemente como o erro ocorre ou o cenário..."></textarea>
             </div>
             <div class="mb-3">
-                <label class="form-label">Solução / Comandos de Correção</label>
-                <textarea id="solucao" class="form-control" rows="5" required placeholder="Passos executados ou comandos utilizados..."></textarea>
+                <label for="solucao" class="form-label">Solução / Comandos de Correção *</label>
+                <textarea id="solucao" class="form-control" rows="6" required placeholder="Insira o passo a passo ou comandos utilizados para resolver..."></textarea>
             </div>
-            <button type="submit" class="btn btn-success w-100">Salvar Erro</button>
+            <button type="submit" class="btn btn-success w-100 py-2">Salvar Registro</button>
         </form>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Bootstrap 5 JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
 let searchTimeout = null;
+// Aponta para a API no diretório pai (../api.php)
+const API_URL = '../api.php';
 
+// Carrega e filtra os erros
 async function carregarErros(busca = '') {
-    const res = await fetch(`api.php?action=list&q=${encodeURIComponent(busca)}`);
-    const dados = await res.json();
-    const container = document.getElementById('listaErros');
-    container.innerHTML = '';
+    try {
+        const res = await fetch(`${API_URL}?action=list&q=${encodeURIComponent(busca)}`);
+        const dados = await res.json();
+        const container = document.getElementById('listaErros');
+        container.innerHTML = '';
 
-    if (dados.length === 0) {
-        container.innerHTML = '<div class="text-center text-muted py-5">Nenhum erro encontrado.</div>';
-        return;
-    }
+        if (!Array.isArray(dados) || dados.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center text-muted py-5">Nenhum registro encontrado.</div>';
+            return;
+        }
 
-    dados.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'col-12';
-        card.innerHTML = `
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <h5 class="card-title text-primary">${escapeHtml(item.titulo)}</h5>
-                        <div>
-                            <span class="badge bg-secondary me-2">${escapeHtml(item.categoria)}</span>
-                            <button onclick="deletarErro(${item.id})" class="btn btn-sm btn-outline-danger">Excluir</button>
+        dados.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'col-12';
+            card.innerHTML = `
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="card-title text-primary mb-1">${escapeHtml(item.titulo)}</h5>
+                            <div>
+                                <span class="badge bg-secondary me-2">${escapeHtml(item.categoria || 'Geral')}</span>
+                                <button onclick="deletarErro(${item.id})" class="btn btn-sm btn-outline-danger" title="Excluir Registro">Excluir</button>
+                            </div>
                         </div>
+                        ${item.descricao ? `<p class="card-text text-muted small mt-2 mb-2">${escapeHtml(item.descricao)}</p>` : ''}
+                        <h6 class="mt-3 font-weight-bold">Solução:</h6>
+                        <div class="pre-wrap">${escapeHtml(item.solucao)}</div>
+                        ${item.tags ? `<div class="mt-2"><small class="text-muted"><strong>Tags:</strong> ${escapeHtml(item.tags)}</small></div>` : ''}
                     </div>
-                    ${item.descricao ? `<p class="card-text text-muted small mt-2">${escapeHtml(item.descricao)}</p>` : ''}
-                    <h6 class="mt-3">Solução:</h6>
-                    <div class="pre-wrap">${escapeHtml(item.solucao)}</div>
-                    ${item.tags ? `<div class="mt-2"><small class="text-muted">Tags: ${escapeHtml(item.tags)}</small></div>` : ''}
                 </div>
-            </div>
-        `;
-        container.appendChild(card);
-    });
+            `;
+            container.appendChild(card);
+        });
+    } catch (err) {
+        console.error('Erro ao buscar dados:', err);
+    }
 }
 
+// Busca em tempo real com Debounce
 document.getElementById('searchInput').addEventListener('input', (e) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => carregarErros(e.target.value), 300);
 });
 
+// Cadastrar novo erro
 document.getElementById('formErro').addEventListener('submit', async (e) => {
     e.preventDefault();
+    
     const payload = {
         titulo: document.getElementById('titulo').value,
         categoria: document.getElementById('categoria').value,
@@ -119,36 +148,63 @@ document.getElementById('formErro').addEventListener('submit', async (e) => {
         solucao: document.getElementById('solucao').value
     };
 
-    const res = await fetch('api.php?action=add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-    
-    const result = await res.json();
-    if (result.success) {
-        bootstrap.Modal.getInstance(document.getElementById('modalNovoErro')).hide();
-        document.getElementById('formErro').reset();
-        carregarErros();
+    try {
+        const res = await fetch(`${API_URL}?action=add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await res.json();
+        if (result.success) {
+            const modalElement = document.getElementById('modalNovoErro');
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            modalInstance.hide();
+            
+            document.getElementById('formErro').reset();
+            carregarErros();
+        } else {
+            alert(result.message || 'Erro ao cadastrar registro.');
+        }
+    } catch (err) {
+        alert('Ocorreu uma falha ao tentar salvar o registro.');
     }
 });
 
+// Excluir erro
 async function deletarErro(id) {
-    if (!confirm('Deseja realmente remover este registro?')) return;
-    const res = await fetch('api.php?action=delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-    });
-    const result = await res.json();
-    if (result.success) carregarErros();
+    if (!confirm('Tem certeza que deseja remover este registro permanentemente?')) return;
+    
+    try {
+        const res = await fetch(`${API_URL}?action=delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        
+        const result = await res.json();
+        if (result.success) {
+            carregarErros();
+        } else {
+            alert(result.message || 'Erro ao excluir o registro.');
+        }
+    } catch (err) {
+        alert('Ocorreu uma falha ao tentar excluir o registro.');
+    }
 }
 
+// Escape de HTML contra XSS
 function escapeHtml(str) {
-    return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
+    if (!str) return '';
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
-// Carga inicial
+// Carregamento inicial ao abrir a página
 carregarErros();
 </script>
 </body>
