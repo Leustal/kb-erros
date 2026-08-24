@@ -22,10 +22,6 @@
         body {
             font-family: 'Inter', sans-serif;
             transition: background-color var(--transition-speed), color var(--transition-speed);
-        }
-
-        /* === 1. TEMA CLARO TECH === */
-        body {
             background: #f0f4f9;
             color: #1e293b !important;
         }
@@ -152,7 +148,7 @@
             transition: all 0.2s ease;
         }
 
-        /* === 2. TEMA ESCURO FUTURÍSTICO / NEON === */
+        /* === TEMA ESCURO FUTURÍSTICO / NEON === */
         body.dark-mode {
             background-color: #080b11 !important;
             color: #f1f5f9 !important;
@@ -423,16 +419,8 @@
 
             if (result.error) throw new Error(result.error);
 
+            // A ordenação A-Z global é garantida diretamente pelo backend (api.php)
             currentData = result.data || [];
-
-            // Apenas aplica a ordenação A-Z no JS se NÃO houver termo de busca ativando relevância
-            if (!search) {
-                currentData.sort((a, b) => {
-                    const titleA = (a.titulo || '').replace(/^["'\s]+|["'\s]+$/g, '');
-                    const titleB = (b.titulo || '').replace(/^["'\s]+|["'\s]+$/g, '');
-                    return titleA.localeCompare(titleB, 'pt-BR', { sensitivity: 'base' });
-                });
-            }
 
             renderCards(currentData);
             renderPagination(result.total_pages, result.page);

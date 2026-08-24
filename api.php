@@ -1,19 +1,19 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-// 1. Carregador simples de arquivo .env nativo em PHP
+// Função simples para carregar variáveis do arquivo .env
 function loadEnv($path) {
     if (!file_exists($path)) {
         return false;
     }
     $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue;
+        if (strpos(trim($line), '#') === 0) continue; // Pula comentários
         list($name, $value) = explode('=', $line, 2);
         $name = trim($name);
-        $value = trim($value, " \t\n\r\0\x0B\"'");
+        $value = trim($value);
         if (!array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
-            putenv("{$name}={$value}");
+            putenv(sprintf('%s=%s', $name, $value));
             $_ENV[$name] = $value;
             $_SERVER[$name] = $value;
         }
@@ -21,156 +21,152 @@ function loadEnv($path) {
     return true;
 }
 
-// Carrega as variáveis do arquivo .env da raiz
-loadEnv(__DIR__ . '/.env');
+// Carrega o .env (tenta na mesma pasta ou no diretório pai)
+if (!loadEnv(__DIR__ . '/.env')) {
+    loadEnv(__DIR__ . '/../.env');
+}
 
-$db_host = getenv('DB_HOST') ?: 'localhost';
-$db_port = getenv('DB_PORT') ?: '3306';
-$db_name = getenv('DB_NAME') ?: 'kb_erros';
-$db_user = getenv('DB_USER') ?: 'root';
-$db_pass = getenv('DB_PASS') ?: '';
+// Resgate das credenciais do .env (com fallbacks de segurança)
+$host    = getenv('DB_HOST') ?: '127.0.0.1';
+$db      = getenv('DB_NAME') ?: getenv('DB_DATABASE');
+$user    = getenv('DB_USER') ?: getenv('DB_USERNAME');
+$pass    = getenv('DB_PASS') ?: getenv('DB_PASSWORD');
+$charset = getenv('DB_CHARSET') ?: 'utf8mb4';
 
-// 2. Conexão PDO com MariaDB/MySQL
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
+];
+
 try {
-    $dsn = "mysql:host={$db_host};port={$db_port};dbname={$db_name};charset=utf8mb4";
-    $pdo = new PDO($dsn, $db_user, $db_pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-    ]);
-} catch (PDOException $e) {
-    echo json_encode(['error' => 'Falha na conexão com o banco de dados: ' . $e->getMessage()]);
+    $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (\PDOException $e) {
+    echo json_encode(['error' => 'Erro de conexão com o banco: ' . $e->getMessage()]);
     exit;
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-// 3. Rota GET: Listagem e Pesquisa com Ordem Alfabética e Relevância Garantidas
+// ==========================================
+// 1. GET - LISTAR / BUSCAR COM PAGINAÇÃO A-Z
+// ==========================================
 if ($method === 'GET') {
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    $page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $limit  = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    
+    if ($page < 1) $page = 1;
+    if ($limit < 1) $limit = 10;
     $offset = ($page - 1) * $limit;
 
-    $whereClause = "";
-    // TRIM(titulo) remove espaços em branco iniciais que afetam a ordem A-Z
-    $orderByClause = "ORDER BY TRIM(titulo) ASC, id ASC"; 
+    // Clausula WHERE
+    $whereClauses = [];
     $params = [];
 
     if (!empty($search)) {
-        $whereClause = "WHERE titulo LIKE :s OR descricao LIKE :s OR solucao LIKE :s OR tags LIKE :s OR categoria LIKE :s";
-        $params[':s'] = "%{$search}%";
-
-        // Ordenação por Relevância:
-        // 1º Encontrado no Título (Prioridade Máxima)
-        // 2º Encontrado nas Tags ou Categoria
-        // 3º Encontrado na Descrição ou Solução
-        // Desempate: Ordem alfabética pelo Título limpo e ID
-        $orderByClause = "ORDER BY 
-            CASE 
-                WHEN titulo LIKE :s THEN 1
-                WHEN tags LIKE :s OR categoria LIKE :s THEN 2
-                ELSE 3
-            END ASC, 
-            TRIM(titulo) ASC, 
-            id ASC";
+        $whereClauses[] = "(titulo LIKE :search OR solucao LIKE :search OR categoria LIKE :search OR tags LIKE :search OR descricao LIKE :search)";
+        $params[':search'] = '%' . $search . '%';
     }
 
-    // Contagem total para paginação
-    $stmtCount = $pdo->prepare("SELECT COUNT(*) as total FROM erros $whereClause");
-    $stmtCount->execute($params);
-    $total = $stmtCount->fetch()['total'];
+    $whereSql = count($whereClauses) > 0 ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
-    // Consulta de registros
-    $stmt = $pdo->prepare("SELECT * FROM erros $whereClause $orderByClause LIMIT :limit OFFSET :offset");
-    
+    // 1. Contagem total de registros
+    $countSql = "SELECT COUNT(*) as total FROM kb_erros $whereSql";
+    $stmtCount = $pdo->prepare($countSql);
     foreach ($params as $key => $val) {
-        $stmt->bindValue($key, $val);
+        $stmtCount->bindValue($key, $val);
+    }
+    $stmtCount->execute();
+    $total = (int)$stmtCount->fetch()['total'];
+
+    // 2. Busca com ORDENAÇÃO GLOBAL A-Z antes do LIMIT/OFFSET
+    $sql = "SELECT * FROM kb_erros $whereSql ORDER BY TRIM(BOTH '\"' FROM TRIM(BOTH '\'' FROM TRIM(titulo))) ASC LIMIT :limit OFFSET :offset";
+    
+    $stmt = $pdo->prepare($sql);
+    foreach ($params as $key => $val) {
+        $stmt->bindValue($key, $val, PDO::PARAM_STR);
     }
     $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
-
     $data = $stmt->fetchAll();
 
     echo json_encode([
-        'data' => $data,
-        'total' => (int)$total,
-        'page' => $page,
-        'limit' => $limit,
-        'total_pages' => ceil($total / $limit)
+        'total'       => $total,
+        'page'        => $page,
+        'limit'       => $limit,
+        'total_pages' => ceil($total / $limit),
+        'data'        => $data
     ]);
     exit;
 }
 
-// Lendo payload JSON enviado nas requisições POST/PUT
+// Ler payload JSON para POST e PUT
 $input = json_decode(file_get_contents('php://input'), true);
 
-// 4. Rota POST: Inserir novo registro
+// ==========================================
+// 2. POST - CRIAR NOVO REGISTRO
+// ==========================================
 if ($method === 'POST') {
-    $titulo = $input['titulo'] ?? '';
-    $categoria = $input['categoria'] ?? 'Geral';
-    $tags = $input['tags'] ?? '';
-    $descricao = $input['descricao'] ?? '';
-    $solucao = $input['solucao'] ?? '';
-
-    if (empty($titulo) || empty($solucao)) {
-        echo json_encode(['error' => 'Título e Solução são campos obrigatórios.']);
+    if (empty($input['titulo']) || empty($input['solucao'])) {
+        echo json_encode(['error' => 'Campos obrigatórios ausentes: titulo e solucao']);
         exit;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO erros (titulo, categoria, tags, descricao, solucao) VALUES (:titulo, :categoria, :tags, :descricao, :solucao)");
-    $stmt->execute([
-        ':titulo' => trim($titulo),
-        ':categoria' => trim($categoria),
-        ':tags' => trim($tags),
-        ':descricao' => trim($descricao),
-        ':solucao' => trim($solucao)
+    $sql = "INSERT INTO kb_erros (titulo, categoria, tags, descricao, solucao) VALUES (:titulo, :categoria, :tags, :descricao, :solucao)";
+    $stmt = $pdo->prepare($sql);
+    $success = $stmt->execute([
+        ':titulo'    => trim($input['titulo']),
+        ':categoria' => isset($input['categoria']) ? trim($input['categoria']) : '',
+        ':tags'      => isset($input['tags']) ? trim($input['tags']) : '',
+        ':descricao' => isset($input['descricao']) ? trim($input['descricao']) : '',
+        ':solucao'   => trim($input['solucao'])
     ]);
 
-    echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
+    echo json_encode(['success' => $success, 'id' => $pdo->lastInsertId()]);
     exit;
 }
 
-// 5. Rota PUT: Atualizar registro existente
+// ==========================================
+// 3. PUT - ATUALIZAR REGISTRO
+// ==========================================
 if ($method === 'PUT') {
-    $id = $input['id'] ?? null;
-    $titulo = $input['titulo'] ?? '';
-    $categoria = $input['categoria'] ?? 'Geral';
-    $tags = $input['tags'] ?? '';
-    $descricao = $input['descricao'] ?? '';
-    $solucao = $input['solucao'] ?? '';
-
-    if (!$id || empty($titulo) || empty($solucao)) {
-        echo json_encode(['error' => 'ID, Título e Solução são obrigatórios para edição.']);
+    if (empty($input['id']) || empty($input['titulo']) || empty($input['solucao'])) {
+        echo json_encode(['error' => 'Campos obrigatórios ausentes: id, titulo, solucao']);
         exit;
     }
 
-    $stmt = $pdo->prepare("UPDATE erros SET titulo = :titulo, categoria = :categoria, tags = :tags, descricao = :descricao, solucao = :solucao WHERE id = :id");
-    $stmt->execute([
-        ':id' => $id,
-        ':titulo' => trim($titulo),
-        ':categoria' => trim($categoria),
-        ':tags' => trim($tags),
-        ':descricao' => trim($descricao),
-        ':solucao' => trim($solucao)
+    $sql = "UPDATE kb_erros SET titulo = :titulo, categoria = :categoria, tags = :tags, descricao = :descricao, solucao = :solucao WHERE id = :id";
+    $stmt = $pdo->prepare($sql);
+    $success = $stmt->execute([
+        ':id'        => (int)$input['id'],
+        ':titulo'    => trim($input['titulo']),
+        ':categoria' => isset($input['categoria']) ? trim($input['categoria']) : '',
+        ':tags'      => isset($input['tags']) ? trim($input['tags']) : '',
+        ':descricao' => isset($input['descricao']) ? trim($input['descricao']) : '',
+        ':solucao'   => trim($input['solucao'])
     ]);
 
-    echo json_encode(['success' => true]);
+    echo json_encode(['success' => $success]);
     exit;
 }
 
-// 6. Rota DELETE: Remover registro
+// ==========================================
+// 4. DELETE - DELETAR REGISTRO
+// ==========================================
 if ($method === 'DELETE') {
-    $id = $_GET['id'] ?? null;
-
-    if (!$id) {
-        echo json_encode(['error' => 'ID não informado.']);
+    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    if ($id <= 0) {
+        echo json_encode(['error' => 'ID inválido para exclusão']);
         exit;
     }
 
-    $stmt = $pdo->prepare("DELETE FROM erros WHERE id = :id");
-    $stmt->execute([':id' => $id]);
+    $sql = "DELETE FROM kb_erros WHERE id = :id";
+    $stmt = $pdo->prepare($sql);
+    $success = $stmt->execute([':id' => $id]);
 
-    echo json_encode(['success' => true]);
+    echo json_encode(['success' => $success]);
     exit;
 }
