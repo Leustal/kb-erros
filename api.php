@@ -44,7 +44,7 @@ try {
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-// 3. Rota GET: Listagem e Pesquisa em Ordem Alfabética
+// 3. Rota GET: Listagem e Pesquisa com Prioridade de Relevância
 if ($method === 'GET') {
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -52,11 +52,25 @@ if ($method === 'GET') {
     $offset = ($page - 1) * $limit;
 
     $whereClause = "";
+    $orderByClause = "ORDER BY titulo ASC"; // Padrão sem busca: Ordem Alfabética (A-Z)
     $params = [];
 
     if (!empty($search)) {
         $whereClause = "WHERE titulo LIKE :s OR descricao LIKE :s OR solucao LIKE :s OR tags LIKE :s OR categoria LIKE :s";
         $params[':s'] = "%{$search}%";
+
+        // Ordenação por Relevância:
+        // 1º Encontrado no Título (Prioridade Máxima)
+        // 2º Encontrado nas Tags ou Categoria
+        // 3º Encontrado na Descrição ou Solução
+        // Desempate: Ordem alfabética pelo Título
+        $orderByClause = "ORDER BY 
+            CASE 
+                WHEN titulo LIKE :s THEN 1
+                WHEN tags LIKE :s OR categoria LIKE :s THEN 2
+                ELSE 3
+            END ASC, 
+            titulo ASC";
     }
 
     // Contagem total para paginação
@@ -64,8 +78,8 @@ if ($method === 'GET') {
     $stmtCount->execute($params);
     $total = $stmtCount->fetch()['total'];
 
-    // Consulta de registros ordenados de A a Z por 'titulo'
-    $stmt = $pdo->prepare("SELECT * FROM erros $whereClause ORDER BY titulo ASC LIMIT :limit OFFSET :offset");
+    // Consulta de registros
+    $stmt = $pdo->prepare("SELECT * FROM erros $whereClause $orderByClause LIMIT :limit OFFSET :offset");
     
     foreach ($params as $key => $val) {
         $stmt->bindValue($key, $val);
