@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-// Função simples para carregar variáveis do arquivo .env
+// Função para carregar variáveis do arquivo .env
 function loadEnv($path) {
     if (!file_exists($path)) {
         return false;
@@ -21,12 +21,12 @@ function loadEnv($path) {
     return true;
 }
 
-// Carrega o .env (tenta na mesma pasta ou no diretório pai)
+// Carrega o .env (procura na mesma pasta ou no diretório pai)
 if (!loadEnv(__DIR__ . '/.env')) {
     loadEnv(__DIR__ . '/../.env');
 }
 
-// Resgate das credenciais do .env (com fallbacks de segurança)
+// Resgate das credenciais do .env
 $host    = getenv('DB_HOST') ?: '127.0.0.1';
 $db      = getenv('DB_NAME') ?: getenv('DB_DATABASE');
 $user    = getenv('DB_USER') ?: getenv('DB_USERNAME');
@@ -61,7 +61,7 @@ if ($method === 'GET') {
     if ($limit < 1) $limit = 10;
     $offset = ($page - 1) * $limit;
 
-    // Clausula WHERE
+    // Cláusula WHERE
     $whereClauses = [];
     $params = [];
 
@@ -81,8 +81,15 @@ if ($method === 'GET') {
     $stmtCount->execute();
     $total = (int)$stmtCount->fetch()['total'];
 
-    // 2. Busca com ORDENAÇÃO GLOBAL A-Z antes do LIMIT/OFFSET
-    $sql = "SELECT * FROM kb_erros $whereSql ORDER BY TRIM(BOTH '\"' FROM TRIM(BOTH '\'' FROM TRIM(titulo))) ASC LIMIT :limit OFFSET :offset";
+    // 2. Busca com ORDENAÇÃO A-Z BLINDADA
+    // Força o collation insensível a acentos/caixa e limpa aspas/espaços das pontas
+    $sql = "SELECT * FROM kb_erros 
+            $whereSql 
+            ORDER BY 
+              LOWER(
+                TRIM(BOTH '\"' FROM TRIM(BOTH '\'' FROM TRIM(titulo)))
+              ) COLLATE utf8mb4_unicode_ci ASC 
+            LIMIT :limit OFFSET :offset";
     
     $stmt = $pdo->prepare($sql);
     foreach ($params as $key => $val) {
