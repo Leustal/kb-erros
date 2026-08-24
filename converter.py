@@ -2,7 +2,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 import sys
 
-DOCX_FILE = 'Guias do trabalho em geral.docx'
+DOCX_FILE = 'erros.docx'
 SQL_FILE = 'import.sql'
 
 def extract_paragraphs(docx_path):
