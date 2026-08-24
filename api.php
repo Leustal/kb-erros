@@ -44,7 +44,7 @@ try {
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-// 3. Rota GET: Listagem e Pesquisa com Prioridade de Relevância
+// 3. Rota GET: Listagem e Pesquisa com Ordem Alfabética e Relevância Garantidas
 if ($method === 'GET') {
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -52,7 +52,8 @@ if ($method === 'GET') {
     $offset = ($page - 1) * $limit;
 
     $whereClause = "";
-    $orderByClause = "ORDER BY titulo ASC"; // Padrão sem busca: Ordem Alfabética (A-Z)
+    // TRIM(titulo) remove espaços em branco iniciais que afetam a ordem A-Z
+    $orderByClause = "ORDER BY TRIM(titulo) ASC, id ASC"; 
     $params = [];
 
     if (!empty($search)) {
@@ -63,14 +64,15 @@ if ($method === 'GET') {
         // 1º Encontrado no Título (Prioridade Máxima)
         // 2º Encontrado nas Tags ou Categoria
         // 3º Encontrado na Descrição ou Solução
-        // Desempate: Ordem alfabética pelo Título
+        // Desempate: Ordem alfabética pelo Título limpo e ID
         $orderByClause = "ORDER BY 
             CASE 
                 WHEN titulo LIKE :s THEN 1
                 WHEN tags LIKE :s OR categoria LIKE :s THEN 2
                 ELSE 3
             END ASC, 
-            titulo ASC";
+            TRIM(titulo) ASC, 
+            id ASC";
     }
 
     // Contagem total para paginação
@@ -118,11 +120,11 @@ if ($method === 'POST') {
 
     $stmt = $pdo->prepare("INSERT INTO erros (titulo, categoria, tags, descricao, solucao) VALUES (:titulo, :categoria, :tags, :descricao, :solucao)");
     $stmt->execute([
-        ':titulo' => $titulo,
-        ':categoria' => $categoria,
-        ':tags' => $tags,
-        ':descricao' => $descricao,
-        ':solucao' => $solucao
+        ':titulo' => trim($titulo),
+        ':categoria' => trim($categoria),
+        ':tags' => trim($tags),
+        ':descricao' => trim($descricao),
+        ':solucao' => trim($solucao)
     ]);
 
     echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
@@ -146,11 +148,11 @@ if ($method === 'PUT') {
     $stmt = $pdo->prepare("UPDATE erros SET titulo = :titulo, categoria = :categoria, tags = :tags, descricao = :descricao, solucao = :solucao WHERE id = :id");
     $stmt->execute([
         ':id' => $id,
-        ':titulo' => $titulo,
-        ':categoria' => $categoria,
-        ':tags' => $tags,
-        ':descricao' => $descricao,
-        ':solucao' => $solucao
+        ':titulo' => trim($titulo),
+        ':categoria' => trim($categoria),
+        ':tags' => trim($tags),
+        ':descricao' => trim($descricao),
+        ':solucao' => trim($solucao)
     ]);
 
     echo json_encode(['success' => true]);
