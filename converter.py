@@ -1,50 +1,62 @@
-import docx
+import zipfile
+import xml.etree.ElementTree as ET
+import sys
 
-def docx_para_sql(docx_path, sql_output_path):
-    doc = docx.Document(docx_path)
-    entries = []
+DOCX_FILE = 'Guias do trabalho em geral.docx'
+SQL_FILE = 'import.sql'
+
+def extract_paragraphs(docx_path):
+    try:
+        with zipfile.ZipFile(docx_path) as z:
+            xml_content = z.read('word/document.xml')
+    except Exception as e:
+        print(f"Erro ao abrir o arquivo DOCX: {e}")
+        sys.exit(1)
+
+    root = ET.fromstring(xml_content)
+    paragraphs = []
     
-    current_title = ""
-    current_content = ""
+    for p in root.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p'):
+        texts = [node.text for node in p.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t') if node.text]
+        full_text = "".join(texts).strip()
+        if full_text:
+            paragraphs.append(full_text)
+            
+    return paragraphs
 
-    for para in doc.paragraphs:
-        text = para.text.strip()
-        if not text:
-            continue
+def generate_sql():
+    paragraphs = extract_paragraphs(DOCX_FILE)
+    entries = []
+    current_title = None
+    current_lines = []
 
-        # Checa se o parágrafo é um título (Heading, texto em negrito ou sem marcadores no início)
-        is_bold = any(run.bold for run in para.runs if run.text.strip())
-        is_heading = para.style.name.startswith('Heading') or is_bold
-
-        # Se for um novo título
-        if is_heading and len(text) < 120 and not text.startswith(('•', '-', '*')):
-            if current_title and current_content:
-                entries.append({
-                    'titulo': current_title,
-                    'solucao': current_content.strip()
-                })
-                current_content = ""
+    for text in paragraphs:
+        # Detecta linhas curtas como título de cada seção
+        is_heading = len(text) < 70 and not text.endswith('.') and not text.startswith('http')
+        
+        if is_heading:
+            if current_title:
+                entries.append((current_title, "\n".join(current_lines)))
+                current_lines = []
             current_title = text
         else:
-            if current_title:
-                current_content += text + "\n"
+            if not current_title:
+                current_title = text
+            else:
+                current_lines.append(text)
 
-    # Salva o último tópico
-    if current_title and current_content:
-        entries.append({
-            'titulo': current_title,
-            'solucao': current_content.strip()
-        })
+    if current_title:
+        entries.append((current_title, "\n".join(current_lines)))
 
-    # Gera o arquivo import.sql
-    with open(sql_output_path, 'w', encoding='utf-8') as f:
-        f.write("USE kb_erros;\n\n")
-        for item in entries:
-            titulo = item['titulo'].replace("'", "''")
-            solucao = item['solucao'].replace("'", "''")
-            sql = f"INSERT INTO erros (titulo, categoria, descricao, solucao) VALUES ('{titulo}', 'Procedimentos', '', '{solucao}');\n"
+    with open(SQL_FILE, 'w', encoding='utf-8') as f:
+        f.write("-- Script de importacao gerado pelo convert.py\n\n")
+        for title, content in entries:
+            clean_title = title.replace("'", "''")
+            clean_content = content.replace("'", "''")
+            sql = f"INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('{clean_title}', 'Guias', 'docx, importado', 'Importado via script', '{clean_content}');\n"
             f.write(sql)
-            
-    print(f"Sucesso! {len(entries)} tópicos extraídos para {sql_output_path}")
 
-docx_para_sql('erros.docx', 'import.sql')
+    print(f"Sucesso! Gerado '{SQL_FILE}' com {len(entries)} registros.")
+
+if __name__ == '__main__':
+    generate_sql()

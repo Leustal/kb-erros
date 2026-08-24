@@ -1,122 +1,217 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
 
-// 1. Função para carregar variáveis de ambiente do arquivo .env
-function loadEnv($path) {
-    if (!file_exists($path)) {
-        return false;
-    }
-    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        // Ignora comentários
-        if (strpos(trim($line), '#') === 0) {
-            continue;
-        }
-        if (strpos($line, '=') !== false) {
-            list($name, $value) = explode('=', $line, 2);
-            $_ENV[trim($name)] = trim($value);
-        }
-    }
-    return true;
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
 }
 
-// Carrega o arquivo .env localizado na raiz do projeto
-loadEnv(__DIR__ . '/.env');
+/**
+ * Função leve para carregar variáveis do arquivo .env
+ */
+function loadEnv($filePath = __DIR__ . '/.env') {
+    if (!file_exists($filePath)) {
+        return;
+    }
 
-// 2. Define as credenciais do banco de dados utilizando o .env (com valores padrão/fallback)
-$host = $_ENV['DB_HOST'] ?? 'localhost';
-$db   = $_ENV['DB_NAME'] ?? 'kb_erros';
-$user = $_ENV['DB_USER'] ?? 'root';
-$pass = $_ENV['DB_PASS'] ?? '';
+    $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if (empty($line) || strpos($line, '#') === 0) {
+            continue;
+        }
 
-// 3. Conexão com o MariaDB usando PDO
+        list($name, $value) = explode('=', $line, 2);
+        $name = trim($name);
+        $value = trim($value, " \t\n\r\0\x0B\"'");
+
+        if (!array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
+            putenv("{$name}={$value}");
+            $_ENV[$name] = $value;
+            $_SERVER[$name] = $value;
+        }
+    }
+}
+
+// Carrega as variáveis de ambiente
+loadEnv();
+
+// Recupera credenciais com valores fallback de segurança
+$driver = getenv('DB_DRIVER') ?: 'pgsql';
+$host   = getenv('DB_HOST')   ?: 'localhost';
+$port   = getenv('DB_PORT')   ?: '5432';
+$db     = getenv('DB_NAME')   ?: 'base_conhecimento';
+$user   = getenv('DB_USER')   ?: 'postgres';
+$pass   = getenv('DB_PASS')   ?: '';
+
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
+    if ($driver === 'pgsql') {
+        $dsn = "pgsql:host=$host;port=$port;dbname=$db";
+    } else {
+        $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
+    }
+
+    $pdo = new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
-} catch (\PDOException $e) {
+
+} catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode([
-        'success' => false, 
-        'error' => 'Falha na conexão com o banco de dados.'
-    ]);
-    exit;
+    echo json_encode(['error' => 'Erro na conexão com o banco de dados: ' . $e->getMessage()]);
+    exit();
 }
 
-// 4. Identifica a ação requisitada pela Query String (ex: api.php?action=list)
-$action = $_GET['action'] ?? 'list';
+$method = $_SERVER['REQUEST_METHOD'];
 
-// -------------------------------------------------------------
-// ROTA: LISTAR / BUSCAR ERROS
-// -------------------------------------------------------------
-if ($action === 'list') {
-    $q = trim($_GET['q'] ?? '');
-    
-    if (!empty($q)) {
-        // Busca flexível em múltiplos campos
-        $sql = "SELECT * FROM erros 
-                WHERE titulo LIKE :q 
-                   OR descricao LIKE :q 
-                   OR solucao LIKE :q 
-                   OR tags LIKE :q 
-                   OR categoria LIKE :q 
-                ORDER BY id DESC";
+switch ($method) {
+    case 'GET':
+        handleGet($pdo);
+        break;
+    case 'POST':
+        handlePost($pdo);
+        break;
+    case 'PUT':
+        handlePut($pdo);
+        break;
+    case 'DELETE':
+        handleDelete($pdo);
+        break;
+    default:
+        http_response_code(405);
+        echo json_encode(['error' => 'Método não permitido']);
+        break;
+}
+
+// LISTAGEM E BUSCA
+function handleGet($pdo) {
+    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $page   = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+    $limit  = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 10;
+    $offset = ($page - 1) * $limit;
+
+    try {
+        if (!empty($search)) {
+            $sqlCount = "SELECT COUNT(*) FROM registros 
+                         WHERE titulo ILIKE :s OR categoria ILIKE :s OR tags ILIKE :s OR descricao ILIKE :s OR solucao ILIKE :s";
+            $stmtCount = $pdo->prepare($sqlCount);
+            $stmtCount->execute([':s' => "%$search%"]);
+            $total = (int)$stmtCount->fetchColumn();
+
+            $sqlData = "SELECT * FROM registros 
+                        WHERE titulo ILIKE :s OR categoria ILIKE :s OR tags ILIKE :s OR descricao ILIKE :s OR solucao ILIKE :s 
+                        ORDER BY id DESC LIMIT :limit OFFSET :offset";
+            $stmtData = $pdo->prepare($sqlData);
+            $stmtData->bindValue(':s', "%$search%", PDO::PARAM_STR);
+            $stmtData->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmtData->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmtData->execute();
+            $data = $stmtData->fetchAll();
+        } else {
+            $total = (int)$pdo->query("SELECT COUNT(*) FROM registros")->fetchColumn();
+
+            $sqlData = "SELECT * FROM registros ORDER BY id DESC LIMIT :limit OFFSET :offset";
+            $stmtData = $pdo->prepare($sqlData);
+            $stmtData->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmtData->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmtData->execute();
+            $data = $stmtData->fetchAll();
+        }
+
+        $totalPages = ceil($total / $limit);
+
+        echo json_encode([
+            'data' => $data,
+            'total' => $total,
+            'page' => $page,
+            'total_pages' => $totalPages
+        ]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Erro ao buscar registros: ' . $e->getMessage()]);
+    }
+}
+
+// CADASTRO
+function handlePost($pdo) {
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (empty($input['titulo']) || empty($input['solucao'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Título e Solução são campos obrigatórios.']);
+        return;
+    }
+
+    try {
+        $sql = "INSERT INTO registros (titulo, categoria, tags, descricao, solucao) 
+                VALUES (:titulo, :categoria, :tags, :descricao, :solucao)";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute(['q' => "%{$q}%"]);
-    } else {
-        // Retorna os últimos 50 cadastros caso a busca esteja vazia
-        $stmt = $pdo->query("SELECT * FROM erros ORDER BY id DESC LIMIT 50");
+        $stmt->execute([
+            ':titulo'    => $input['titulo'],
+            ':categoria' => $input['categoria'] ?? 'Geral',
+            ':tags'      => $input['tags'] ?? '',
+            ':descricao' => $input['descricao'] ?? '',
+            ':solucao'   => $input['solucao']
+        ]);
+
+        echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Erro ao cadastrar registro: ' . $e->getMessage()]);
     }
-    
-    echo json_encode($stmt->fetchAll());
-    exit;
 }
 
-// -------------------------------------------------------------
-// ROTA: ADICIONAR NOVO ERRO
-// -------------------------------------------------------------
-if ($action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    
-    if (empty($data['titulo']) || empty($data['solucao'])) {
+// EDIÇÃO
+function handlePut($pdo) {
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (empty($input['id']) || empty($input['titulo']) || empty($input['solucao'])) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Título e Solução são obrigatórios.']);
-        exit;
+        echo json_encode(['error' => 'ID, Título e Solução são obrigatórios para edição.']);
+        return;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO erros (titulo, categoria, descricao, solucao, tags) VALUES (:titulo, :categoria, :descricao, :solucao, :tags)");
-    
-    $success = $stmt->execute([
-        'titulo'    => trim($data['titulo']),
-        'categoria' => !empty($data['categoria']) ? trim($data['categoria']) : 'Geral',
-        'descricao' => !empty($data['descricao']) ? trim($data['descricao']) : '',
-        'solucao'   => trim($data['solucao']),
-        'tags'      => !empty($data['tags']) ? trim($data['tags']) : ''
-    ]);
+    try {
+        $sql = "UPDATE registros 
+                SET titulo = :titulo, categoria = :categoria, tags = :tags, descricao = :descricao, solucao = :solucao 
+                WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':id'        => $input['id'],
+            ':titulo'    => $input['titulo'],
+            ':categoria' => $input['categoria'] ?? 'Geral',
+            ':tags'      => $input['tags'] ?? '',
+            ':descricao' => $input['descricao'] ?? '',
+            ':solucao'   => $input['solucao']
+        ]);
 
-    echo json_encode(['success' => $success]);
-    exit;
+        echo json_encode(['success' => true]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Erro ao atualizar registro: ' . $e->getMessage()]);
+    }
 }
 
-// -------------------------------------------------------------
-// ROTA: EXCLUIR ERRO
-// -------------------------------------------------------------
-if ($action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    $id = intval($data['id'] ?? 0);
+// EXCLUSÃO
+function handleDelete($pdo) {
+    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-    if ($id > 0) {
-        $stmt = $pdo->prepare("DELETE FROM erros WHERE id = :id");
-        $success = $stmt->execute(['id' => $id]);
-        echo json_encode(['success' => $success]);
-    } else {
+    if ($id <= 0) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'ID inválido fornecido.']);
+        echo json_encode(['error' => 'ID inválido para exclusão.']);
+        return;
     }
-    exit;
-}
 
-// Ação não reconhecida
-http_response_code(404);
-echo json_encode(['error' => 'Ação não encontrada.']);
+    try {
+        $stmt = $pdo->prepare("DELETE FROM registros WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+
+        echo json_encode(['success' => true]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Erro ao excluir registro: ' . $e->getMessage()]);
+    }
+}

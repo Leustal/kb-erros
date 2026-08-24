@@ -1,5 +1,17 @@
-# .gitignore
+# Credenciais e Ambientes
 .env
-config.php
-.vscode/
+
+# Arquivos do ambiente e uploads
+*.docx
+*.pdf
+*.txt
+*.sql
+
+# Logs
 *.log
+.DS_Store
+Thumbs.db
+
+# Dependências
+vendor/
+node_modules/
