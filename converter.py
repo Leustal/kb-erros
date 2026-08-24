@@ -2,6 +2,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 import sys
 
+# Nome atualizado para bater com o arquivo local
 DOCX_FILE = 'erros.docx'
 SQL_FILE = 'import.sql'
 
@@ -10,7 +11,7 @@ def extract_paragraphs(docx_path):
         with zipfile.ZipFile(docx_path) as z:
             xml_content = z.read('word/document.xml')
     except Exception as e:
-        print(f"Erro ao abrir o arquivo DOCX: {e}")
+        print(f"Erro ao abrir o arquivo DOCX '{docx_path}': {e}")
         sys.exit(1)
 
     root = ET.fromstring(xml_content)
@@ -31,7 +32,6 @@ def generate_sql():
     current_lines = []
 
     for text in paragraphs:
-        # Detecta linhas curtas como título de cada seção
         is_heading = len(text) < 70 and not text.endswith('.') and not text.startswith('http')
         
         if is_heading:
@@ -49,10 +49,13 @@ def generate_sql():
         entries.append((current_title, "\n".join(current_lines)))
 
     with open(SQL_FILE, 'w', encoding='utf-8') as f:
-        f.write("-- Script de importacao gerado pelo convert.py\n\n")
+        # Quebra de linha garantida após o comentário do MySQL/phpMyAdmin
+        f.write("/* Script de importacao gerado pelo converter.py */\n\n")
+        
         for title, content in entries:
-            clean_title = title.replace("'", "''")
-            clean_content = content.replace("'", "''")
+            clean_title = title.replace("\\", "\\\\").replace("'", "''")
+            clean_content = content.replace("\\", "\\\\").replace("'", "''")
+            
             sql = f"INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('{clean_title}', 'Guias', 'docx, importado', 'Importado via script', '{clean_content}');\n"
             f.write(sql)
 

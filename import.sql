@@ -1,4 +1,4 @@
--- Script de importacao gerado pelo convert.py
+/* Script de importacao gerado pelo converter.py */
 
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Guias do trabalho em geral', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Trocar/colocar e-mail para receber notificações', 'Guias', 'docx, importado', 'Importado via script', 'https://billing.saveincloud.com/support-intervention');
@@ -334,7 +334,7 @@ RAM, CPU e rede não foram cobrados.');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Cliente conta teste/destruida', 'Guias', 'docx, importado', 'Importado via script', 'Nesse caso, como a sua conta expirou o prazo do uso de período de teste e não converteu a conta depois, ela acabou sendo destruída mesmo.
 Você pode realizar uma recarga com um valor mínimo de R$50,00 para ativar a sua conta.');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Demonstrar assinar cloud', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('NGINX', 'Guias', 'docx, importado', 'Importado via script', 'No such file or directory\n/etc/tinyproxy/tinyproxy.conf: No such file or directory\n/etc/tinyproxy/tinyproxy.conf: No such file or directory"
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('NGINX', 'Guias', 'docx, importado', 'Importado via script', 'No such file or directory\\n/etc/tinyproxy/tinyproxy.conf: No such file or directory\\n/etc/tinyproxy/tinyproxy.conf: No such file or directory"
 Esse erro se dá por conta de ter 1 cloudlet reservado 1 limite de escalonamento');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Deixar um node fora no arquivo de upstream', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('No /etc/nginx/nginx-jelastic.conf', 'Guias', 'docx, importado', 'Importado via script', 'Caso seja apenas o arquivo padrão, é possivel desativar o upstream (Redirecionamento) adicionando um “down” frente do server, como por exem:');
@@ -421,8 +421,8 @@ INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Ati
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('netsh advfirewall set allprofiles state on', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Verifica se o firewall está ligado', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('netsh advfirewall show allprofiles', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Verifica se o RDP está ativo', 'Guias', 'docx, importado', 'Importado via script', 'reg query "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Habilitar o RDP via registro', 'Guias', 'docx, importado', 'Importado via script', 'reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Verifica se o RDP está ativo', 'Guias', 'docx, importado', 'Importado via script', 'reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server" /v fDenyTSConnections');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Habilitar o RDP via registro', 'Guias', 'docx, importado', 'Importado via script', 'reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Após habilitar o rdp', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('reiniciar o serviço termservice', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Mas atenção isso derruba as sessões antigas', 'Guias', 'docx, importado', 'Importado via script', '');
@@ -655,7 +655,7 @@ INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('use
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('database page siz: 4096', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('database size (GB) : 100', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('main database name: testdb', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('main database path: c:\temp\mydb1.fdb', 'Guias', 'docx, importado', 'Importado via script', 'em CPUs, pode definir o valor 10 para a sua instância (conforme saída do comando lscpu).');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('main database path: c:\\temp\\mydb1.fdb', 'Guias', 'docx, importado', 'Importado via script', 'em CPUs, pode definir o valor 10 para a sua instância (conforme saída do comando lscpu).');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('use o comando lscpu', 'Guias', 'docx, importado', 'Importado via script', 'O gerenciamento e otimização do banco é de responsabilidade do cliente nesse caso.
 É necessário que verifiquem a otimização dos recursos, tipo de firebird a ser utilizado bem como otimizar as consultas (query) com índices se necessário.');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Lentidão no firebird', 'Guias', 'docx, importado', 'Importado via script', 'Senhor poderia realizar uma query externamente, por algum gerenciador de banco, como o dbeaver ou ibexpert e nos enviar o resultado, por gentileza
@@ -813,9 +813,9 @@ Depois criar apontamentos como MX, CNAME, e configurar o spf, DMARC, DKIM, para 
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('GPT pra bloqueio no sender_access', 'Guias', 'docx, importado', 'Importado via script', 'Preciso de um bloqueio em meu servidor do CWP, crie no padrão do regex o bloqueio dos seguintes domínios:');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('regexp:/etc/postfix/sender_access', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Exemplo de padrão regex', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('/^.*@dominio\.com$/        REJECT', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('/^user[0-9]+@gmail\.com$/  REJECT', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('/@spammer.*\.com$/         REJECT', 'Guias', 'docx, importado', 'Importado via script', '');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('/^.*@dominio\\.com$/        REJECT', 'Guias', 'docx, importado', 'Importado via script', '');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('/^user[0-9]+@gmail\\.com$/  REJECT', 'Guias', 'docx, importado', 'Importado via script', '');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('/@spammer.*\\.com$/         REJECT', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Veja como já está no arquivo sender_access do servidor:', 'Guias', 'docx, importado', 'Importado via script', 'Crie da mesma forma para os novos domínios informados.');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('postmap /etc/postfix/sender_access', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('systemctl reload postfix', 'Guias', 'docx, importado', 'Importado via script', '');
@@ -1219,7 +1219,7 @@ INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('A a
 Para mais detalhes, você consegue verificar esta documentação, onde informa sobre o processo de limitar a memória e utilizar outras variáveis para a instância tomcat, veja neste link:');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('virtuozzo.com/application-management-docs/java-options-arguments/', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Cliente Juliano com problema de IOps Ambiente desliga do nada', 'Guias', 'docx, importado', 'Importado via script', 'É preciso limitar manualmente a memória RAM que o Java utiliza, definindo os parâmetros da JVM diretamente no arquivo /opt/tomcat/conf/variables.conf. Essa configuração garante que o serviço tenha recursos previsíveis e não cause o colapso do sistema operacional por consumo excessivo. Para realizar esse ajuste de forma correta, o senhor pode seguir as orientações detalhadas na documentação oficial da Virtuozzo sobre o Java Agent e sobre a configuração de servidores de aplicação Java nos links abaixo:
-https://www.virtuozzo.com/application-management-docs/javaagent/\\
+https://www.virtuozzo.com/application-management-docs/javaagent/\\\\
 https://www.virtuozzo.com/application-management-docs/java-application-server-config/#server
 Muitas quedas para acesso em uma aplicação tomcat / lentidão de acesso a um cliente / Operadora
 Pedir os testes e tudo mais.');
@@ -1376,9 +1376,9 @@ INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Apa
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Verificar se os dois bancos estão em read_only (apenas leitura)', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('SHOW transaction_read_only;', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('SELECT pg_is_in_recovery();', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Mostra se um dos nós está enviando dados WAL de replicacao \', 'Guias', 'docx, importado', 'Importado via script', '');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Mostra se um dos nós está enviando dados WAL de replicacao \\', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('select * from pg_stat_replication;', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Mostra se um dos nós está recebendo dados de replicaçao WAL \', 'Guias', 'docx, importado', 'Importado via script', '');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Mostra se um dos nós está recebendo dados de replicaçao WAL \\', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('select * from pg_stat_wal_receiver;', 'Guias', 'docx, importado', 'Importado via script', 'Se os dois nodos nao mostrarem nada nesta consulta, a replicação está quebrada.
 como ele validou que a tabela existe nos dois bancos? ele acessou individualmente cada um?');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('O senhor utilizou uma query?', 'Guias', 'docx, importado', 'Importado via script', '');
@@ -1551,7 +1551,7 @@ INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Ver
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Pode ser os workers em caso de travamento de muitas requisições', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('ps aux | grep http | wc -l', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Mongodb', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Authenticação mongodb:', 'Guias', 'docx, importado', 'Importado via script', 'grep -i "password\|username\|mongodb" /usr/lib/node_modules/mongo-express/config.default.js
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Authenticação mongodb:', 'Guias', 'docx, importado', 'Importado via script', 'grep -i "password\\|username\\|mongodb" /usr/lib/node_modules/mongo-express/config.default.js
 Cliente quer saber a capacidade de fornecer um ambiente com a versão do mongodb atualizado
 Na plataforma não temos as novas versões por questão de licenciamento, mas o senhor pode subir a versão que deseja via Docker.
 Desde 2018 a da Community usa licença. SSPL (Server Side Public License). As que não precisam são essas que tem na plataforma.');
@@ -1627,7 +1627,7 @@ erro please commit or stash them.
 O senhor pode verificar os erros de implementação indo nos logs e em jem.log. Segue o print.
 No log está indicando que no diretório do projeto (/var/www/webroot/ROOT), existem alterações locais não commitadas. E o Git está impedindo o pull --rebase para evitar sobrescrever essas alterações.');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Cliente informa que ao subir projeto consta o seguinte erro:', 'Guias', 'docx, importado', 'Importado via script', '"error": "The [ jem vcs update ] operation has failed: Authentication failed or url is incorrect",');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('ERRO DE CREDENCIAL', 'Guias', 'docx, importado', 'Importado via script', '"log": "NodeId - IDdonode; Host - nomedodominio; URL - gitlab/github; Directory - /var/www/webroot/ROOT; \nspawn /bin/git --git-dir=/var/www/webroot/ROOT/.git pull --rebase\nerror cannot pull with rebase You have unstaged changes.\nerror Please commit or stash them."');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('ERRO DE CREDENCIAL', 'Guias', 'docx, importado', 'Importado via script', '"log": "NodeId - IDdonode; Host - nomedodominio; URL - gitlab/github; Directory - /var/www/webroot/ROOT; \\nspawn /bin/git --git-dir=/var/www/webroot/ROOT/.git pull --rebase\\nerror cannot pull with rebase You have unstaged changes.\\nerror Please commit or stash them."');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Cliente está tentando LiteSpeed->implementações->Root', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Verificar logs vcs_update.log se houver erros relacionados a git', 'Guias', 'docx, importado', 'Importado via script', 'Possivelmente o erro seja algum processo do git em execução nesse momento, o que está impedindo a operação de implementação via git');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Pode ser erro de autenticação também', 'Guias', 'docx, importado', 'Importado via script', 'Pedir para verificar o token de acesso, pode estar errado e demonstrar o log vcs_update.log');
@@ -1738,7 +1738,7 @@ INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Se 
 Caso o uso de recursos e o travamento seja legítimo (Processos e execuções de uma aplicação sua, por exemplo) o aumento de recursos é valido.
 Por outro lado, se o travamento ocorreu por parte de processos do sistema, o melhor seria que o senhor investigasse e caso seja possível, parar a execução desses processos para que os recursos possam ser utilizados por sua aplicação/serviço.
 Se o senhor possui mais de um processo/serviço ou aplicação na máquina, e o travamento ocorreu por conta de uma “briga” por recursos, então sim, outro servidor seria indispensável para evitar novos travamentos em disputa de processamento e memória.');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Apache Python', 'Guias', 'docx, importado', 'Importado via script', 'Cliente com problema na aplicação python ModuleNotFoundError: No module named ‘flask_cors’\');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Apache Python', 'Guias', 'docx, importado', 'Importado via script', 'Cliente com problema na aplicação python ModuleNotFoundError: No module named ‘flask_cors’\\');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Perguntar como o cliente rodaria está aplicação?', 'Guias', 'docx, importado', 'Importado via script', 'Qual comando geralmente o senhor utiliza para iniciar esta aplicação python?');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Verificar os logs', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Pip list | grep (dependência em questão)', 'Guias', 'docx, importado', 'Importado via script', '');
@@ -1807,7 +1807,7 @@ INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('sys
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('cd /opt/firebird/data/', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('ls', 'Guias', 'docx, importado', 'Importado via script', 'Tanto o FTP quanto o banco mantem as credenciais antigas, já que o sistema todo é apenas uma imagem do ambiente excluído.');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Cliente informa que o site travou', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('grep -i "error\|fail\|crit\|panic /var/log/messages', 'Guias', 'docx, importado', 'Importado via script', 'É recomendado que realize o bloqueio em nível firewall, e a mitigação dos ataques via WAF, por exemplo, para que diminua consideravelmente o uso de recursos, e ocorra o bloqueio após muitas tentativas de falhas de autenticação.
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('grep -i "error\\|fail\\|crit\\|panic /var/log/messages', 'Guias', 'docx, importado', 'Importado via script', 'É recomendado que realize o bloqueio em nível firewall, e a mitigação dos ataques via WAF, por exemplo, para que diminua consideravelmente o uso de recursos, e ocorra o bloqueio após muitas tentativas de falhas de autenticação.
 Realizar um escalonamento horizontal/vertical é valido, porém em casos onde o uso de recursos é legitimo. Se o senhor configura um escalonamento horizontal/vertical em uma situação onde o esgotamento de recursos é causado por ataques ou tentativas parecidas com a que ocorreu, o senhor estará aumentando a capacidade do atacante em obter o que deseja (atacante terá mais recursos disponíveis para utilizar, aumentando o rate do ataque), e ainda pagando por isso.');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('SPAM', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('pesquisar cwp em environments jca', 'Guias', 'docx, importado', 'Importado via script', '');
@@ -1864,9 +1864,9 @@ INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Bot
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Teste:', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Como seria um teste pra ver se o e-mail está bloqueado mesmo:', 'Guias', 'docx, importado', 'Importado via script', 'postmap -q "detran@mstarts01a.corehostx.xyz" regexp:/etc/postfix/sender_access');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Exemplo de padrão regex', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('/^.*@dominio\.com$/        REJECT', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('/^user[0-9]+@gmail\.com$/  REJECT', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('/@spammer.*\.com$/         REJECT', 'Guias', 'docx, importado', 'Importado via script', '');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('/^.*@dominio\\.com$/        REJECT', 'Guias', 'docx, importado', 'Importado via script', '');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('/^user[0-9]+@gmail\\.com$/  REJECT', 'Guias', 'docx, importado', 'Importado via script', '');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('/@spammer.*\\.com$/         REJECT', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Criação de filtros', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Acessar o webmail', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Demonstrar em configurações / filtros / criar', 'Guias', 'docx, importado', 'Importado via script', 'https://suporte.studio4x.com.br/tutoriais/configurando-filtros-e-regras-de-e-mail-no-roundcube/
@@ -2595,13 +2595,13 @@ INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('-Pa
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('-Description "Admin provisionado via Cloudbase-Init"', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Add-LocalGroupMember -Group "Administrators" -Member $novoUsuario', 'Guias', 'docx, importado', 'Importado via script', 'if (Get-LocalGroup -Name "Remote Desktop Users" -ErrorAction SilentlyContinue) {
 Add-LocalGroupMember -Group "Remote Desktop Users" -Member $novoUsuario');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('}', 'Guias', 'docx, importado', 'Importado via script', '"[$(Get-Date)] Usuario $novoUsuario criado com sucesso" | Out-File C:\cloudbase-user.log -Append');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('}', 'Guias', 'docx, importado', 'Importado via script', '"[$(Get-Date)] Usuario $novoUsuario criado com sucesso" | Out-File C:\\cloudbase-user.log -Append');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('tzutil /s "E. South America Standard Time"', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Criação do usuário user.admin;', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Definição da senha inicial;', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Inclusão do usuário no grupo Administrators;', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Inclusão no grupo Remote Desktop Users;', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Registro da operação em C:\cloudbase-user.log;', 'Guias', 'docx, importado', 'Importado via script', 'Configuração do fuso horário para Horário de Brasília.');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Registro da operação em C:\\cloudbase-user.log;', 'Guias', 'docx, importado', 'Importado via script', 'Configuração do fuso horário para Horário de Brasília.');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Nuvion VM Windows', 'Guias', 'docx, importado', 'Importado via script', 'Certo senhor no caso, houve uma mudança após dia 01/06/2026, onde a criação de novos ambientes Windows na região de São Paulo, só poderão ser criados em nossa nova plataforma Nuvion, nossa plataforma Iaas, oferecendo melhor performance e recursos.
 Entretando as localidades de Fortaleza e Brasília continuam permitindo a criação de ambientes Windows normalmente em nossa plataforma Paas(cloudlets).
 No entanto se o senhor possui uma VM Windows de São Paulo em sua conta, ele continuará normalmente em sua conta, não será realizada nenhuma alteração, ele continuará o mesmo, causando nenhum impacto.
@@ -2741,18 +2741,18 @@ INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('smb
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Caso não se recorde senha enviado ao e-mail, poderá alterar:', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('smbpasswd samba-user', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Dentro do prompt faça um teste:', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('smb: \> put /etc/hostname testefile.txt', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('smb: \> ls', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('smb: \> exit', 'Guias', 'docx, importado', 'Importado via script', 'Se o put funcionar, a permissão no Samba está ok e o problema está em como o Windows está autenticando. Se falhar, o problema está na configuração do Samba ou nas permissões do Linux.');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('smb: \\> put /etc/hostname testefile.txt', 'Guias', 'docx, importado', 'Importado via script', '');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('smb: \\> ls', 'Guias', 'docx, importado', 'Importado via script', '');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('smb: \\> exit', 'Guias', 'docx, importado', 'Importado via script', 'Se o put funcionar, a permissão no Samba está ok e o problema está em como o Windows está autenticando. Se falhar, o problema está na configuração do Samba ou nas permissões do Linux.');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Problema do SQL no Windows:', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('EXEC sp_configure ‘show advanced options’, 1; RECONFIGURE;', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('EXEC sp_configure ‘xp_cmdshell’, 1; RECONFIGURE;', 'Guias', 'docx, importado', 'Importado via script', 'EXEC xp_cmdshell ‘net use \IP_DO_SAMBA\nome_compartilhamento /user:usuario_samba senha_samba’;');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('EXEC sp_configure ‘xp_cmdshell’, 0; RECONFIGURE;', 'Guias', 'docx, importado', 'Importado via script', 'Após executar isso uma vez, o SQL Server passa a reconhecer o caminho de rede e o backup pode ser direcionado usando o caminho UNC completo, por exemplo \IP_DO_SAMBA\nome_compartilhamento\arquivo.bak, sem depender da letra de drive mapeada.');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('EXEC sp_configure ‘xp_cmdshell’, 1; RECONFIGURE;', 'Guias', 'docx, importado', 'Importado via script', 'EXEC xp_cmdshell ‘net use \\IP_DO_SAMBA\\nome_compartilhamento /user:usuario_samba senha_samba’;');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('EXEC sp_configure ‘xp_cmdshell’, 0; RECONFIGURE;', 'Guias', 'docx, importado', 'Importado via script', 'Após executar isso uma vez, o SQL Server passa a reconhecer o caminho de rede e o backup pode ser direcionado usando o caminho UNC completo, por exemplo \\IP_DO_SAMBA\\nome_compartilhamento\\arquivo.bak, sem depender da letra de drive mapeada.');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('Exemplo meu:', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('EXEC sp_configure ''show advanced options'', 1; RECONFIGURE;', 'Guias', 'docx, importado', 'Importado via script', '');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('EXEC sp_configure ''xp_cmdshell'', 1; RECONFIGURE;', 'Guias', 'docx, importado', 'Importado via script', 'EXEC xp_cmdshell ''net use \\ipprivadoDoAmbiente\samba /user:samba-user minha senha’;
-BACKUP DATABASE NomedoDatabase TO DISK = ''\\ipprivadoDoAmbiente\samba\arquivo.bak'' WITH FORMAT, INIT, NAME = ''Backup Teste'';');
-INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('EXEC sp_configure ''xp_cmdshell'', 0; RECONFIGURE;', 'Guias', 'docx, importado', 'Importado via script', 'Caso o cliente não sabia qual o nome é o share que seria o \ depois do ipPrivado ele pode verificar o share desta forma dentro da instância Linux:');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('EXEC sp_configure ''xp_cmdshell'', 1; RECONFIGURE;', 'Guias', 'docx, importado', 'Importado via script', 'EXEC xp_cmdshell ''net use \\\\ipprivadoDoAmbiente\\samba /user:samba-user minha senha’;
+BACKUP DATABASE NomedoDatabase TO DISK = ''\\\\ipprivadoDoAmbiente\\samba\\arquivo.bak'' WITH FORMAT, INIT, NAME = ''Backup Teste'';');
+INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('EXEC sp_configure ''xp_cmdshell'', 0; RECONFIGURE;', 'Guias', 'docx, importado', 'Importado via script', 'Caso o cliente não sabia qual o nome é o share que seria o \\ depois do ipPrivado ele pode verificar o share desta forma dentro da instância Linux:');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('cat /etc/samba/smb.conf', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('O bloco é o nome do caminhoOu', 'Guias', 'docx, importado', 'Importado via script', '');
 INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('smbclient -L //ipPrivado -U samba-user', 'Guias', 'docx, importado', 'Importado via script', '');
