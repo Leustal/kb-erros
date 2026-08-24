@@ -2,7 +2,6 @@ import zipfile
 import xml.etree.ElementTree as ET
 import sys
 
-# Nome atualizado para bater com o arquivo local
 DOCX_FILE = 'erros.docx'
 SQL_FILE = 'import.sql'
 
@@ -49,14 +48,11 @@ def generate_sql():
         entries.append((current_title, "\n".join(current_lines)))
 
     with open(SQL_FILE, 'w', encoding='utf-8') as f:
-        # Quebra de linha garantida após o comentário do MySQL/phpMyAdmin
-        f.write("/* Script de importacao gerado pelo converter.py */\n\n")
-        
         for title, content in entries:
             clean_title = title.replace("\\", "\\\\").replace("'", "''")
             clean_content = content.replace("\\", "\\\\").replace("'", "''")
             
-            sql = f"INSERT INTO registros (titulo, categoria, tags, descricao, solucao) VALUES ('{clean_title}', 'Guias', 'docx, importado', 'Importado via script', '{clean_content}');\n"
+            sql = f"INSERT INTO erros (titulo, categoria, tags, descricao, solucao) VALUES ('{clean_title}', 'Guias', 'docx, importado', 'Importado via script', '{clean_content}');\n"
             f.write(sql)
 
     print(f"Sucesso! Gerado '{SQL_FILE}' com {len(entries)} registros.")
