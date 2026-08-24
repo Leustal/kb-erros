@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Base de Conhecimento Suporte</title>
+    <title>Base de Conhecimento DEVOPS/INFRA</title>
     <!-- Fonts Google & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -94,7 +94,7 @@
             word-break: break-all;
             color: #38bdf8 !important;
             margin: 0;
-            padding-top: 1.8rem !important; /* Libera espaço para o botão Copiar */
+            padding-top: 1.8rem !important;
         }
 
         .btn-copy {
@@ -151,7 +151,6 @@
             font-weight: 600;
             transition: all 0.2s ease;
         }
-
 
         /* === 2. TEMA ESCURO FUTURÍSTICO / NEON === */
         body.dark-mode {
@@ -286,7 +285,7 @@
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-10">
         <div>
-            <h2 class="title-gradient m-0"><i class="bi bi-cpu-fill me-2"></i>SUPORTE</h2>
+            <h2 class="title-gradient m-0"><i class="bi bi-cpu-fill me-2"></i>DEVOPS // KB</h2>
             <small class="text-secondary fw-semibold">Base de Conhecimento e Resolução de Erros</small>
         </div>
         <div class="d-flex gap-2">
@@ -425,6 +424,16 @@
             if (result.error) throw new Error(result.error);
 
             currentData = result.data || [];
+
+            // Apenas aplica a ordenação A-Z no JS se NÃO houver termo de busca ativando relevância
+            if (!search) {
+                currentData.sort((a, b) => {
+                    const titleA = (a.titulo || '').replace(/^["'\s]+|["'\s]+$/g, '');
+                    const titleB = (b.titulo || '').replace(/^["'\s]+|["'\s]+$/g, '');
+                    return titleA.localeCompare(titleB, 'pt-BR', { sensitivity: 'base' });
+                });
+            }
+
             renderCards(currentData);
             renderPagination(result.total_pages, result.page);
             document.getElementById('totalInfo').innerText = `Mostrando ${currentData.length} de ${result.total} registros`;
@@ -447,7 +456,6 @@
                 return cleanTag ? `<span class="badge tag-badge badge-neon me-1" onclick="filterByTag('${cleanTag}')">#${cleanTag}</span>` : '';
             }).join('') : '';
 
-            // Garante que a categoria não fique vazia
             const catTexto = (item.categoria && item.categoria.trim()) ? item.categoria.trim() : 'Geral';
 
             return `
