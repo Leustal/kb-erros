@@ -11,15 +11,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // -------------------------------------------------------------
-// LEITOR ROBUSTO DE .ENV (Sem parse_ini_file)
+// LEITOR MANUAL DE .ENV (Evita Erro 500 com parse_ini_file)
 // -------------------------------------------------------------
 function loadEnv($path) {
     if (!file_exists($path)) return [];
     $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     $env = [];
     foreach ($lines as $line) {
-        $line = trim($line);
-        if (empty($line) || strpos($line, '#') === 0) continue;
+        if (strpos(trim($line), '#') === 0) continue;
         list($name, $value) = explode('=', $line, 2) + [NULL, NULL];
         if ($name !== NULL && $value !== NULL) {
             $env[trim($name)] = trim($value, " \t\n\r\0\x0B\"'");
@@ -28,7 +27,6 @@ function loadEnv($path) {
     return $env;
 }
 
-// Tenta localizar o .env no diretório atual ou na raiz superior
 $envPath = __DIR__ . '/.env';
 if (!file_exists($envPath)) {
     $envPath = dirname(__DIR__) . '/.env';
@@ -69,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action ===
 
     $id = $data['id'] ?? ($_GET['id'] ?? null);
 
-    // Mapeamento: Aba Solução / Raiz
+    // Captura flexível dos campos
     $titulo = '';
     if (isset($data['aba_solucao']['titulo'])) {
         $titulo = trim($data['aba_solucao']['titulo']);
@@ -84,18 +82,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action ===
         $solucao = trim($data['solucao']);
     }
 
-    $categoria = $data['aba_solucao']['categoria'] ?? ($data['categoria'] ?? '');
-    $tags      = $data['aba_solucao']['tags'] ?? ($data['tags'] ?? '');
-    $descricao = $data['aba_solucao']['problema'] ?? ($data['descricao'] ?? '');
-
-    // Mapeamento: Aba Auditoria / Raiz
+    $categoria       = $data['aba_solucao']['categoria'] ?? ($data['categoria'] ?? '');
+    $tags            = $data['aba_solucao']['tags'] ?? ($data['tags'] ?? '');
+    $descricao       = $data['aba_solucao']['problema'] ?? ($data['descricao'] ?? '');
+    
     $nota_raw        = $data['aba_auditoria']['nota_final'] ?? ($data['nota_final'] ?? null);
     $nota_final      = (is_numeric($nota_raw) && $nota_raw !== '') ? floatval($nota_raw) : null;
+    
     $veredito        = $data['aba_auditoria']['veredito'] ?? ($data['veredito'] ?? '');
     $objetivo        = $data['aba_auditoria']['objetivo'] ?? ($data['objetivo'] ?? '');
     $oportunidade_ps = $data['aba_auditoria']['oportunidade_ps'] ?? ($data['oportunidade_ps'] ?? '');
 
-    // Validação
     if (empty($titulo) || empty($solucao)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Título e Solução são obrigatórios.']);
