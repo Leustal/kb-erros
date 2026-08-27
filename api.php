@@ -1,5 +1,7 @@
 <?php
-// Trata requisições OPTIONS e cabeçalhos CORS
+// api.php - Backend para Knowledge Base com integração Chatwoot/n8n
+
+// Cabeçalhos CORS e resposta JSON
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
@@ -10,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Oculta warnings para não quebrar a saída JSON em erros inesperados
+// Oculta warnings para não quebrar a resposta JSON em exceções
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
@@ -59,7 +61,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 try {
     // ==========================================
-    // 1. GET - LISTAR / BUSCAR COM PAGINAÇÃO A-Z
+    // 1. GET - LISTAR E PESQUISAR (PAGINAÇÃO A-Z)
     // ==========================================
     if ($method === 'GET') {
         $search = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -74,13 +76,13 @@ try {
         $params = [];
 
         if (!empty($search)) {
-            $whereClauses[] = "(titulo LIKE :search OR solucao LIKE :search OR categoria LIKE :search OR tags LIKE :search OR descricao LIKE :search)";
+            $whereClauses[] = "(titulo LIKE :search OR solucao LIKE :search OR categoria LIKE :search OR tags LIKE :search OR descricao LIKE :search OR veredito LIKE :search)";
             $params[':search'] = '%' . $search . '%';
         }
 
         $whereSql = count($whereClauses) > 0 ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
-        // Contagem total
+        // Contagem Total
         $countSql = "SELECT COUNT(*) as total FROM kb_erros $whereSql";
         $stmtCount = $pdo->prepare($countSql);
         foreach ($params as $key => $val) {
@@ -89,7 +91,7 @@ try {
         $stmtCount->execute();
         $total = (int)$stmtCount->fetch()['total'];
 
-        // Ordenação A-Z universal insensível a acentos/caixa
+        // Consulta Ordenada de A-Z
         $sql = "SELECT * FROM kb_erros 
                 $whereSql 
                 ORDER BY LOWER(TRIM(BOTH '\"' FROM TRIM(BOTH '\'' FROM TRIM(titulo)))) COLLATE utf8mb4_unicode_ci ASC 
@@ -114,27 +116,72 @@ try {
         exit;
     }
 
-    // Leitura do payload JSON para POST/PUT
+    // Leitura do payload JSON para requisições POST e PUT
     $rawInput = file_get_contents('php://input');
     $input = json_decode($rawInput, true);
 
     // ==========================================
-    // 2. POST - CRIAR NOVO REGISTRO
+    // 2. POST - ADICIONAR NOVO REGISTRO (Manual / n8n)
     // ==========================================
     if ($method === 'POST') {
-        if (empty($input['titulo']) || empty($input['solucao'])) {
+        // Extração flexível (suporta a estrutura nova em 2 abas do n8n ou o formato legado)
+        $abaSolucao   = $input['aba_solucao'] ?? [];
+        $abaAuditoria = $input['aba_auditoria'] ?? [];
+
+        // 1. Campos da Aba 1 (Solução)
+        $titulo    = trim($abaSolucao['titulo'] ?? $input['titulo'] ?? '');
+        $solucao   = trim($abaSolucao['solucao'] ?? $input['solucao'] ?? '');
+        $categoria = trim($abaSolucao['categoria'] ?? $input['categoria'] ?? 'Geral');
+
+        // Trata tags se vierem como array ou string
+        $rawTags = $abaSolucao['tags'] ?? $input['tags'] ?? '';
+        $tags = is_array($rawTags) ? implode(',', $rawTags) : trim($rawTags);
+
+        // Tratamento da Descrição / Metadados
+        if (!empty($input['descricao'])) {
+            $descricao = trim($input['descricao']);
+        } elseif (!empty($abaSolucao['problema'])) {
+            $atendente = $input['atendente_nome'] ?? 'Suporte';
+            $cliente   = $input['cliente_email'] ?? 'Não informado';
+            $inicio    = $input['hora_inicio'] ?? 'Não informado';
+            $fim       = $input['hora_finalizacao'] ?? 'Não informado';
+            $problema  = trim($abaSolucao['problema']);
+
+            $descricao = "• Nome do atendente: {$atendente}\n• Email cliente: {$cliente}\n• Hora do início do atendimento: {$inicio}\n• Hora finalização do atendimento: {$fim}\n• Problema do atendimento: {$problema}";
+        } else {
+            $descricao = '';
+        }
+
+        // 2. Campos da Aba 2 (Auditoria)
+        $objetivo          = trim($abaAuditoria['objetivo'] ?? $input['objetivo'] ?? '');
+        $veredito          = trim($abaAuditoria['veredito'] ?? $input['veredito'] ?? '');
+        $oportunidadePs    = trim($abaAuditoria['oportunidade_ps'] ?? $input['oportunidade_ps'] ?? '');
+        $notaFinal         = isset($abaAuditoria['nota_final']) ? (float)$abaAuditoria['nota_final'] : (isset($input['nota_final']) ? (float)$input['nota_final'] : null);
+        $relatorioMarkdown = trim($abaAuditoria['relatorio_markdown'] ?? $input['relatorio_markdown'] ?? '');
+
+        // Validação mínima
+        if (empty($titulo) || empty($solucao)) {
             echo json_encode(['error' => 'Campos obrigatórios ausentes: titulo e solucao']);
             exit;
         }
 
-        $sql = "INSERT INTO kb_erros (titulo, categoria, tags, descricao, solucao) VALUES (:titulo, :categoria, :tags, :descricao, :solucao)";
+        $sql = "INSERT INTO kb_erros 
+                (titulo, categoria, tags, descricao, solucao, objetivo, veredito, oportunidade_ps, nota_final, relatorio_markdown) 
+                VALUES 
+                (:titulo, :categoria, :tags, :descricao, :solucao, :objetivo, :veredito, :oportunidade_ps, :nota_final, :relatorio_markdown)";
+
         $stmt = $pdo->prepare($sql);
         $success = $stmt->execute([
-            ':titulo'    => trim($input['titulo']),
-            ':categoria' => isset($input['categoria']) ? trim($input['categoria']) : '',
-            ':tags'      => isset($input['tags']) ? trim($input['tags']) : '',
-            ':descricao' => isset($input['descricao']) ? trim($input['descricao']) : '',
-            ':solucao'   => trim($input['solucao'])
+            ':titulo'             => $titulo,
+            ':categoria'          => $categoria,
+            ':tags'               => $tags,
+            ':descricao'          => $descricao,
+            ':solucao'            => $solucao,
+            ':objetivo'           => $objetivo,
+            ':veredito'           => $veredito,
+            ':oportunidade_ps'     => $oportunidadePs,
+            ':nota_final'         => $notaFinal,
+            ':relatorio_markdown' => $relatorioMarkdown
         ]);
 
         echo json_encode(['success' => $success, 'id' => $pdo->lastInsertId()]);
@@ -142,7 +189,7 @@ try {
     }
 
     // ==========================================
-    // 3. PUT - ATUALIZAR REGISTRO
+    // 3. PUT - ATUALIZAR REGISTRO EXISTENTE
     // ==========================================
     if ($method === 'PUT') {
         if (empty($input['id']) || empty($input['titulo']) || empty($input['solucao'])) {
@@ -150,15 +197,32 @@ try {
             exit;
         }
 
-        $sql = "UPDATE kb_erros SET titulo = :titulo, categoria = :categoria, tags = :tags, descricao = :descricao, solucao = :solucao WHERE id = :id";
+        $sql = "UPDATE kb_erros SET 
+                titulo = :titulo, 
+                categoria = :categoria, 
+                tags = :tags, 
+                descricao = :descricao, 
+                solucao = :solucao,
+                objetivo = :objetivo,
+                veredito = :veredito,
+                oportunidade_ps = :oportunidade_ps,
+                nota_final = :nota_final,
+                relatorio_markdown = :relatorio_markdown 
+                WHERE id = :id";
+
         $stmt = $pdo->prepare($sql);
         $success = $stmt->execute([
-            ':id'        => (int)$input['id'],
-            ':titulo'    => trim($input['titulo']),
-            ':categoria' => isset($input['categoria']) ? trim($input['categoria']) : '',
-            ':tags'      => isset($input['tags']) ? trim($input['tags']) : '',
-            ':descricao' => isset($input['descricao']) ? trim($input['descricao']) : '',
-            ':solucao'   => trim($input['solucao'])
+            ':id'                 => (int)$input['id'],
+            ':titulo'             => trim($input['titulo']),
+            ':categoria'          => isset($input['categoria']) ? trim($input['categoria']) : '',
+            ':tags'               => isset($input['tags']) ? trim($input['tags']) : '',
+            ':descricao'          => isset($input['descricao']) ? trim($input['descricao']) : '',
+            ':solucao'            => trim($input['solucao']),
+            ':objetivo'           => isset($input['objetivo']) ? trim($input['objetivo']) : '',
+            ':veredito'           => isset($input['veredito']) ? trim($input['veredito']) : '',
+            ':oportunidade_ps'     => isset($input['oportunidade_ps']) ? trim($input['oportunidade_ps']) : '',
+            ':nota_final'         => isset($input['nota_final']) ? (float)$input['nota_final'] : null,
+            ':relatorio_markdown' => isset($input['relatorio_markdown']) ? trim($input['relatorio_markdown']) : ''
         ]);
 
         echo json_encode(['success' => $success]);

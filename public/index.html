@@ -1,640 +1,587 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Base de Conhecimento Suporte</title>
-    <!-- Fonts Google & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base de Conhecimento & Auditoria | Suporte Técnico</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Marked library para renderizar Markdown do relatório de auditoria -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
+  <style>
+    :root {
+      --bg-dark: #0B0E14;
+      --card-bg: #151921;
+      --card-border: #232936;
+      --accent-cyan: #00F0FF;
+      --accent-purple: #7000FF;
+      --text-main: #F3F4F6;
+      --text-muted: #9CA3AF;
+    }
 
-    <style>
-        :root {
-            --radius-lg: 16px;
-            --radius-md: 12px;
-            --radius-sm: 8px;
-            --transition-speed: 0.25s;
-        }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            transition: background-color var(--transition-speed), color var(--transition-speed);
-            background: #f0f4f9;
-            color: #1e293b !important;
-        }
+    .glass-header {
+      background: rgba(21, 25, 33, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+    }
 
-        .title-gradient {
-            background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 800;
-        }
+    .search-box {
+      background: #1C222D;
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      border-radius: 12px;
+      padding: 12px 20px;
+      transition: all 0.3s ease;
+    }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85) !important;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(13, 110, 253, 0.15) !important;
-            border-radius: var(--radius-lg) !important;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-            transition: all var(--transition-speed) ease-in-out;
-        }
+    .search-box:focus {
+      background: #1C222D;
+      color: var(--text-main);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+    }
 
-        .glass-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px -6px rgba(13, 110, 253, 0.2);
-            border-color: rgba(13, 110, 253, 0.4) !important;
-        }
+    .card-kb {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
 
-        .form-control, .form-select, .input-group-text {
-            border-radius: var(--radius-md) !important;
-            border: 1px solid #cbd5e1;
-            background-color: #ffffff;
-            transition: all 0.2s ease;
-        }
+    .card-kb:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      border-color: rgba(0, 240, 255, 0.3);
+    }
 
-        .input-group .form-control {
-            border-top-right-radius: 0 !important;
-            border-bottom-right-radius: 0 !important;
-        }
+    .badge-category {
+      background: rgba(112, 0, 255, 0.15);
+      color: #A855F7;
+      border: 1px solid rgba(112, 0, 255, 0.3);
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
 
-        .input-group .input-group-text:first-child {
-            border-top-left-radius: var(--radius-md) !important;
-            border-bottom-left-radius: var(--radius-md) !important;
-        }
+    .badge-tag {
+      background: rgba(0, 240, 255, 0.08);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
 
-        .form-control:focus, .form-select:focus {
-            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
-            border-color: #0d6efd;
-        }
+    .badge-tag:hover {
+      background: rgba(0, 240, 255, 0.2);
+    }
 
-        .code-box-wrapper {
-            position: relative;
-            background-color: #1e293b !important;
-            border: 1px solid rgba(13, 110, 253, 0.2) !important;
-            border-radius: var(--radius-md);
-            padding: 1.2rem;
-            overflow: hidden;
-        }
+    .badge-score {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10B981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+    }
 
-        pre { 
-            font-family: 'Fira Code', monospace; 
-            font-size: 0.9rem; 
-            font-weight: 500;
-            line-height: 1.6;
-            white-space: pre-wrap; 
-            word-break: break-all;
-            color: #38bdf8 !important;
-            margin: 0;
-            padding-top: 1.8rem !important;
-        }
+    .badge-veredito {
+      background: rgba(245, 158, 11, 0.15);
+      color: #F59E0B;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 8px;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+    }
 
-        .btn-copy {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #94a3b8;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            font-size: 0.75rem;
-            padding: 4px 10px;
-            border-radius: var(--radius-sm);
-            backdrop-filter: blur(4px);
-            transition: all 0.2s;
-            z-index: 5;
-        }
+    .btn-cyber {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      border: none;
+      color: #FFF;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 10px 20px;
+      transition: opacity 0.2s ease;
+    }
 
-        .btn-copy:hover {
-            background: #0d6efd;
-            color: #fff;
-            box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
-        }
+    .btn-cyber:hover {
+      opacity: 0.9;
+      color: #FFF;
+    }
 
-        .badge-neon {
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            padding: 0.35em 0.65em;
-            letter-spacing: 0.3px;
-        }
+    /* Estilização de Abas internas nos Cards e no Modal */
+    .nav-tabs-cyber {
+      border-bottom: 1px solid var(--card-border);
+    }
 
-        .badge-category {
-            background-color: rgba(13, 110, 253, 0.12) !important;
-            color: #0d6efd !important;
-            border: 1px solid rgba(13, 110, 253, 0.25) !important;
-        }
+    .nav-tabs-cyber .nav-link {
+      color: var(--text-muted);
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
 
-        .tag-badge { 
-            cursor: pointer; 
-            transition: all 0.2s ease; 
-            background: rgba(13, 110, 253, 0.1) !important;
-            color: #0d6efd !important;
-            border: 1px solid rgba(13, 110, 253, 0.2);
-        }
+    .nav-tabs-cyber .nav-link:hover {
+      color: var(--text-main);
+      border-color: rgba(0, 240, 255, 0.4);
+    }
 
-        .tag-badge:hover { 
-            transform: scale(1.05); 
-            background: #0d6efd !important;
-            color: #fff !important;
-            box-shadow: 0 0 10px rgba(13, 110, 253, 0.4);
-        }
+    .nav-tabs-cyber .nav-link.active {
+      color: var(--accent-cyan);
+      background: transparent;
+      border-bottom: 2px solid var(--accent-cyan);
+      font-weight: 600;
+    }
 
-        .btn-action {
-            border-radius: var(--radius-md) !important;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      border-radius: 16px;
+    }
 
-        /* === TEMA ESCURO FUTURÍSTICO / NEON === */
-        body.dark-mode {
-            background-color: #080b11 !important;
-            color: #f1f5f9 !important;
-        }
+    .form-control {
+      background: #1C222D;
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      border-radius: 8px;
+    }
 
-        body.dark-mode .title-gradient {
-            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
-        }
+    .form-control:focus {
+      background: #1C222D;
+      color: var(--text-main);
+      border-color: var(--accent-cyan);
+      box-shadow: none;
+    }
 
-        body.dark-mode .glass-card {
-            background: rgba(15, 23, 42, 0.65) !important;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(56, 189, 248, 0.15) !important;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
+    .pagination .page-link {
+      background: var(--card-bg);
+      border-color: var(--card-border);
+      color: var(--text-main);
+    }
 
-        body.dark-mode .glass-card:hover {
-            border-color: rgba(56, 189, 248, 0.5) !important;
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2), 0 10px 20px -5px rgba(0, 0, 0, 0.5);
-        }
+    .pagination .page-item.active .page-link {
+      background: var(--accent-cyan);
+      border-color: var(--accent-cyan);
+      color: #000;
+      font-weight: bold;
+    }
 
-        body.dark-mode .badge-category {
-            background-color: rgba(56, 189, 248, 0.2) !important;
-            color: #38bdf8 !important;
-            border: 1px solid rgba(56, 189, 248, 0.4) !important;
-            text-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
-        }
+    /* Container de renderização Markdown */
+    .markdown-body {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #D1D5DB;
+    }
 
-        body.dark-mode .card-text.text-muted {
-            color: #94a3b8 !important;
-        }
+    .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+      color: var(--accent-cyan);
+      font-size: 1rem;
+      margin-top: 10px;
+      margin-bottom: 5px;
+    }
 
-        body.dark-mode .modal-content {
-            background-color: #0f172a !important;
-            border: 1px solid rgba(56, 189, 248, 0.3) !important;
-            border-radius: var(--radius-lg);
-            box-shadow: 0 0 30px rgba(0, 242, 254, 0.15);
-            color: #f1f5f9 !important;
-        }
+    .markdown-body ul, .markdown-body ol {
+      padding-left: 20px;
+      margin-bottom: 10px;
+    }
 
-        body.dark-mode .form-control, 
-        body.dark-mode .form-select,
-        body.dark-mode .input-group-text {
-            background-color: rgba(30, 41, 59, 0.7) !important;
-            color: #f8fafc !important;
-            border-color: rgba(255, 255, 255, 0.1) !important;
-        }
-
-        body.dark-mode .form-control:focus, 
-        body.dark-mode .form-select:focus {
-            border-color: #38bdf8 !important;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4) !important;
-        }
-
-        body.dark-mode .form-control::placeholder { 
-            color: #64748b !important; 
-        }
-
-        body.dark-mode .code-box-wrapper {
-            background-color: #030712 !important;
-            border: 1px solid rgba(56, 189, 248, 0.25) !important;
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
-        }
-
-        body.dark-mode pre {
-            color: #38bdf8 !important;
-            text-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
-        }
-
-        body.dark-mode .btn-copy {
-            background: rgba(56, 189, 248, 0.15);
-            color: #38bdf8;
-            border-color: rgba(56, 189, 248, 0.35);
-        }
-
-        body.dark-mode .btn-copy:hover {
-            background: #38bdf8;
-            color: #030712;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
-        }
-
-        body.dark-mode .tag-badge { 
-            background: rgba(56, 189, 248, 0.1) !important;
-            color: #38bdf8 !important;
-            border: 1px solid rgba(56, 189, 248, 0.25);
-        }
-
-        body.dark-mode .tag-badge:hover { 
-            background: #38bdf8 !important;
-            color: #030712 !important;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
-        }
-
-        body.dark-mode .shortcut-hint kbd {
-            background-color: #1e293b;
-            color: #38bdf8;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-        }
-
-        .btn-neon-primary {
-            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-            border: none;
-            color: #030712;
-            font-weight: 700;
-            border-radius: var(--radius-md);
-            transition: all 0.25s ease;
-        }
-
-        .btn-neon-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 20px rgba(0, 242, 254, 0.6);
-            color: #000;
-        }
-
-        kbd { 
-            font-size: 0.75rem; 
-            padding: 3px 6px; 
-            border-radius: 4px;
-        }
-    </style>
+    .markdown-body code {
+      background: #11141A;
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: #F43F5E;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container py-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-10">
-        <div>
-            <h2 class="title-gradient m-0"><i class="bi bi-cpu-fill me-2"></i>SUPORTE</h2>
-            <small class="text-secondary fw-semibold">Base de Conhecimento e Resolução de Erros</small>
+  <!-- Header -->
+  <header class="glass-header sticky-top py-3 mb-4">
+    <div class="container d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-cpu fs-3 text-info"></i>
+        <h4 class="m-0 fw-bold">KB <span style="color: var(--accent-cyan);">Support</span></h4>
+      </div>
+      <button class="btn btn-cyber d-flex align-items-center gap-2" onclick="openModal()">
+        <i class="bi bi-plus-lg"></i> Novo Registro
+      </button>
+    </div>
+  </header>
+
+  <div class="container pb-5">
+    <!-- Search Bar -->
+    <div class="row mb-4">
+      <div class="col-md-8 mx-auto">
+        <div class="position-relative">
+          <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+          <input type="text" id="searchInput" class="form-control search-box ps-5" placeholder="Pesquisar por título, erro, categoria, tag ou veredito..." oninput="onSearchChange()">
         </div>
-        <div class="d-flex gap-2">
-            <button id="btnExport" class="btn btn-outline-secondary btn-action btn-sm" onclick="exportToCSV()">
-                <i class="bi bi-file-earmark-spreadsheet"></i> Exportar
-            </button>
-            <button id="btnDarkMode" class="btn btn-outline-info btn-action btn-sm" onclick="toggleDarkMode()">
-                <i class="bi bi-moon-stars"></i> Modo Escuro
-            </button>
-            <button class="btn btn-neon-primary btn-sm px-3" onclick="openModal()">
-                <i class="bi bi-plus-lg me-1"></i> Cadastrar Erro
-            </button>
-        </div>
+      </div>
     </div>
 
-    <!-- Filtros de Busca -->
-    <div class="row g-2 mb-4">
-        <div class="col-md-10">
-            <div class="input-group">
-                <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search text-info"></i></span>
-                <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Pesquisar por erro, comando, banco de dados ou solução..." oninput="handleSearch()">
-                <span class="input-group-text shortcut-hint bg-transparent d-none d-md-flex align-items-center">
-                    <kbd>/</kbd> <span class="mx-1 text-muted">ou</span> <kbd>ctrl+k</kbd>
-                </span>
-                <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()" id="btnClearSearch" style="display:none;">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <select id="limitSelect" class="form-select" onchange="loadData(1)">
-                <option value="10">10/pág</option>
-                <option value="25">25/pág</option>
-                <option value="50">50/pág</option>
-            </select>
-        </div>
+    <!-- Cards Container -->
+    <div id="cardsContainer" class="row g-4">
+      <div class="text-center py-5 text-muted">
+        <div class="spinner-border text-info" role="status"></div>
+        <p class="mt-2">Carregando registros...</p>
+      </div>
     </div>
 
-    <!-- Lista de Cards -->
-    <div id="cardsContainer"></div>
+    <!-- Pagination -->
+    <nav class="mt-5">
+      <ul id="pagination" class="pagination justify-content-center"></ul>
+    </nav>
+  </div>
 
-    <!-- Paginação e Footer -->
-    <div class="d-flex justify-content-between align-items-center mt-4">
-        <span id="totalInfo" class="text-secondary small fw-semibold">Mostrando 0 registros</span>
-        <nav><ul class="pagination pagination-sm m-0" id="pagination"></ul></nav>
-    </div>
-</div>
-
-<!-- Modal Form Manual -->
-<div class="modal fade" id="crudModal" tabindex="-1">
+  <!-- Modal Cadastro/Edição -->
+  <div class="modal fade" id="kbModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-bottom border-secondary border-opacity-20">
-                <h5 class="modal-title fw-bold" id="modalTitle">Cadastrar Novo Registro</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="crudForm">
-                    <input type="hidden" id="itemId">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Título do Erro / Procedimento *</label>
-                        <input type="text" id="titulo" class="form-control" required placeholder="Ex: Erro de conexão com Postgres">
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Categoria</label>
-                            <input type="text" id="categoria" class="form-control" placeholder="Ex: Procedimentos, Banco de Dados, Docker">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Tags (separadas por vírgula)</label>
-                            <input type="text" id="tags" class="form-control" placeholder="Ex: postgres, snapshot, porta">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Descrição do Problema</label>
-                        <textarea id="descricao" class="form-control" rows="2" placeholder="Detalhes técnicos ou mensagem de erro original..."></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Solução / Procedimento *</label>
-                        <textarea id="solucao" class="form-control font-monospace" rows="6" required placeholder="Passos executados para resolver o problema..."></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-top border-secondary border-opacity-20">
-                <button type="button" class="btn btn-outline-secondary btn-action btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-neon-primary btn-sm px-4" onclick="saveRecord()">Salvar Registro</button>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title" id="modalTitle">Novo Registro</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-    </div>
-</div>
+        <div class="modal-body">
+          <form id="kbForm" onsubmit="saveRecord(event)">
+            <input type="hidden" id="recordId">
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+            <!-- Navegação de Abas do Modal -->
+            <ul class="nav nav-tabs nav-tabs-cyber mb-3" id="modalTab" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="modal-solucao-tab" data-bs-toggle="tab" data-bs-target="#modal-solucao-pane" type="button" role="tab"><i class="bi bi-journal-text me-1"></i> 1. Solução / KB</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="modal-auditoria-tab" data-bs-toggle="tab" data-bs-target="#modal-auditoria-pane" type="button" role="tab"><i class="bi bi-shield-check me-1"></i> 2. Auditoria & QA</button>
+              </li>
+            </ul>
+
+            <div class="tab-content">
+              <!-- Conteúdo da Aba 1: Solução -->
+              <div class="tab-pane fade show active" id="modal-solucao-pane" role="tabpanel">
+                <div class="mb-3">
+                  <label class="form-label">Título do Erro / Procedimento *</label>
+                  <input type="text" id="inputTitulo" class="form-control" required placeholder="Ex: Erro 502 Bad Gateway no Nginx">
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Categoria</label>
+                    <input type="text" id="inputCategoria" class="form-control" placeholder="Ex: Nginx, SSL, PHP">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Tags (separadas por vírgula)</label>
+                    <input type="text" id="inputTags" class="form-control" placeholder="Ex: erro502, memoria, timeout">
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Descrição do Problema / Metadados</label>
+                  <textarea id="inputDescricao" class="form-control" rows="3" placeholder="Insira detalhes adicionais do atendimento..."></textarea>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Solução / Procedimento *</label>
+                  <textarea id="inputSolucao" class="form-control" rows="5" required placeholder="Descreva os passos executados para solução..."></textarea>
+                </div>
+              </div>
+
+              <!-- Conteúdo da Aba 2: Auditoria -->
+              <div class="tab-pane fade" id="modal-auditoria-pane" role="tabpanel">
+                <div class="row">
+                  <div class="col-md-8 mb-3">
+                    <label class="form-label">Veredito</label>
+                    <input type="text" id="inputVeredito" class="form-control" placeholder="Ex: Resolvido com sucesso, Resolvido Parcialmente">
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Nota Final (0 a 10)</label>
+                    <input type="number" step="0.1" min="0" max="10" id="inputNotaFinal" class="form-control" placeholder="10.0">
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Objetivo do Atendimento</label>
+                  <textarea id="inputObjetivo" class="form-control" rows="2" placeholder="Qual era o objetivo principal do suporte?"></textarea>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Oportunidade de Prestação de Serviços (PS)</label>
+                  <textarea id="inputOportunidadePs" class="form-control" rows="2" placeholder="Oportunidades de upsell ou melhorias identificadas..."></textarea>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Relatório Final (Markdown)</label>
+                  <textarea id="inputRelatorioMarkdown" class="form-control" rows="5" placeholder="Insira o relatório detalhado em formato Markdown..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top border-secondary">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-cyber">Salvar Registro</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
     let currentPage = 1;
     let searchTimeout = null;
-    let currentData = [];
-    let modalInstance = null;
+    const modal = new bootstrap.Modal(document.getElementById('kbModal'));
 
     document.addEventListener('DOMContentLoaded', () => {
-        modalInstance = new bootstrap.Modal(document.getElementById('crudModal'));
-        
-        const savedTheme = localStorage.getItem('kb_theme');
-        if (savedTheme === 'dark' || !savedTheme) {
-            document.body.classList.add('dark-mode');
-            document.getElementById('btnDarkMode').innerHTML = '<i class="bi bi-sun"></i> Modo Claro';
-        } else {
-            document.body.classList.remove('dark-mode');
-            document.getElementById('btnDarkMode').innerHTML = '<i class="bi bi-moon-stars"></i> Modo Escuro';
-        }
-
-        loadData();
-
-        document.addEventListener('keydown', (e) => {
-            const searchInput = document.getElementById('searchInput');
-            if ((e.key === '/' || (e.ctrlKey && e.key.toLowerCase() === 'k')) && document.activeElement !== searchInput) {
-                e.preventDefault();
-                searchInput.focus();
-                searchInput.select();
-            } else if (e.key === 'Escape' && document.activeElement === searchInput) {
-                clearSearch();
-            }
-        });
+      fetchData(currentPage);
     });
 
-    async function loadData(page = 1) {
-        currentPage = page;
-        const search = document.getElementById('searchInput').value.trim();
-        const limit = document.getElementById('limitSelect').value;
+    function onSearchChange() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        currentPage = 1;
+        fetchData(currentPage);
+      }, 300);
+    }
 
-        document.getElementById('btnClearSearch').style.display = search ? 'block' : 'none';
+    async function fetchData(page = 1) {
+      const search = document.getElementById('searchInput').value.trim();
+      const container = document.getElementById('cardsContainer');
+      
+      try {
+        const res = await fetch(`api.php?search=${encodeURIComponent(search)}&page=${page}&limit=9`);
+        const result = await res.json();
 
-        try {
-            const res = await fetch(`api.php?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`);
-            const result = await res.json();
-
-            if (result.error) throw new Error(result.error);
-
-            // A ordenação A-Z global é garantida diretamente pelo backend (api.php)
-            currentData = result.data || [];
-
-            renderCards(currentData);
-            renderPagination(result.total_pages, result.page);
-            document.getElementById('totalInfo').innerText = `Mostrando ${currentData.length} de ${result.total} registros`;
-        } catch (err) {
-            console.error(err);
-            document.getElementById('cardsContainer').innerHTML = `<div class="alert alert-danger glass-card">Erro ao carregar dados: ${err.message}</div>`;
+        if (result.error) {
+          container.innerHTML = `<div class="alert alert-danger">${result.error}</div>`;
+          return;
         }
+
+        renderCards(result.data);
+        renderPagination(result.total_pages, result.page);
+      } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger">Erro ao carregar dados da API.</div>`;
+      }
     }
 
     function renderCards(data) {
-        const container = document.getElementById('cardsContainer');
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div class="alert alert-warning text-center glass-card my-4">Nenhum registro encontrado.</div>';
-            return;
-        }
+      const container = document.getElementById('cardsContainer');
+      if (!data || data.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1"></i>
+            <p class="mt-2">Nenhum registro encontrado.</p>
+          </div>`;
+        return;
+      }
 
-        container.innerHTML = data.map(item => {
-            const tagsHtml = item.tags ? item.tags.split(',').map(tag => {
-                const cleanTag = tag.trim();
-                return cleanTag ? `<span class="badge tag-badge badge-neon me-1" onclick="filterByTag('${cleanTag}')">#${cleanTag}</span>` : '';
-            }).join('') : '';
+      container.innerHTML = data.map((item) => {
+        const tagsHtml = item.tags ? item.tags.split(',').map(tag => 
+          `<span class="badge-tag" onclick="filterByTag('${tag.trim()}')">#${tag.trim()}</span>`
+        ).join(' ') : '';
 
-            const catTexto = (item.categoria && item.categoria.trim()) ? item.categoria.trim() : 'Geral';
+        const hasAuditoria = item.veredito || item.nota_final || item.relatorio_markdown || item.objetivo;
 
-            return `
-                <div class="card glass-card mb-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="fw-bold mb-0 text-info">${escapeHtml(item.titulo)}</h5>
-                            <div>
-                                <span class="badge badge-category badge-neon me-2">${escapeHtml(catTexto)}</span>
-                                <button class="btn btn-outline-warning btn-action btn-sm py-0 px-2 me-1" onclick="editRecord(${item.id})"><i class="bi bi-pencil"></i></button>
-                                <button class="btn btn-outline-danger btn-action btn-sm py-0 px-2" onclick="deleteRecord(${item.id})"><i class="bi bi-trash"></i></button>
-                            </div>
-                        </div>
+        // Renderiza Markdown do relatório se existir
+        const markdownRendered = item.relatorio_markdown ? marked.parse(item.relatorio_markdown) : '';
 
-                        ${item.descricao ? `<p class="card-text text-muted small mb-3">${escapeHtml(item.descricao)}</p>` : ''}
-
-                        <div class="code-box-wrapper mb-3">
-                            <button class="btn btn-sm btn-copy" onclick="copyToClipboard(this)">
-                                <i class="bi bi-clipboard me-1"></i> Copiar
-                            </button>
-                            <pre>${escapeHtml(item.solucao)}</pre>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>${tagsHtml}</div>
-                            <small class="text-muted opacity-75 font-monospace" style="font-size: 0.75rem;">${item.criado_em ? item.criado_em.split(' ')[0] : ''}</small>
-                        </div>
-                    </div>
+        return `
+          <div class="col-md-6 col-lg-4">
+            <div class="card-kb p-4">
+              <!-- Header do Card -->
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="badge-category">${item.categoria || 'Geral'}</span>
+                  ${item.nota_final !== null && item.nota_final !== undefined ? `<span class="badge-score"><i class="bi bi-star-fill me-1"></i>${parseFloat(item.nota_final).toFixed(1)}</span>` : ''}
                 </div>
-            `;
-        }).join('');
+                <div class="dropdown">
+                  <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-dark">
+                    <li><a class="dropdown-item" href="#" onclick="editRecord(${JSON.stringify(item).replace(/"/g, '&quot;')})"><i class="bi bi-pencil me-2"></i>Editar</a></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteRecord(${item.id})"><i class="bi bi-trash me-2"></i>Excluir</a></li>
+                  </ul>
+                </div>
+              </div>
+              
+              <h5 class="fw-bold mb-2">${item.titulo}</h5>
+
+              <!-- Navegação de Abas do Card -->
+              <ul class="nav nav-tabs nav-tabs-cyber mb-3" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="card-sol-${item.id}-tab" data-bs-toggle="tab" data-bs-target="#card-sol-${item.id}" type="button" role="tab"><i class="bi bi-check2-circle me-1"></i>Solução</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link ${!hasAuditoria ? 'disabled' : ''}" id="card-aud-${item.id}-tab" data-bs-toggle="tab" data-bs-target="#card-aud-${item.id}" type="button" role="tab"><i class="bi bi-shield-check me-1"></i>Auditoria</button>
+                </li>
+              </ul>
+
+              <!-- Conteúdo das Abas -->
+              <div class="tab-content flex-grow-1 d-flex flex-column mb-3">
+                
+                <!-- Aba Solução -->
+                <div class="tab-pane fade show active flex-grow-1" id="card-sol-${item.id}" role="tabpanel">
+                  ${item.descricao ? `<p class="text-muted small mb-2" style="white-space: pre-line;">${item.descricao}</p>` : ''}
+                  <div class="bg-dark p-3 rounded-3 border border-secondary border-opacity-25 h-100">
+                    <small class="text-info fw-bold d-block mb-1"><i class="bi bi-wrench me-1"></i>Procedimento:</small>
+                    <div class="small" style="white-space: pre-line;">${item.solucao}</div>
+                  </div>
+                </div>
+
+                <!-- Aba Auditoria -->
+                <div class="tab-pane fade flex-grow-1" id="card-aud-${item.id}" role="tabpanel">
+                  <div class="bg-dark p-3 rounded-3 border border-secondary border-opacity-25 h-100 small">
+                    ${item.veredito ? `<div class="mb-2"><span class="badge-veredito"><i class="bi bi-award me-1"></i>${item.veredito}</span></div>` : ''}
+                    ${item.objetivo ? `<div class="mb-2"><strong class="text-info">Objetivo:</strong> ${item.objetivo}</div>` : ''}
+                    ${item.oportunidade_ps ? `<div class="mb-2"><strong class="text-warning">Oportunidade PS:</strong> ${item.oportunidade_ps}</div>` : ''}
+                    ${markdownRendered ? `<div class="markdown-body border-top border-secondary border-opacity-25 pt-2 mt-2">${markdownRendered}</div>` : ''}
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Tags -->
+              <div class="d-flex flex-wrap gap-1 mt-auto">
+                ${tagsHtml}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
-    function renderPagination(totalPages, activePage) {
-        const pagination = document.getElementById('pagination');
-        if (totalPages <= 1) { pagination.innerHTML = ''; return; }
+    function filterByTag(tag) {
+      document.getElementById('searchInput').value = tag;
+      fetchData(1);
+    }
 
-        let html = `<li class="page-item ${activePage === 1 ? 'disabled' : ''}">
-            <a class="page-link glass-card" href="#" onclick="loadData(${activePage - 1}); return false;">Anterior</a>
-        </li>`;
+    function renderPagination(totalPages, page) {
+      const nav = document.getElementById('pagination');
+      if (totalPages <= 1) {
+        nav.innerHTML = '';
+        return;
+      }
 
-        for (let i = 1; i <= totalPages; i++) {
-            if (i === 1 || i === totalPages || (i >= activePage - 2 && i <= activePage + 2)) {
-                html += `<li class="page-item ${i === activePage ? 'active' : ''}">
-                    <a class="page-link glass-card" href="#" onclick="loadData(${i}); return false;">${i}</a>
-                </li>`;
-            }
+      let html = '';
+      for (let i = 1; i <= totalPages; i++) {
+        html += `
+          <li class="page-item ${i === page ? 'active' : ''}">
+            <button class="page-link" onclick="goToPage(${i})">${i}</button>
+          </li>
+        `;
+      }
+      nav.innerHTML = html;
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      fetchData(currentPage);
+    }
+
+    function openModal() {
+      document.getElementById('recordId').value = '';
+      document.getElementById('kbForm').reset();
+      document.getElementById('modalTitle').innerText = 'Novo Registro';
+      
+      // Reseta para a primeira aba
+      const firstTab = new bootstrap.Tab(document.getElementById('modal-solucao-tab'));
+      firstTab.show();
+
+      modal.show();
+    }
+
+    function editRecord(item) {
+      document.getElementById('recordId').value = item.id;
+      
+      // Aba Solução
+      document.getElementById('inputTitulo').value = item.titulo || '';
+      document.getElementById('inputCategoria').value = item.categoria || '';
+      document.getElementById('inputTags').value = item.tags || '';
+      document.getElementById('inputDescricao').value = item.descricao || '';
+      document.getElementById('inputSolucao').value = item.solucao || '';
+
+      // Aba Auditoria
+      document.getElementById('inputVeredito').value = item.veredito || '';
+      document.getElementById('inputNotaFinal').value = item.nota_final !== null ? item.nota_final : '';
+      document.getElementById('inputObjetivo').value = item.objetivo || '';
+      document.getElementById('inputOportunidadePs').value = item.oportunidade_ps || '';
+      document.getElementById('inputRelatorioMarkdown').value = item.relatorio_markdown || '';
+
+      document.getElementById('modalTitle').innerText = 'Editar Registro';
+
+      // Reseta para a primeira aba
+      const firstTab = new bootstrap.Tab(document.getElementById('modal-solucao-tab'));
+      firstTab.show();
+
+      modal.show();
+    }
+
+    async function saveRecord(event) {
+      event.preventDefault();
+      const id = document.getElementById('recordId').value;
+      
+      const payload = {
+        id: id ? parseInt(id) : undefined,
+        titulo: document.getElementById('inputTitulo').value.trim(),
+        categoria: document.getElementById('inputCategoria').value.trim(),
+        tags: document.getElementById('inputTags').value.trim(),
+        descricao: document.getElementById('inputDescricao').value.trim(),
+        solucao: document.getElementById('inputSolucao').value.trim(),
+        veredito: document.getElementById('inputVeredito').value.trim(),
+        nota_final: document.getElementById('inputNotaFinal').value !== '' ? parseFloat(document.getElementById('inputNotaFinal').value) : null,
+        objetivo: document.getElementById('inputObjetivo').value.trim(),
+        oportunidade_ps: document.getElementById('inputOportunidadePs').value.trim(),
+        relatorio_markdown: document.getElementById('inputRelatorioMarkdown').value.trim()
+      };
+
+      const method = id ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch('api.php', {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          modal.hide();
+          fetchData(currentPage);
+        } else {
+          alert('Erro ao salvar: ' + (result.error || 'Erro desconhecido'));
         }
-
-        html += `<li class="page-item ${activePage === totalPages ? 'disabled' : ''}">
-            <a class="page-link glass-card" href="#" onclick="loadData(${activePage + 1}); return false;">Próxima</a>
-        </li>`;
-
-        pagination.innerHTML = html;
-    }
-
-    function handleSearch() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => loadData(1), 300);
-    }
-
-    function filterByTag(tagName) {
-        document.getElementById('searchInput').value = tagName;
-        loadData(1);
-    }
-
-    function clearSearch() {
-        document.getElementById('searchInput').value = '';
-        loadData(1);
-    }
-
-    function openModal(item = null) {
-        document.getElementById('crudForm').reset();
-        document.getElementById('itemId').value = item ? item.id : '';
-        document.getElementById('modalTitle').innerText = item ? 'Editar Registro' : 'Cadastrar Novo Registro';
-
-        if (item) {
-            document.getElementById('titulo').value = item.titulo || '';
-            document.getElementById('categoria').value = item.categoria || '';
-            document.getElementById('tags').value = item.tags || '';
-            document.getElementById('descricao').value = item.descricao || '';
-            document.getElementById('solucao').value = item.solucao || '';
-        }
-        modalInstance.show();
-    }
-
-    async function saveRecord() {
-        const id = document.getElementById('itemId').value;
-        const payload = {
-            id: id ? parseInt(id) : undefined,
-            titulo: document.getElementById('titulo').value.trim(),
-            categoria: document.getElementById('categoria').value.trim(),
-            tags: document.getElementById('tags').value.trim(),
-            descricao: document.getElementById('descricao').value.trim(),
-            solucao: document.getElementById('solucao').value.trim()
-        };
-
-        if (!payload.titulo || !payload.solucao) {
-            alert('Título e Solução são obrigatórios.');
-            return;
-        }
-
-        const method = id ? 'PUT' : 'POST';
-        try {
-            const res = await fetch('api.php', {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
-            const result = await res.json();
-            if (result.error) throw new Error(result.error);
-
-            modalInstance.hide();
-            loadData(currentPage);
-        } catch (err) {
-            alert('Erro ao salvar: ' + err.message);
-        }
-    }
-
-    function editRecord(id) {
-        const item = currentData.find(x => x.id === id);
-        if (item) openModal(item);
+      } catch (err) {
+        alert('Erro de comunicação com o servidor.');
+      }
     }
 
     async function deleteRecord(id) {
-        if (!confirm('Deseja realmente excluir este registro?')) return;
-        try {
-            const res = await fetch(`api.php?id=${id}`, { method: 'DELETE' });
-            const result = await res.json();
-            if (result.error) throw new Error(result.error);
-            loadData(currentPage);
-        } catch (err) {
-            alert('Erro ao excluir: ' + err.message);
+      if (!confirm('Deseja realmente excluir este registro?')) return;
+
+      try {
+        const res = await fetch(`api.php?id=${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) {
+          fetchData(currentPage);
+        } else {
+          alert('Erro ao excluir registro.');
         }
+      } catch (err) {
+        alert('Erro na requisição de exclusão.');
+      }
     }
-
-    function copyToClipboard(btn) {
-        const pre = btn.nextElementSibling;
-        navigator.clipboard.writeText(pre.innerText).then(() => {
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = '<i class="bi bi-check2"></i> Copiado!';
-            btn.classList.replace('btn-copy', 'btn-success');
-            setTimeout(() => {
-                btn.innerHTML = originalHtml;
-                btn.classList.replace('btn-success', 'btn-copy');
-            }, 2000);
-        });
-    }
-
-    function toggleDarkMode() {
-        document.body.classList.toggle('dark-mode');
-        const isDark = document.body.classList.contains('dark-mode');
-        
-        localStorage.setItem('kb_theme', isDark ? 'dark' : 'light');
-
-        document.getElementById('btnDarkMode').innerHTML = isDark ? 
-            '<i class="bi bi-sun"></i> Modo Claro' : '<i class="bi bi-moon-stars"></i> Modo Escuro';
-    }
-
-    function exportToCSV() {
-        if (!currentData || currentData.length === 0) {
-            alert('Nenhum dado disponível para exportar.');
-            return;
-        }
-
-        const headers = ['ID', 'Título', 'Categoria', 'Tags', 'Descrição', 'Solução', 'Criado Em'];
-        const rows = currentData.map(item => [
-            item.id,
-            `"${(item.titulo || '').replace(/"/g, '""')}"`,
-            `"${(item.categoria || '').replace(/"/g, '""')}"`,
-            `"${(item.tags || '').replace(/"/g, '""')}"`,
-            `"${(item.descricao || '').replace(/"/g, '""')}"`,
-            `"${(item.solucao || '').replace(/"/g, '""')}"`,
-            item.criado_em || ''
-        ]);
-
-        const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement('a');
-        link.setAttribute('href', encodedUri);
-        link.setAttribute('download', `base_conhecimento_export_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    function escapeHtml(text) {
-        if (!text) return '';
-        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    }
-</script>
+  </script>
 </body>
 </html>
