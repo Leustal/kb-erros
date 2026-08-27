@@ -84,7 +84,7 @@ function loadEnv(string $filePath): void
 
 
 loadEnv(
-    '/var/www/webroot/ROOT/.env'
+    dirname(__DIR__) . '/.env'
 );
 
 
