@@ -1,31 +1,69 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SaveInCloud - KB & Quality Audit</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
   <style>
+    :root {
+      /* Tema Escuro (Padrão) */
+      --bg-body: #0b0f19;
+      --bg-card: #151d30;
+      --bg-card-hover: #1b253d;
+      --bg-input: #1b253d;
+      --bg-tag: #0284c720;
+      --bg-badge: #0f172a;
+      --bg-tab-active: #06b6d4;
+      --bg-tab-inactive: #1e293b;
+      --border-color: #24314d;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-highlight: #38bdf8;
+      --shadow-color: rgba(0, 0, 0, 0.35);
+    }
+
+    [data-theme="light"] {
+      /* Tema Claro */
+      --bg-body: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f8fafc;
+      --bg-input: #ffffff;
+      --bg-tag: #e0f2fe;
+      --bg-badge: #e2e8f0;
+      --bg-tab-active: #0284c7;
+      --bg-tab-inactive: #e2e8f0;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-highlight: #0284c7;
+      --shadow-color: rgba(0, 0, 0, 0.05);
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
     }
 
     body {
-      background-color: #0f172a;
-      color: #f8fafc;
-      padding: 20px;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
+    /* Header e Modos */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #1e293b;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
     }
 
     .title-container {
@@ -35,144 +73,238 @@
     }
 
     .title-container h1 {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: 700;
-      color: #f8fafc;
+      color: var(--text-main);
     }
 
     .logo-icon {
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       background-color: #06b6d4;
       border-radius: 50%;
-      display: inline-block;
+      box-shadow: 0 0 12px #06b6d480;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .theme-toggle-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px var(--shadow-color);
+    }
+
+    .theme-toggle-btn:hover {
+      border-color: var(--text-highlight);
     }
 
     .status-loading {
-      font-size: 0.9rem;
-      color: #94a3b8;
+      font-size: 0.85rem;
+      color: var(--text-muted);
     }
 
+    /* Input de Pesquisa */
     .search-container {
-      margin-bottom: 25px;
+      margin-bottom: 24px;
     }
 
     .search-input {
       width: 100%;
-      padding: 14px 18px;
-      background-color: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      color: #f8fafc;
+      padding: 16px 20px;
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      color: var(--text-main);
       font-size: 0.95rem;
       outline: none;
-      transition: border-color 0.2s;
+      box-shadow: 0 6px 16px var(--shadow-color);
     }
 
     .search-input:focus {
-      border-color: #06b6d4;
+      border-color: var(--text-highlight);
     }
 
-    .search-input::placeholder {
-      color: #64748b;
-    }
-
+    /* Grid de Cards */
     .cards-grid {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
     }
 
     .card {
-      background-color: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 20px;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 8px 24px var(--shadow-color);
     }
 
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
+      gap: 12px;
     }
 
     .card-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #38bdf8;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-highlight);
+      line-height: 1.4;
     }
 
     .badge {
-      background-color: #0f172a;
-      color: #94a3b8;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      border: 1px solid #334155;
+      background-color: var(--bg-badge);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      white-space: nowrap;
     }
 
+    /* Abas Internas do Card */
+    .card-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background-color: var(--bg-tab-active);
+      color: #ffffff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Conteúdo das Seções */
     .card-section {
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     .card-section-title {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #94a3b8;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 4px;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
     }
 
     .card-text {
       font-size: 0.95rem;
-      line-height: 1.5;
-      color: #cbd5e1;
+      line-height: 1.6;
+      color: var(--text-main);
       white-space: pre-wrap;
     }
 
+    .audit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .audit-item {
+      background-color: var(--bg-body);
+      border: 1px solid var(--border-color);
+      padding: 12px 16px;
+      border-radius: 12px;
+    }
+
+    .audit-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .audit-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* Tags e Paginação */
     .tags-container {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       flex-wrap: wrap;
-      margin-top: 10px;
+      margin-top: 16px;
     }
 
     .tag {
-      background-color: #0284c720;
-      color: #38bdf8;
-      padding: 2px 8px;
-      border-radius: 4px;
+      background-color: var(--bg-tag);
+      color: var(--text-highlight);
+      padding: 4px 10px;
+      border-radius: 8px;
       font-size: 0.75rem;
+      font-weight: 600;
     }
 
     .pagination {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 15px;
-      margin-top: 30px;
+      gap: 16px;
+      margin-top: 36px;
     }
 
     .pagination button {
-      background-color: #1e293b;
-      border: 1px solid #334155;
-      color: #f8fafc;
-      padding: 8px 16px;
-      border-radius: 6px;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 20px;
+      border-radius: 12px;
       cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 4px 12px var(--shadow-color);
     }
 
     .pagination button:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
     }
 
     .empty-message {
       text-align: center;
-      padding: 40px;
-      color: #64748b;
+      padding: 60px 20px;
+      color: var(--text-muted);
     }
   </style>
 </head>
@@ -183,7 +315,12 @@
       <span class="logo-icon"></span>
       <h1>SaveInCloud - KB & Quality Audit</h1>
     </div>
-    <div id="status-loading" class="status-loading">Carregando registros...</div>
+    <div class="header-actions">
+      <div id="status-loading" class="status-loading">Carregando registros...</div>
+      <button id="theme-toggle" class="theme-toggle-btn">
+        <span id="theme-icon">🌙</span> <span id="theme-text">Escuro</span>
+      </button>
+    </div>
   </header>
 
   <main>
@@ -198,12 +335,12 @@
     </section>
 
     <section id="cards-container" class="cards-grid">
-      <!-- Os registros serão renderizados via JavaScript -->
+      <!-- Cards renderizados dinamicamente via JS -->
     </section>
 
     <nav class="pagination">
       <button id="btn-prev" disabled>Anterior</button>
-      <span id="page-info" style="font-size: 0.9rem; color: #94a3b8;">Página 1</span>
+      <span id="page-info" style="font-size: 0.9rem; color: var(--text-muted);">Página 1</span>
       <button id="btn-next" disabled>Próxima</button>
     </nav>
   </main>
@@ -219,7 +356,37 @@
     const btnPrev = document.getElementById('btn-prev');
     const btnNext = document.getElementById('btn-next');
     const pageInfo = document.getElementById('page-info');
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
 
+    // Modos Claro / Escuro
+    function initTheme() {
+      const savedTheme = localStorage.getItem('kb_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeUI(savedTheme);
+    }
+
+    function updateThemeUI(theme) {
+      if (theme === 'light') {
+        themeIcon.innerText = '☀️';
+        themeText.innerText = 'Claro';
+      } else {
+        themeIcon.innerText = '🌙';
+        themeText.innerText = 'Escuro';
+      }
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('kb_theme', newTheme);
+      updateThemeUI(newTheme);
+    });
+
+    // Busca de Registros
     async function carregarRegistros(busca = '', pagina = 1) {
       statusLoading.innerText = 'Carregando registros...';
       
@@ -231,8 +398,6 @@
         }
 
         const json = await response.json();
-        
-        // Tratamento flexível: funciona tanto se retornar { data: [...] } quanto [...]
         const registros = Array.isArray(json) ? json : (json.data || []);
         const totalPaginas = json.total_pages || 1;
 
@@ -264,19 +429,62 @@
               <span class="badge">${escapeHtml(categoria)}</span>
             </header>
 
-            ${item.descricao ? `
-              <div class="card-section">
-                <div class="card-section-title">Descrição / Problema</div>
-                <div class="card-text">${escapeHtml(item.descricao)}</div>
-              </div>
-            ` : ''}
+            <div class="card-tabs">
+              <button class="tab-btn active" onclick="switchTab(this, 'tab-solucao-${item.id}')">Solução KB</button>
+              <button class="tab-btn" onclick="switchTab(this, 'tab-qualidade-${item.id}')">Auditoria de Qualidade</button>
+            </div>
 
-            ${item.solucao ? `
-              <div class="card-section">
-                <div class="card-section-title">Solução</div>
-                <div class="card-text">${escapeHtml(item.solucao)}</div>
+            <!-- Aba 1: Solução KB -->
+            <div id="tab-solucao-${item.id}" class="tab-content active">
+              ${item.descricao ? `
+                <div class="card-section">
+                  <div class="card-section-title">Descrição / Problema</div>
+                  <div class="card-text">${escapeHtml(item.descricao)}</div>
+                </div>
+              ` : ''}
+
+              ${item.solucao ? `
+                <div class="card-section">
+                  <div class="card-section-title">Solução</div>
+                  <div class="card-text">${escapeHtml(item.solucao)}</div>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Aba 2: Auditoria de Qualidade -->
+            <div id="tab-qualidade-${item.id}" class="tab-content">
+              <div class="audit-grid">
+                <div class="audit-item">
+                  <div class="audit-label">Nota Final</div>
+                  <div class="audit-value">${item.nota_final !== null && item.nota_final !== undefined ? item.nota_final : 'N/A'}</div>
+                </div>
+                <div class="audit-item">
+                  <div class="audit-label">Veredito</div>
+                  <div class="audit-value">${escapeHtml(item.veredito || 'Não avaliado')}</div>
+                </div>
               </div>
-            ` : ''}
+
+              ${item.objetivo ? `
+                <div class="card-section">
+                  <div class="card-section-title">Objetivo</div>
+                  <div class="card-text">${escapeHtml(item.objetivo)}</div>
+                </div>
+              ` : ''}
+
+              ${item.oportunidade_ps ? `
+                <div class="card-section">
+                  <div class="card-section-title">Oportunidade PS</div>
+                  <div class="card-text">${escapeHtml(item.oportunidade_ps)}</div>
+                </div>
+              ` : ''}
+
+              ${item.relatorio_markdown ? `
+                <div class="card-section">
+                  <div class="card-section-title">Relatório de Auditoria</div>
+                  <div class="card-text">${escapeHtml(item.relatorio_markdown)}</div>
+                </div>
+              ` : ''}
+            </div>
 
             ${tagsArray.length > 0 ? `
               <footer class="tags-container">
@@ -286,6 +494,19 @@
           </article>
         `;
       }).join('');
+    }
+
+    function switchTab(btnElement, tabId) {
+      const card = btnElement.closest('.card');
+      
+      // Desativa botões da mesma aba
+      card.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      // Oculta conteúdos de abas do mesmo card
+      card.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      // Ativa aba selecionada
+      btnElement.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
     }
 
     function atualizarPaginacao(paginaAtual, totalPaginas) {
@@ -305,7 +526,7 @@
         .replace(/'/g, '&#039;');
     }
 
-    // Eventos de Busca e Paginação
+    // Eventos
     searchInput.addEventListener('input', (e) => {
       clearTimeout(debounceTimer);
       currentSearch = e.target.value.trim();
@@ -315,17 +536,15 @@
     });
 
     btnPrev.addEventListener('click', () => {
-      if (currentPage > 1) {
-        carregarRegistros(currentSearch, currentPage - 1);
-      }
+      if (currentPage > 1) carregarRegistros(currentSearch, currentPage - 1);
     });
 
     btnNext.addEventListener('click', () => {
       carregarRegistros(currentSearch, currentPage + 1);
     });
 
-    // Carga inicial ao abrir a página
     document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
       carregarRegistros();
     });
   </script>
