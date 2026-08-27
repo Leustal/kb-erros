@@ -1,0 +1,10 @@
+# Habilita o reescritor de URLs
+RewriteEngine On
+
+# Redireciona a raiz para a pasta public
+RewriteRule ^$ public/index.html [L]
+
+# Redireciona todas as requisições de arquivos/pastas não existentes para a pasta public
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/$1 [L]
