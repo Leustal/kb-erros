@@ -1,46 +1,12 @@
 <?php
-// api.php - Backend com fallback de conexão e retorno amigável de erros
-
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
 header('Content-Type: application/json; charset=utf-8');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
-ini_set('display_errors', 0);
-error_reporting(E_ALL);
-
-function loadEnv($path) {
-    if (!file_exists($path)) return false;
-    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue;
-        if (strpos($line, '=') === false) continue;
-        list($name, $value) = explode('=', $line, 2);
-        $name = trim($name);
-        $value = trim($value);
-        if (!array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
-            putenv(sprintf('%s=%s', $name, $value));
-            $_ENV[$name] = $value;
-            $_SERVER[$name] = $value;
-        }
-    }
-    return true;
-}
-
-loadEnv(__DIR__ . '/.env');
-loadEnv(__DIR__ . '/../.env');
-
-// Altere diretamente aqui se não estiver usando arquivo .env
-$host    = getenv('DB_HOST') ?: '127.0.0.1';
-$db      = getenv('DB_NAME') ?: (getenv('DB_DATABASE') ?: 'kb_database');
-$user    = getenv('DB_USER') ?: (getenv('DB_USERNAME') ?: 'root');
-$pass    = getenv('DB_PASS') !== false ? getenv('DB_PASS') : (getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '');
-$charset = getenv('DB_CHARSET') ?: 'utf8mb4';
+// Configurações de Conexão com o Banco de Dados
+$host    = 'localhost';
+$db      = 'nome_do_banco';
+$user    = 'usuario_banco';
+$pass    = 'senha_banco';
+$charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 $options = [
@@ -52,223 +18,149 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-    // Retorna 200 com array vazio e mensagem técnica para não travar a tela com erro 500
-    echo json_encode([
-        'total' => 0,
-        'page' => 1,
-        'limit' => 10,
-        'total_pages' => 0,
-        'data' => [],
-        'error' => 'Falha na conexão MySQL: ' . $e->getMessage()
-    ]);
+    echo json_encode(['error' => 'Falha na conexão com o banco de dados: ' . $e->getMessage()]);
     exit;
 }
 
-$method = $_SERVER['REQUEST_METHOD'];
-$action = $_GET['action'] ?? '';
+$action = $_GET['action'] ?? 'read';
 
-$rawInput = file_get_contents('php://input');
-$input = json_decode($rawInput, true) ?: [];
+// ------------------------------------------------------------------
+// 1. AÇÃO: READ (LISTAGEM E BUSCA)
+// ------------------------------------------------------------------
+if ($action === 'read') {
+    $search = $_GET['search'] ?? '';
+    $page   = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+    $limit  = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 10;
+    $offset = ($page - 1) * $limit;
 
-try {
-    // ==========================================
-    // 1. GET - LISTAR E PESQUISAR
-    // ==========================================
-    if ($method === 'GET' && $action !== 'delete') {
-        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-        $page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-        $limit  = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
-        
-        if ($page < 1) $page = 1;
-        if ($limit < 1) $limit = 10;
-        $offset = ($page - 1) * $limit;
+    $whereClause = '';
+    $params = [];
 
-        $whereClauses = [];
-        $params = [];
+    if (!empty($search)) {
+        $whereClause = "WHERE titulo LIKE :search 
+                           OR descricao LIKE :search 
+                           OR solucao LIKE :search 
+                           OR categoria LIKE :search 
+                           OR tags LIKE :search 
+                           OR veredito LIKE :search 
+                           OR objetivo LIKE :search";
+        $params[':search'] = '%' . $search . '%';
+    }
 
-        if (!empty($search)) {
-            $whereClauses[] = "(titulo LIKE :search OR solucao LIKE :search OR categoria LIKE :search OR tags LIKE :search OR descricao LIKE :search OR veredito LIKE :search)";
-            $params[':search'] = '%' . $search . '%';
-        }
+    // Contagem total para paginação
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM chamados $whereClause");
+    $countStmt->execute($params);
+    $totalRecords = $countStmt->fetchColumn();
+    $totalPages   = ceil($totalRecords / $limit);
 
-        $whereSql = count($whereClauses) > 0 ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
+    // Consulta dos registros com paginação
+    $query = "SELECT * FROM chamados $whereClause ORDER BY id DESC LIMIT $limit OFFSET $offset";
+    $stmt  = $pdo->prepare($query);
 
-        $countSql = "SELECT COUNT(*) as total FROM kb_erros $whereSql";
-        $stmtCount = $pdo->prepare($countSql);
-        foreach ($params as $key => $val) {
-            $stmtCount->bindValue($key, $val);
-        }
-        $stmtCount->execute();
-        $total = (int)$stmtCount->fetch()['total'];
+    foreach ($params as $key => $val) {
+        $stmt->bindValue($key, $val);
+    }
+    $stmt->bindValue('$limit', $limit, PDO::PARAM_INT);
+    $stmt->bindValue('$offset', $offset, PDO::PARAM_INT);
 
-        $sql = "SELECT * FROM kb_erros 
-                $whereSql 
-                ORDER BY LOWER(TRIM(BOTH '\"' FROM TRIM(BOTH '\'' FROM TRIM(titulo)))) COLLATE utf8mb4_unicode_ci ASC 
-                LIMIT :limit OFFSET :offset";
-        
-        $stmt = $pdo->prepare($sql);
-        foreach ($params as $key => $val) {
-            $stmt->bindValue($key, $val, PDO::PARAM_STR);
-        }
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute();
-        $data = $stmt->fetchAll();
+    $stmt->execute();
+    $data = $stmt->fetchAll();
 
-        echo json_encode([
-            'total'       => $total,
-            'page'        => $page,
-            'limit'       => $limit,
-            'total_pages' => ceil($total / $limit),
-            'data'        => $data
-        ]);
+    echo json_encode([
+        'data'        => $data,
+        'total'       => (int)$totalRecords,
+        'page'        => $page,
+        'total_pages' => (int)$totalPages
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ------------------------------------------------------------------
+// 2. AÇÃO: UPDATE (EDIÇÃO SEM CAMPOS OBRIGATÓRIOS)
+// ------------------------------------------------------------------
+if ($action === 'update') {
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (!$input || !isset($input['id'])) {
+        echo json_encode(['success' => false, 'error' => 'ID do registro não informado.']);
         exit;
     }
 
-    // ==========================================
-    // 2. POST - INSERIR (n8n / Manual)
-    // ==========================================
-    if ($method === 'POST' && $action !== 'update') {
-        $abaSolucao   = $input['aba_solucao'] ?? [];
-        $abaAuditoria = $input['aba_auditoria'] ?? $input['aba_auditoria_qualidade'] ?? [];
+    $id = (int)$input['id'];
 
-        $titulo    = trim($abaSolucao['titulo'] ?? $input['titulo'] ?? '');
-        $solucao   = trim($abaSolucao['solucao'] ?? $input['solucao'] ?? '');
-        $categoria = trim($abaSolucao['categoria'] ?? $input['categoria'] ?? 'Geral');
+    // Tratamento de campos com fallback (string vazia se nulo/ausente)
+    $titulo          = $input['aba_solucao']['titulo'] ?? '';
+    $categoria       = $input['aba_solucao']['categoria'] ?? '';
+    $tags            = $input['aba_solucao']['tags'] ?? '';
+    $descricao       = $input['aba_solucao']['problema'] ?? '';
+    $solucao         = $input['aba_solucao']['solucao'] ?? '';
 
-        $rawTags = $abaSolucao['tags'] ?? $input['tags'] ?? '';
-        $tags    = is_array($rawTags) ? implode(',', $rawTags) : trim($rawTags);
+    // Nota final como Float ou NULL se estiver vazio
+    $nota_final      = (isset($input['aba_auditoria']['nota_final']) && $input['aba_auditoria']['nota_final'] !== '') 
+                        ? (float)$input['aba_auditoria']['nota_final'] 
+                        : null;
 
-        if (!empty($input['descricao'])) {
-            $descricao = trim($input['descricao']);
-        } elseif (!empty($abaSolucao['problema'])) {
-            $atendente = $input['atendente_nome'] ?? 'Suporte';
-            $cliente   = $input['cliente_email'] ?? 'Não informado';
-            $inicio    = $input['hora_inicio'] ?? 'Não informado';
-            $fim       = $input['hora_finalizacao'] ?? 'Não informado';
-            $problema  = trim($abaSolucao['problema']);
+    $veredito        = $input['aba_auditoria']['veredito'] ?? '';
+    $objetivo        = $input['aba_auditoria']['objetivo'] ?? '';
+    $oportunidade_ps = $input['aba_auditoria']['oportunidade_ps'] ?? '';
 
-            $descricao = "• Nome do atendente: {$atendente}\n• Email cliente: {$cliente}\n• Hora do início do atendimento: {$inicio}\n• Hora finalização do atendimento: {$fim}\n• Problema do atendimento: {$problema}";
-        } else {
-            $descricao = '';
-        }
-
-        $objetivo          = trim($abaAuditoria['objetivo'] ?? $input['objetivo'] ?? '');
-        $veredito          = trim($abaAuditoria['veredito'] ?? $input['veredito'] ?? '');
-        $oportunidadePs    = trim($abaAuditoria['oportunidade_ps'] ?? $input['oportunidade_ps'] ?? '');
-        $notaFinal         = isset($abaAuditoria['nota_final']) ? (float)$abaAuditoria['nota_final'] : (isset($input['nota_final']) ? (float)$input['nota_final'] : null);
-        $relatorioMarkdown = trim($abaAuditoria['relatorio_markdown'] ?? $input['relatorio_markdown'] ?? '');
-
-        if (empty($titulo) || empty($solucao)) {
-            echo json_encode(['error' => 'Campos obrigatórios ausentes: titulo e solucao']);
-            exit;
-        }
-
-        $sql = "INSERT INTO kb_erros 
-                (titulo, categoria, tags, descricao, solucao, objetivo, veredito, oportunidade_ps, nota_final, relatorio_markdown) 
-                VALUES 
-                (:titulo, :categoria, :tags, :descricao, :solucao, :objetivo, :veredito, :oportunidade_ps, :nota_final, :relatorio_markdown)";
-
-        $stmt = $pdo->prepare($sql);
-        $success = $stmt->execute([
-            ':titulo'             => $titulo,
-            ':categoria'          => $categoria,
-            ':tags'               => $tags,
-            ':descricao'          => $descricao,
-            ':solucao'            => $solucao,
-            ':objetivo'           => $objetivo,
-            ':veredito'           => $veredito,
-            ':oportunidade_ps'    => $oportunidadePs,
-            ':nota_final'         => $notaFinal,
-            ':relatorio_markdown' => $relatorioMarkdown
-        ]);
-
-        echo json_encode([
-            'success' => $success, 
-            'id'      => $pdo->lastInsertId()
-        ]);
-        exit;
-    }
-
-    // ==========================================
-    // 3. PUT / POST (action=update)
-    // ==========================================
-    if ($method === 'PUT' || ($method === 'POST' && $action === 'update')) {
-        $id = $input['id'] ?? $_GET['id'] ?? null;
-
-        $abaSolucao   = $input['aba_solucao'] ?? [];
-        $abaAuditoria = $input['aba_auditoria'] ?? $input['aba_auditoria_qualidade'] ?? [];
-
-        $titulo  = trim($abaSolucao['titulo'] ?? $input['titulo'] ?? '');
-        $solucao = trim($abaSolucao['solucao'] ?? $input['solucao'] ?? '');
-
-        if (empty($id) || empty($titulo) || empty($solucao)) {
-            echo json_encode(['error' => 'Campos obrigatórios ausentes: id, titulo e solucao']);
-            exit;
-        }
-
-        $categoria         = trim($abaSolucao['categoria'] ?? $input['categoria'] ?? '');
-        $rawTags           = $abaSolucao['tags'] ?? $input['tags'] ?? '';
-        $tags              = is_array($rawTags) ? implode(',', $rawTags) : trim($rawTags);
-        $descricao         = trim($input['descricao'] ?? $abaSolucao['problema'] ?? '');
-        $objetivo          = trim($abaAuditoria['objetivo'] ?? $input['objetivo'] ?? '');
-        $veredito          = trim($abaAuditoria['veredito'] ?? $input['veredito'] ?? '');
-        $oportunidadePs    = trim($abaAuditoria['oportunidade_ps'] ?? $input['oportunidade_ps'] ?? '');
-        $notaFinal         = isset($abaAuditoria['nota_final']) ? (float)$abaAuditoria['nota_final'] : (isset($input['nota_final']) ? (float)$input['nota_final'] : null);
-        $relatorioMarkdown = trim($abaAuditoria['relatorio_markdown'] ?? $input['relatorio_markdown'] ?? '');
-
-        $sql = "UPDATE kb_erros SET 
-                titulo = :titulo, 
-                categoria = :categoria, 
-                tags = :tags, 
-                descricao = :descricao, 
+    try {
+        $stmt = $pdo->prepare("
+            UPDATE chamados SET 
+                titulo = :titulo,
+                categoria = :categoria,
+                tags = :tags,
+                descricao = :descricao,
                 solucao = :solucao,
-                objetivo = :objetivo,
-                veredito = :veredito,
-                oportunidade_ps = :oportunidade_ps,
                 nota_final = :nota_final,
-                relatorio_markdown = :relatorio_markdown 
-                WHERE id = :id";
+                veredito = :veredito,
+                objetivo = :objetivo,
+                oportunidade_ps = :oportunidade_ps
+            WHERE id = :id
+        ");
 
-        $stmt = $pdo->prepare($sql);
         $success = $stmt->execute([
-            ':id'                 => (int)$id,
-            ':titulo'             => $titulo,
-            ':categoria'          => $categoria,
-            ':tags'               => $tags,
-            ':descricao'          => $descricao,
-            ':solucao'            => $solucao,
-            ':objetivo'           => $objetivo,
-            ':veredito'           => $veredito,
-            ':oportunidade_ps'    => $oportunidadePs,
-            ':nota_final'         => $notaFinal,
-            ':relatorio_markdown' => $relatorioMarkdown
+            ':titulo'          => $titulo,
+            ':categoria'       => $categoria,
+            ':tags'            => $tags,
+            ':descricao'       => $descricao,
+            ':solucao'         => $solucao,
+            ':nota_final'      => $nota_final,
+            ':veredito'        => $veredito,
+            ':objetivo'        => $objetivo,
+            ':oportunidade_ps' => $oportunidade_ps,
+            ':id'              => $id
         ]);
 
         echo json_encode(['success' => $success]);
+    } catch (\PDOException $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// ------------------------------------------------------------------
+// 3. AÇÃO: DELETE (EXCLUSÃO)
+// ------------------------------------------------------------------
+if ($action === 'delete') {
+    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
+    if ($id <= 0) {
+        echo json_encode(['success' => false, 'error' => 'ID inválido.']);
         exit;
     }
 
-    // ==========================================
-    // 4. DELETE
-    // ==========================================
-    if ($method === 'DELETE' || ($method === 'GET' && $action === 'delete')) {
-        $id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($input['id']) ? (int)$input['id'] : 0);
-
-        if ($id <= 0) {
-            echo json_encode(['error' => 'ID inválido para exclusão']);
-            exit;
-        }
-
-        $sql = "DELETE FROM kb_erros WHERE id = :id";
-        $stmt = $pdo->prepare($sql);
+    try {
+        $stmt = $pdo->prepare("DELETE FROM chamados WHERE id = :id");
         $success = $stmt->execute([':id' => $id]);
 
         echo json_encode(['success' => $success]);
-        exit;
+    } catch (\PDOException $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     }
-
-} catch (\Exception $e) {
-    echo json_encode(['error' => 'Erro interno no servidor: ' . $e->getMessage()]);
     exit;
 }
+
+// Ação desconhecida
+echo json_encode(['error' => 'Ação inválida.']);
+exit;
