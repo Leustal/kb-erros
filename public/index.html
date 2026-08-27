@@ -570,6 +570,9 @@
       cardsContainer.innerHTML = registros.map(item => {
         const categoria = item.categoria || 'Geral';
         const tagsArray = item.tags ? item.tags.split(',').filter(t => t.trim() !== '') : [];
+        const problemaDescricao = item.descricao || item.problema || '';
+        const notaFinal = (item.nota_final !== null && item.nota_final !== undefined) ? item.nota_final : item.nota;
+        const oportunidade = item.oportunidade_ps || item.oportunidade || '';
 
         return `
           <article class="card">
@@ -590,10 +593,10 @@
             </div>
 
             <div id="tab-solucao-${item.id}" class="tab-content active">
-              ${item.descricao ? `
+              ${problemaDescricao ? `
                 <div class="card-section">
                   <div class="card-section-title">Descrição / Problema</div>
-                  <div class="card-text">${escapeHtml(item.descricao)}</div>
+                  <div class="card-text">${escapeHtml(problemaDescricao)}</div>
                 </div>
               ` : ''}
               ${item.solucao ? `
@@ -608,7 +611,7 @@
               <div class="audit-grid">
                 <div class="audit-item">
                   <div class="audit-label">Nota Final</div>
-                  <div class="audit-value">${item.nota_final !== null && item.nota_final !== undefined ? item.nota_final : 'N/A'}</div>
+                  <div class="audit-value">${notaFinal !== null && notaFinal !== undefined ? notaFinal : 'N/A'}</div>
                 </div>
                 <div class="audit-item">
                   <div class="audit-label">Veredito</div>
@@ -621,10 +624,10 @@
                   <div class="card-text">${escapeHtml(item.objetivo)}</div>
                 </div>
               ` : ''}
-              ${item.oportunidade_ps ? `
+              ${oportunidade ? `
                 <div class="card-section">
                   <div class="card-section-title">Oportunidade PS</div>
-                  <div class="card-text">${escapeHtml(item.oportunidade_ps)}</div>
+                  <div class="card-text">${escapeHtml(oportunidade)}</div>
                 </div>
               ` : ''}
             </div>
@@ -648,12 +651,12 @@
       document.getElementById('edit-titulo').value = item.titulo || '';
       document.getElementById('edit-categoria').value = item.categoria || '';
       document.getElementById('edit-tags').value = item.tags || '';
-      document.getElementById('edit-descricao').value = item.descricao || '';
+      document.getElementById('edit-descricao').value = item.descricao || item.problema || '';
       document.getElementById('edit-solucao').value = item.solucao || '';
-      document.getElementById('edit-nota').value = item.nota_final !== null ? item.nota_final : '';
+      document.getElementById('edit-nota').value = (item.nota_final !== null && item.nota_final !== undefined) ? item.nota_final : (item.nota || '');
       document.getElementById('edit-veredito').value = item.veredito || '';
       document.getElementById('edit-objetivo').value = item.objetivo || '';
-      document.getElementById('edit-oportunidade').value = item.oportunidade_ps || '';
+      document.getElementById('edit-oportunidade').value = item.oportunidade_ps || item.oportunidade || '';
 
       document.getElementById('modal-edit').classList.add('active');
     }
@@ -711,7 +714,11 @@
 
       statusLoading.innerText = 'Excluindo...';
       try {
-        const response = await fetch(`./api.php?action=delete&id=${id}`);
+        const response = await fetch('./api.php?action=delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id })
+        });
         const res = await response.json();
         if (res.success) {
           carregarRegistros(currentSearch, currentPage);
