@@ -30,7 +30,7 @@ function loadEnv($filePath) {
 loadEnv('/var/www/webroot/ROOT/.env');
 
 $host    = getenv('DB_HOST') ?: $_ENV['DB_HOST'] ?: 'localhost';
-$db      = getenv('DB_NAME') ?: $_ENV['DB_NAME'] ?: 'kb_database';
+$db      = getenv('DB_NAME') ?: $_ENV['DB_NAME'] ?: 'kb_erros';
 $user    = getenv('DB_USER') ?: $_ENV['DB_USER'] ?: 'root';
 $pass    = getenv('DB_PASS') ?: $_ENV['DB_PASS'] ?: '';
 $charset = getenv('DB_CHARSET') ?: $_ENV['DB_CHARSET'] ?: 'utf8mb4';
@@ -77,7 +77,7 @@ switch ($action) {
 
         try {
             if ($action === 'create') {
-                $sql = "INSERT INTO registros 
+                $sql = "INSERT INTO erros 
                         (titulo, categoria, tags, descricao, solucao, nota_final, veredito, objetivo, oportunidade_ps, relatorio_markdown) 
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $pdo->prepare($sql);
@@ -91,7 +91,7 @@ switch ($action) {
                     echo json_encode(['success' => false, 'error' => 'ID não informado para atualização.']);
                     exit;
                 }
-                $sql = "UPDATE registros 
+                $sql = "UPDATE erros 
                         SET titulo = ?, categoria = ?, tags = ?, descricao = ?, solucao = ?, 
                             nota_final = ?, veredito = ?, objetivo = ?, oportunidade_ps = ?, relatorio_markdown = ? 
                         WHERE id = ?";
@@ -116,7 +116,7 @@ switch ($action) {
         }
 
         try {
-            $stmt = $pdo->prepare("DELETE FROM registros WHERE id = ?");
+            $stmt = $pdo->prepare("DELETE FROM erros WHERE id = ?");
             $success = $stmt->execute([$id]);
             echo json_encode(['success' => $success]);
         } catch (\PDOException $e) {
@@ -134,12 +134,12 @@ switch ($action) {
         try {
             if (!empty($search)) {
                 $searchTerm = "%$search%";
-                $countSql = "SELECT COUNT(*) FROM registros WHERE titulo LIKE ? OR descricao LIKE ? OR solucao LIKE ? OR categoria LIKE ? OR tags LIKE ?";
+                $countSql = "SELECT COUNT(*) FROM erros WHERE titulo LIKE ? OR descricao LIKE ? OR solucao LIKE ? OR categoria LIKE ? OR tags LIKE ?";
                 $stmtCount = $pdo->prepare($countSql);
                 $stmtCount->execute([$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm]);
                 $totalRows = $stmtCount->fetchColumn();
 
-                $dataSql = "SELECT * FROM registros WHERE titulo LIKE ? OR descricao LIKE ? OR solucao LIKE ? OR categoria LIKE ? OR tags LIKE ? ORDER BY id DESC LIMIT ? OFFSET ?";
+                $dataSql = "SELECT * FROM erros WHERE titulo LIKE ? OR descricao LIKE ? OR solucao LIKE ? OR categoria LIKE ? OR tags LIKE ? ORDER BY id DESC LIMIT ? OFFSET ?";
                 $stmtData = $pdo->prepare($dataSql);
                 $stmtData->bindValue(1, $searchTerm, PDO::PARAM_STR);
                 $stmtData->bindValue(2, $searchTerm, PDO::PARAM_STR);
@@ -150,9 +150,9 @@ switch ($action) {
                 $stmtData->bindValue(7, $offset, PDO::PARAM_INT);
                 $stmtData->execute();
             } else {
-                $totalRows = $pdo->query("SELECT COUNT(*) FROM registros")->fetchColumn();
+                $totalRows = $pdo->query("SELECT COUNT(*) FROM erros")->fetchColumn();
                 
-                $stmtData = $pdo->prepare("SELECT * FROM registros ORDER BY id DESC LIMIT ? OFFSET ?");
+                $stmtData = $pdo->prepare("SELECT * FROM erros ORDER BY id DESC LIMIT ? OFFSET ?");
                 $stmtData->bindValue(1, $limit, PDO::PARAM_INT);
                 $stmtData->bindValue(2, $offset, PDO::PARAM_INT);
                 $stmtData->execute();
