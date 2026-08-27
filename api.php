@@ -1,5 +1,5 @@
 <?php
-// api.php - Backend para Knowledge Base com integração Chatwoot/n8n/MySQL
+// api.php - Backend com fallback de conexão e retorno amigável de erros
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -32,14 +32,14 @@ function loadEnv($path) {
     return true;
 }
 
-if (!loadEnv(__DIR__ . '/.env')) {
-    loadEnv(__DIR__ . '/../.env');
-}
+loadEnv(__DIR__ . '/.env');
+loadEnv(__DIR__ . '/../.env');
 
+// Altere diretamente aqui se não estiver usando arquivo .env
 $host    = getenv('DB_HOST') ?: '127.0.0.1';
-$db      = getenv('DB_NAME') ?: getenv('DB_DATABASE');
-$user    = getenv('DB_USER') ?: getenv('DB_USERNAME');
-$pass    = getenv('DB_PASS') ?: getenv('DB_PASSWORD');
+$db      = getenv('DB_NAME') ?: (getenv('DB_DATABASE') ?: 'kb_database');
+$user    = getenv('DB_USER') ?: (getenv('DB_USERNAME') ?: 'root');
+$pass    = getenv('DB_PASS') !== false ? getenv('DB_PASS') : (getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '');
 $charset = getenv('DB_CHARSET') ?: 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -52,8 +52,15 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Erro de conexão com o banco de dados: ' . $e->getMessage()]);
+    // Retorna 200 com array vazio e mensagem técnica para não travar a tela com erro 500
+    echo json_encode([
+        'total' => 0,
+        'page' => 1,
+        'limit' => 10,
+        'total_pages' => 0,
+        'data' => [],
+        'error' => 'Falha na conexão MySQL: ' . $e->getMessage()
+    ]);
     exit;
 }
 
@@ -65,7 +72,7 @@ $input = json_decode($rawInput, true) ?: [];
 
 try {
     // ==========================================
-    // 1. GET - LISTAR E PESQUISAR (A-Z)
+    // 1. GET - LISTAR E PESQUISAR
     // ==========================================
     if ($method === 'GET' && $action !== 'delete') {
         $search = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -86,7 +93,6 @@ try {
 
         $whereSql = count($whereClauses) > 0 ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
-        // Contagem Total
         $countSql = "SELECT COUNT(*) as total FROM kb_erros $whereSql";
         $stmtCount = $pdo->prepare($countSql);
         foreach ($params as $key => $val) {
@@ -95,7 +101,6 @@ try {
         $stmtCount->execute();
         $total = (int)$stmtCount->fetch()['total'];
 
-        // Consulta Principal Ordenada por A-Z
         $sql = "SELECT * FROM kb_erros 
                 $whereSql 
                 ORDER BY LOWER(TRIM(BOTH '\"' FROM TRIM(BOTH '\'' FROM TRIM(titulo)))) COLLATE utf8mb4_unicode_ci ASC 
@@ -110,7 +115,6 @@ try {
         $stmt->execute();
         $data = $stmt->fetchAll();
 
-        // Estrutura exata esperada pelo frontend original
         echo json_encode([
             'total'       => $total,
             'page'        => $page,
@@ -122,7 +126,7 @@ try {
     }
 
     // ==========================================
-    // 2. POST - INSERIR REGISTRO
+    // 2. POST - INSERIR (n8n / Manual)
     // ==========================================
     if ($method === 'POST' && $action !== 'update') {
         $abaSolucao   = $input['aba_solucao'] ?? [];
@@ -156,7 +160,6 @@ try {
         $relatorioMarkdown = trim($abaAuditoria['relatorio_markdown'] ?? $input['relatorio_markdown'] ?? '');
 
         if (empty($titulo) || empty($solucao)) {
-            http_response_code(400);
             echo json_encode(['error' => 'Campos obrigatórios ausentes: titulo e solucao']);
             exit;
         }
@@ -188,7 +191,7 @@ try {
     }
 
     // ==========================================
-    // 3. PUT / POST (action=update) - ATUALIZAR
+    // 3. PUT / POST (action=update)
     // ==========================================
     if ($method === 'PUT' || ($method === 'POST' && $action === 'update')) {
         $id = $input['id'] ?? $_GET['id'] ?? null;
@@ -200,7 +203,6 @@ try {
         $solucao = trim($abaSolucao['solucao'] ?? $input['solucao'] ?? '');
 
         if (empty($id) || empty($titulo) || empty($solucao)) {
-            http_response_code(400);
             echo json_encode(['error' => 'Campos obrigatórios ausentes: id, titulo e solucao']);
             exit;
         }
@@ -248,13 +250,12 @@ try {
     }
 
     // ==========================================
-    // 4. DELETE - EXCLUIR REGISTRO
+    // 4. DELETE
     // ==========================================
     if ($method === 'DELETE' || ($method === 'GET' && $action === 'delete')) {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($input['id']) ? (int)$input['id'] : 0);
 
         if ($id <= 0) {
-            http_response_code(400);
             echo json_encode(['error' => 'ID inválido para exclusão']);
             exit;
         }
@@ -268,7 +269,6 @@ try {
     }
 
 } catch (\Exception $e) {
-    http_response_code(500);
     echo json_encode(['error' => 'Erro interno no servidor: ' . $e->getMessage()]);
     exit;
 }
