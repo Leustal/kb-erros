@@ -11,14 +11,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // -------------------------------------------------------------
-// LEITOR MANUAL DE .ENV (Evita Erro 500 com parse_ini_file)
+// BUSCA RECURSIVA E PARSER MANUAL DO .ENV
 // -------------------------------------------------------------
-function loadEnv($path) {
-    if (!file_exists($path)) return [];
-    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+function findAndLoadEnv() {
+    $dir = __DIR__;
+    $envPath = null;
+    
+    // Procura o arquivo .env no diretório atual e sobe até 3 níveis
+    for ($i = 0; $i < 3; $i++) {
+        if (file_exists($dir . '/.env')) {
+            $envPath = $dir . '/.env';
+            break;
+        }
+        $dir = dirname($dir);
+    }
+
+    if (!$envPath) return [];
+
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     $env = [];
     foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue;
+        $line = trim($line);
+        if (empty($line) || strpos($line, '#') === 0) continue;
         list($name, $value) = explode('=', $line, 2) + [NULL, NULL];
         if ($name !== NULL && $value !== NULL) {
             $env[trim($name)] = trim($value, " \t\n\r\0\x0B\"'");
@@ -27,18 +41,14 @@ function loadEnv($path) {
     return $env;
 }
 
-$envPath = __DIR__ . '/.env';
-if (!file_exists($envPath)) {
-    $envPath = dirname(__DIR__) . '/.env';
-}
+$env = findAndLoadEnv();
 
-$env = loadEnv($envPath);
-
+// Mapeamento flexível de chaves do .env com suporte a fallback de ambiente
 $db_host = $env['DB_HOST'] ?? getenv('DB_HOST') ?: 'localhost';
 $db_name = $env['DB_DATABASE'] ?? $env['DB_NAME'] ?? getenv('DB_DATABASE') ?: getenv('DB_NAME');
 $db_user = $env['DB_USERNAME'] ?? $env['DB_USER'] ?? getenv('DB_USERNAME') ?: getenv('DB_USER');
 $db_pass = $env['DB_PASSWORD'] ?? $env['DB_PASS'] ?? getenv('DB_PASSWORD') ?: getenv('DB_PASS');
-$tabela  = $env['DB_TABLE'] ?? getenv('DB_TABLE') ?: 'sua_tabela';
+$tabela  = $env['DB_TABLE'] ?? getenv('DB_TABLE') ?: 'kb_audits';
 
 try {
     $pdo = new PDO("mysql:host={$db_host};dbname={$db_name};charset=utf8mb4", $db_user, $db_pass, [
@@ -47,7 +57,10 @@ try {
     ]);
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Falha na conexão com o banco de dados: ' . $e->getMessage()]);
+    echo json_encode([
+        'success' => false, 
+        'error' => 'Falha na conexão com o banco de dados via .env: ' . $e->getMessage()
+    ]);
     exit;
 }
 
@@ -67,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action ===
 
     $id = $data['id'] ?? ($_GET['id'] ?? null);
 
-    // Captura flexível dos campos
+    // Mapeamento flexível: Aba Solução ou Raiz
     $titulo = '';
     if (isset($data['aba_solucao']['titulo'])) {
         $titulo = trim($data['aba_solucao']['titulo']);
@@ -82,17 +95,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action ===
         $solucao = trim($data['solucao']);
     }
 
-    $categoria       = $data['aba_solucao']['categoria'] ?? ($data['categoria'] ?? '');
-    $tags            = $data['aba_solucao']['tags'] ?? ($data['tags'] ?? '');
-    $descricao       = $data['aba_solucao']['problema'] ?? ($data['descricao'] ?? '');
-    
+    $categoria = $data['aba_solucao']['categoria'] ?? ($data['categoria'] ?? '');
+    $tags      = $data['aba_solucao']['tags'] ?? ($data['tags'] ?? '');
+    $descricao = $data['aba_solucao']['problema'] ?? ($data['descricao'] ?? '');
+
+    // Mapeamento flexível: Aba Auditoria ou Raiz
     $nota_raw        = $data['aba_auditoria']['nota_final'] ?? ($data['nota_final'] ?? null);
     $nota_final      = (is_numeric($nota_raw) && $nota_raw !== '') ? floatval($nota_raw) : null;
-    
     $veredito        = $data['aba_auditoria']['veredito'] ?? ($data['veredito'] ?? '');
     $objetivo        = $data['aba_auditoria']['objetivo'] ?? ($data['objetivo'] ?? '');
     $oportunidade_ps = $data['aba_auditoria']['oportunidade_ps'] ?? ($data['oportunidade_ps'] ?? '');
 
+    // Validação dos campos obrigatórios
     if (empty($titulo) || empty($solucao)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Título e Solução são obrigatórios.']);
