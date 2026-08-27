@@ -1,11 +1,20 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-// Configurações de Conexão com o Banco de Dados
-$host    = 'localhost';
-$db      = 'nome_do_banco';
-$user    = 'usuario_banco';
-$pass    = 'senha_banco';
+// Carrega o autoloader do Composer (se estiver usando vlucas/phpdotenv)
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+    if (class_exists('Dotenv\Dotenv')) {
+        $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+        $dotenv->safeLoad();
+    }
+}
+
+// Tenta carregar do $_ENV, $_SERVER ou getenv()
+$host    = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?? '127.0.0.1';
+$db      = $_ENV['DB_DATABASE'] ?? $_ENV['DB_NAME'] ?? getenv('DB_DATABASE') ?? getenv('DB_NAME') ?? '';
+$user    = $_ENV['DB_USERNAME'] ?? $_ENV['DB_USER'] ?? getenv('DB_USERNAME') ?? getenv('DB_USER') ?? '';
+$pass    = $_ENV['DB_PASSWORD'] ?? $_ENV['DB_PASS'] ?? getenv('DB_PASSWORD') ?? getenv('DB_PASS') ?? '';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -47,13 +56,11 @@ if ($action === 'read') {
         $params[':search'] = '%' . $search . '%';
     }
 
-    // Contagem total para paginação
     $countStmt = $pdo->prepare("SELECT COUNT(*) FROM chamados $whereClause");
     $countStmt->execute($params);
     $totalRecords = $countStmt->fetchColumn();
     $totalPages   = ceil($totalRecords / $limit);
 
-    // Consulta dos registros com paginação
     $query = "SELECT * FROM chamados $whereClause ORDER BY id DESC LIMIT $limit OFFSET $offset";
     $stmt  = $pdo->prepare($query);
 
@@ -76,7 +83,7 @@ if ($action === 'read') {
 }
 
 // ------------------------------------------------------------------
-// 2. AÇÃO: UPDATE (EDIÇÃO SEM CAMPOS OBRIGATÓRIOS)
+// 2. AÇÃO: UPDATE (EDIÇÃO FLEXÍVEL)
 // ------------------------------------------------------------------
 if ($action === 'update') {
     $input = json_decode(file_get_contents('php://input'), true);
@@ -88,14 +95,12 @@ if ($action === 'update') {
 
     $id = (int)$input['id'];
 
-    // Tratamento de campos com fallback (string vazia se nulo/ausente)
     $titulo          = $input['aba_solucao']['titulo'] ?? '';
     $categoria       = $input['aba_solucao']['categoria'] ?? '';
     $tags            = $input['aba_solucao']['tags'] ?? '';
     $descricao       = $input['aba_solucao']['problema'] ?? '';
     $solucao         = $input['aba_solucao']['solucao'] ?? '';
 
-    // Nota final como Float ou NULL se estiver vazio
     $nota_final      = (isset($input['aba_auditoria']['nota_final']) && $input['aba_auditoria']['nota_final'] !== '') 
                         ? (float)$input['aba_auditoria']['nota_final'] 
                         : null;
@@ -161,6 +166,5 @@ if ($action === 'delete') {
     exit;
 }
 
-// Ação desconhecida
 echo json_encode(['error' => 'Ação inválida.']);
 exit;
