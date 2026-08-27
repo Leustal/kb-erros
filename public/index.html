@@ -324,7 +324,6 @@
       color: var(--text-muted);
     }
 
-    /* Modal de Edição */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -544,7 +543,7 @@
     async function carregarRegistros(busca = '', pagina = 1) {
       statusLoading.innerText = 'Carregando registros...';
       try {
-        const response = await fetch(`./api.php?search=${encodeURIComponent(busca)}&page=${pagina}&limit=10`);
+        const response = await fetch(`./api.php?search=${encodeURIComponent(busca)}&page=${pagina}&limit=10&_t=${Date.now()}`);
         if (!response.ok) throw new Error(`Erro na requisição: ${response.status}`);
 
         const json = await response.json();
@@ -639,7 +638,6 @@
       }).join('');
     }
 
-    // Modal & Ações de Edição
     function openEditModal(id) {
       const item = registrosCache.find(r => r.id == id);
       if (!item) return;
@@ -666,25 +664,27 @@
       event.preventDefault();
       statusLoading.innerText = 'Salvando...';
 
+      const notaVal = document.getElementById('edit-nota').value;
+
       const payload = {
-        id: document.getElementById('edit-id').value,
+        id: parseInt(document.getElementById('edit-id').value, 10),
         aba_solucao: {
-          titulo: document.getElementById('edit-titulo').value,
-          categoria: document.getElementById('edit-categoria').value,
-          tags: document.getElementById('edit-tags').value,
-          problema: document.getElementById('edit-descricao').value,
-          solucao: document.getElementById('edit-solucao').value
+          titulo: document.getElementById('edit-titulo').value.trim(),
+          categoria: document.getElementById('edit-categoria').value.trim(),
+          tags: document.getElementById('edit-tags').value.trim(),
+          problema: document.getElementById('edit-descricao').value.trim(),
+          solucao: document.getElementById('edit-solucao').value.trim()
         },
         aba_auditoria: {
-          nota_final: document.getElementById('edit-nota').value ? parseFloat(document.getElementById('edit-nota').value) : null,
-          veredito: document.getElementById('edit-veredito').value,
-          objetivo: document.getElementById('edit-objetivo').value,
-          oportunidade_ps: document.getElementById('edit-oportunidade').value
+          nota_final: notaVal !== '' ? parseFloat(notaVal) : null,
+          veredito: document.getElementById('edit-veredito').value.trim(),
+          objetivo: document.getElementById('edit-objetivo').value.trim(),
+          oportunidade_ps: document.getElementById('edit-oportunidade').value.trim()
         }
       };
 
       try {
-        const response = await fetch('./api.php?action=update', {
+        const response = await fetch(`./api.php?action=update&_t=${Date.now()}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -705,13 +705,12 @@
       }
     }
 
-    // Ação de Exclusão
     async function excluirRegistro(id) {
       if (!confirm('Tem certeza que deseja excluir este registro permanentemente?')) return;
 
       statusLoading.innerText = 'Excluindo...';
       try {
-        const response = await fetch(`./api.php?action=delete&id=${id}`);
+        const response = await fetch(`./api.php?action=delete&id=${id}&_t=${Date.now()}`);
         const res = await response.json();
         if (res.success) {
           carregarRegistros(currentSearch, currentPage);
