@@ -693,52 +693,54 @@
     }
 
     async function salvarRegistro(event) {
-      event.preventDefault();
-      statusLoading.innerText = 'Salvando...';
+  event.preventDefault();
+  statusLoading.innerText = 'Salvando...';
 
-      const id = document.getElementById('edit-id').value;
-      const isEdit = Boolean(id);
+  const id = document.getElementById('edit-id').value;
+  const isEdit = Boolean(id);
 
-      const payload = {
-        id: id || undefined,
-        aba_solucao: {
-          titulo: document.getElementById('edit-titulo').value,
-          categoria: document.getElementById('edit-categoria').value,
-          tags: document.getElementById('edit-tags').value,
-          problema: document.getElementById('edit-descricao').value,
-          solucao: document.getElementById('edit-solucao').value
-        },
-        aba_auditoria: {
-          nota_final: document.getElementById('edit-nota').value ? parseFloat(document.getElementById('edit-nota').value) : null,
-          veredito: document.getElementById('edit-veredito').value,
-          objetivo: document.getElementById('edit-objetivo').value,
-          oportunidade_ps: document.getElementById('edit-oportunidade').value
-        }
-      };
+  // Payload plano com os campos diretamente no primeiro nível
+  const payload = {
+    titulo: document.getElementById('edit-titulo').value.trim(),
+    solucao: document.getElementById('edit-solucao').value.trim(),
+    categoria: document.getElementById('edit-categoria').value.trim(),
+    tags: document.getElementById('edit-tags').value.trim(),
+    problema: document.getElementById('edit-descricao').value.trim(),
+    descricao: document.getElementById('edit-descricao').value.trim(),
+    nota_final: document.getElementById('edit-nota').value ? parseFloat(document.getElementById('edit-nota').value) : null,
+    veredito: document.getElementById('edit-veredito').value.trim(),
+    objetivo: document.getElementById('edit-objetivo').value.trim(),
+    oportunidade_ps: document.getElementById('edit-oportunidade').value.trim()
+  };
 
-      const action = isEdit ? 'update' : 'create';
+  // Se for edição, inclui o ID no payload
+  if (isEdit) {
+    payload.id = id;
+  }
 
-      try {
-        const response = await fetch(`./api.php?action=${action}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+  const action = isEdit ? 'update' : 'create';
 
-        const res = await response.json();
-        if (res.success) {
-          closeModal();
-          carregarRegistros(currentSearch, isEdit ? currentPage : 1);
-        } else {
-          alert('Erro ao salvar: ' + (res.error || 'Erro desconhecido'));
-        }
-      } catch (err) {
-        console.error('Erro ao gravar:', err);
-        alert('Erro ao se conectar com a API');
-      } finally {
-        statusLoading.innerText = '';
-      }
+  try {
+    const response = await fetch(`./api.php?action=${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const res = await response.json();
+    if (res.success) {
+      closeModal();
+      carregarRegistros(currentSearch, isEdit ? currentPage : 1);
+    } else {
+      alert('Erro ao salvar: ' + (res.error || res.message || 'Erro desconhecido'));
     }
+  } catch (err) {
+    console.error('Erro ao gravar:', err);
+    alert('Erro ao se conectar com a API');
+  } finally {
+    statusLoading.innerText = '';
+  }
+}
 
     // Ação de Exclusão
     async function excluirRegistro(id) {
