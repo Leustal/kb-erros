@@ -20,6 +20,7 @@
       --shadow-color: rgba(0, 0, 0, 0.35);
       --btn-danger: #ef4444;
       --btn-warning: #f59e0b;
+      --btn-primary: #06b6d4;
     }
 
     [data-theme="light"] {
@@ -36,6 +37,7 @@
       --shadow-color: rgba(0, 0, 0, 0.05);
       --btn-danger: #dc2626;
       --btn-warning: #d97706;
+      --btn-primary: #0284c7;
     }
 
     * {
@@ -86,7 +88,23 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
+    }
+
+    .btn-new {
+      background-color: var(--btn-primary);
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 4px 12px var(--shadow-color);
+    }
+
+    .btn-new:hover {
+      opacity: 0.9;
     }
 
     .theme-toggle-btn {
@@ -324,7 +342,7 @@
       color: var(--text-muted);
     }
 
-    /* Modal de Edição */
+    /* Modal Formulario */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -427,6 +445,7 @@
     </div>
     <div class="header-actions">
       <div id="status-loading" class="status-loading">Carregando registros...</div>
+      <button class="btn-new" onclick="openCreateModal()">+ Novo Registro</button>
       <button id="theme-toggle" class="theme-toggle-btn">
         <span id="theme-icon">🌙</span> <span id="theme-text">Escuro</span>
       </button>
@@ -453,14 +472,14 @@
     </nav>
   </main>
 
-  <!-- Modal de Edição -->
-  <div id="modal-edit" class="modal-overlay">
+  <!-- Modal de Criar / Editar -->
+  <div id="modal-form" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="color: var(--text-highlight);">Editar Registro</h3>
+        <h3 id="modal-title" style="color: var(--text-highlight);">Novo Registro</h3>
         <button class="btn-action" onclick="closeModal()">✕</button>
       </div>
-      <form id="form-edit" onsubmit="salvarEdicao(event)">
+      <form id="form-registro" onsubmit="salvarRegistro(event)">
         <input type="hidden" id="edit-id">
         <div class="form-group">
           <label>Título</label>
@@ -500,7 +519,7 @@
         </div>
         <div class="modal-actions">
           <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
-          <button type="submit" class="btn-save">Salvar Alterações</button>
+          <button type="submit" class="btn-save">Salvar</button>
         </div>
       </form>
     </div>
@@ -642,7 +661,14 @@
       }).join('');
     }
 
-    // Modal & Ações de Edição
+    // Modal & Ações de Criação e Edição
+    function openCreateModal() {
+      document.getElementById('form-registro').reset();
+      document.getElementById('edit-id').value = '';
+      document.getElementById('modal-title').innerText = 'Novo Registro';
+      document.getElementById('modal-form').classList.add('active');
+    }
+
     function openEditModal(id) {
       const item = registrosCache.find(r => r.id == id);
       if (!item) return;
@@ -658,19 +684,23 @@
       document.getElementById('edit-objetivo').value = item.objetivo || '';
       document.getElementById('edit-oportunidade').value = item.oportunidade_ps || item.oportunidade || '';
 
-      document.getElementById('modal-edit').classList.add('active');
+      document.getElementById('modal-title').innerText = 'Editar Registro';
+      document.getElementById('modal-form').classList.add('active');
     }
 
     function closeModal() {
-      document.getElementById('modal-edit').classList.remove('active');
+      document.getElementById('modal-form').classList.remove('active');
     }
 
-    async function salvarEdicao(event) {
+    async function salvarRegistro(event) {
       event.preventDefault();
       statusLoading.innerText = 'Salvando...';
 
+      const id = document.getElementById('edit-id').value;
+      const isEdit = Boolean(id);
+
       const payload = {
-        id: document.getElementById('edit-id').value,
+        id: id || undefined,
         aba_solucao: {
           titulo: document.getElementById('edit-titulo').value,
           categoria: document.getElementById('edit-categoria').value,
@@ -686,8 +716,10 @@
         }
       };
 
+      const action = isEdit ? 'update' : 'create';
+
       try {
-        const response = await fetch('./api.php?action=update', {
+        const response = await fetch(`./api.php?action=${action}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -696,12 +728,12 @@
         const res = await response.json();
         if (res.success) {
           closeModal();
-          carregarRegistros(currentSearch, currentPage);
+          carregarRegistros(currentSearch, isEdit ? currentPage : 1);
         } else {
           alert('Erro ao salvar: ' + (res.error || 'Erro desconhecido'));
         }
       } catch (err) {
-        console.error('Erro ao atualizar:', err);
+        console.error('Erro ao gravar:', err);
         alert('Erro ao se conectar com a API');
       } finally {
         statusLoading.innerText = '';
