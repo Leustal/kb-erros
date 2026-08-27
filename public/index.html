@@ -1,587 +1,597 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Base de Conhecimento & Auditoria | Suporte Técnico</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Marked library para renderizar Markdown do relatório de auditoria -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  
-  <style>
-    :root {
-      --bg-dark: #0B0E14;
-      --card-bg: #151921;
-      --card-border: #232936;
-      --accent-cyan: #00F0FF;
-      --accent-purple: #7000FF;
-      --text-main: #F3F4F6;
-      --text-muted: #9CA3AF;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base de Conhecimento & Auditoria - SaveinCloud</title>
+    <!-- Font Awesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Marked.js para renderizar Markdown da auditoria -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-body: #13151b;
+            --bg-card: #1e222d;
+            --border-card: #2d3342;
+            --text-primary: #f0f4f8;
+            --text-secondary: #a0aec0;
+            --accent-cyan: #00d2ff;
+            --accent-blue: #3182ce;
+            --accent-green: #38a169;
+            --accent-red: #e53e3e;
+            --tag-bg: rgba(0, 210, 255, 0.12);
+            --tag-text: #00d2ff;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
 
-    body {
-      background-color: var(--bg-dark);
-      color: var(--text-main);
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
 
-    .glass-header {
-      background: rgba(21, 25, 33, 0.8);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--card-border);
-    }
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            padding: 24px;
+            min-height: 100vh;
+        }
 
-    .search-box {
-      background: #1C222D;
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      border-radius: 12px;
-      padding: 12px 20px;
-      transition: all 0.3s ease;
-    }
+        header {
+            max-width: 1400px;
+            margin: 0 auto 24px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-card);
+            padding-bottom: 16px;
+        }
 
-    .search-box:focus {
-      background: #1C222D;
-      color: var(--text-main);
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
-    }
+        header h1 {
+            font-size: 22px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-    .card-kb {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
+        header h1 i {
+            color: var(--accent-cyan);
+        }
 
-    .card-kb:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      border-color: rgba(0, 240, 255, 0.3);
-    }
+        .search-bar {
+            max-width: 1400px;
+            margin: 0 auto 24px auto;
+            display: flex;
+            gap: 12px;
+        }
 
-    .badge-category {
-      background: rgba(112, 0, 255, 0.15);
-      color: #A855F7;
-      border: 1px solid rgba(112, 0, 255, 0.3);
-      font-size: 0.75rem;
-      padding: 4px 10px;
-      border-radius: 20px;
-    }
+        .search-bar input {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
 
-    .badge-tag {
-      background: rgba(0, 240, 255, 0.08);
-      color: var(--accent-cyan);
-      border: 1px solid rgba(0, 240, 255, 0.2);
-      font-size: 0.7rem;
-      padding: 2px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
+        .search-bar input:focus {
+            border-color: var(--accent-cyan);
+        }
 
-    .badge-tag:hover {
-      background: rgba(0, 240, 255, 0.2);
-    }
+        /* GRID RESPONSIVO: ALINHAMENTO AO TOPO PERMITE ALTURA DINÂMICA POR CARD */
+        .cards-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
+            align-items: start;
+        }
 
-    .badge-score {
-      background: rgba(16, 185, 129, 0.15);
-      color: #10B981;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      font-weight: 700;
-      border-radius: 8px;
-      padding: 2px 8px;
-      font-size: 0.8rem;
-    }
+        .card-kb {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            padding: 18px;
+            box-shadow: var(--shadow);
+            position: relative;
+            transition: transform 0.2s, border-color 0.2s;
+            height: auto;
+        }
 
-    .badge-veredito {
-      background: rgba(245, 158, 11, 0.15);
-      color: #F59E0B;
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      border-radius: 8px;
-      padding: 2px 8px;
-      font-size: 0.75rem;
-    }
+        .card-kb:hover {
+            border-color: rgba(0, 210, 255, 0.4);
+        }
 
-    .btn-cyber {
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-      border: none;
-      color: #FFF;
-      font-weight: 600;
-      border-radius: 10px;
-      padding: 10px 20px;
-      transition: opacity 0.2s ease;
-    }
+        /* TOPO DO CARD: ABAS + AÇÕES */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-card);
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
 
-    .btn-cyber:hover {
-      opacity: 0.9;
-      color: #FFF;
-    }
+        .card-tabs {
+            display: flex;
+            gap: 8px;
+        }
 
-    /* Estilização de Abas internas nos Cards e no Modal */
-    .nav-tabs-cyber {
-      border-bottom: 1px solid var(--card-border);
-    }
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
 
-    .nav-tabs-cyber .nav-link {
-      color: var(--text-muted);
-      border: none;
-      border-bottom: 2px solid transparent;
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
 
-    .nav-tabs-cyber .nav-link:hover {
-      color: var(--text-main);
-      border-color: rgba(0, 240, 255, 0.4);
-    }
+        .tab-btn.active {
+            color: var(--accent-cyan);
+            background: rgba(0, 210, 255, 0.1);
+            border-bottom: 2px solid var(--accent-cyan);
+        }
 
-    .nav-tabs-cyber .nav-link.active {
-      color: var(--accent-cyan);
-      background: transparent;
-      border-bottom: 2px solid var(--accent-cyan);
-      font-weight: 600;
-    }
+        .card-actions {
+            display: flex;
+            gap: 6px;
+        }
 
-    .modal-content {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      border-radius: 16px;
-    }
+        .action-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-card);
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
 
-    .form-control {
-      background: #1C222D;
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      border-radius: 8px;
-    }
+        .action-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.12);
+        }
 
-    .form-control:focus {
-      background: #1C222D;
-      color: var(--text-main);
-      border-color: var(--accent-cyan);
-      box-shadow: none;
-    }
+        .action-btn.copy-btn:hover { color: var(--accent-cyan); border-color: var(--accent-cyan); }
+        .action-btn.edit-btn:hover { color: #4299e1; border-color: #4299e1; }
+        .action-btn.delete-btn:hover { color: var(--accent-red); border-color: var(--accent-red); }
 
-    .pagination .page-link {
-      background: var(--card-bg);
-      border-color: var(--card-border);
-      color: var(--text-main);
-    }
+        /* CONTEÚDO DAS ABAS */
+        .tab-content {
+            display: none;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
 
-    .pagination .page-item.active .page-link {
-      background: var(--accent-cyan);
-      border-color: var(--accent-cyan);
-      color: #000;
-      font-weight: bold;
-    }
+        .tab-content.active {
+            display: block;
+        }
 
-    /* Container de renderização Markdown */
-    .markdown-body {
-      font-size: 0.85rem;
-      line-height: 1.5;
-      color: #D1D5DB;
-    }
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
 
-    .markdown-body h1, .markdown-body h2, .markdown-body h3 {
-      color: var(--accent-cyan);
-      font-size: 1rem;
-      margin-top: 10px;
-      margin-bottom: 5px;
-    }
+        .meta-info {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
 
-    .markdown-body ul, .markdown-body ol {
-      padding-left: 20px;
-      margin-bottom: 10px;
-    }
+        .meta-info p {
+            margin: 4px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
 
-    .markdown-body code {
-      background: #11141A;
-      padding: 2px 5px;
-      border-radius: 4px;
-      color: #F43F5E;
-    }
-  </style>
+        .meta-info strong {
+            color: var(--text-primary);
+        }
+
+        .content-block {
+            margin-bottom: 12px;
+        }
+
+        .content-block h4 {
+            font-size: 13px;
+            color: var(--accent-cyan);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .procedure-box {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-left: 3px solid var(--accent-cyan);
+            border-radius: 4px;
+            padding: 12px;
+            white-space: pre-wrap;
+            font-family: inherit;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-exito { background: rgba(56, 161, 105, 0.2); color: #48bb78; border: 1px solid #48bb78; }
+        .badge-parcial { background: rgba(221, 107, 32, 0.2); color: #ed8936; border: 1px solid #ed8936; }
+        .badge-falha { background: rgba(229, 62, 62, 0.2); color: #f56565; border: 1px solid #f56565; }
+
+        .markdown-render {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 10px;
+            border: 1px solid var(--border-card);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .markdown-render table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 11px;
+        }
+
+        .markdown-render th, .markdown-render td {
+            border: 1px solid var(--border-card);
+            padding: 6px 8px;
+            text-align: left;
+        }
+
+        .card-footer {
+            margin-top: 14px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .category-badge {
+            background: rgba(49, 130, 206, 0.2);
+            color: #63b3ed;
+            border: 1px solid #3182ce;
+            border-radius: 4px;
+            font-size: 11px;
+            padding: 2px 8px;
+            font-weight: 600;
+        }
+
+        .tag {
+            background-color: var(--tag-bg);
+            color: var(--tag-text);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            border-radius: 4px;
+            font-size: 11px;
+            padding: 2px 8px;
+        }
+
+        /* MODAL DE EDIÇÃO */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 650px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            border-bottom: 1px solid var(--border-card);
+            padding-bottom: 12px;
+        }
+
+        .modal-header h3 { color: var(--accent-cyan); font-size: 18px; }
+        .close-modal { background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600; }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-card);
+            border-radius: 6px;
+            padding: 10px;
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            border-top: 1px solid var(--border-card);
+            padding-top: 14px;
+        }
+
+        .btn-save { background: var(--accent-cyan); color: #000; font-weight: 700; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; }
+        .btn-cancel { background: rgba(255, 255, 255, 0.1); color: var(--text-primary); border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--accent-cyan);
+            color: #000;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            box-shadow: var(--shadow);
+            display: none;
+            z-index: 2000;
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <header class="glass-header sticky-top py-3 mb-4">
-    <div class="container d-flex justify-content-between align-items-center">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-cpu fs-3 text-info"></i>
-        <h4 class="m-0 fw-bold">KB <span style="color: var(--accent-cyan);">Support</span></h4>
-      </div>
-      <button class="btn btn-cyber d-flex align-items-center gap-2" onclick="openModal()">
-        <i class="bi bi-plus-lg"></i> Novo Registro
-      </button>
-    </div>
-  </header>
+    <header>
+        <h1><i class="fa-solid fa-brain"></i> SaveinCloud - KB & Quality Audit</h1>
+        <div id="total-count" style="color: var(--text-secondary); font-size: 13px;">Carregando registros...</div>
+    </header>
 
-  <div class="container pb-5">
-    <!-- Search Bar -->
-    <div class="row mb-4">
-      <div class="col-md-8 mx-auto">
-        <div class="position-relative">
-          <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-          <input type="text" id="searchInput" class="form-control search-box ps-5" placeholder="Pesquisar por título, erro, categoria, tag ou veredito..." oninput="onSearchChange()">
-        </div>
-      </div>
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Pesquisar por título, problema, solução, atendente, categoria ou tags..." onkeyup="filterCards()">
     </div>
 
-    <!-- Cards Container -->
-    <div id="cardsContainer" class="row g-4">
-      <div class="text-center py-5 text-muted">
-        <div class="spinner-border text-info" role="status"></div>
-        <p class="mt-2">Carregando registros...</p>
-      </div>
-    </div>
+    <main class="cards-grid" id="cardsGrid"></main>
 
-    <!-- Pagination -->
-    <nav class="mt-5">
-      <ul id="pagination" class="pagination justify-content-center"></ul>
-    </nav>
-  </div>
-
-  <!-- Modal Cadastro/Edição -->
-  <div class="modal fade" id="kbModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header border-secondary">
-          <h5 class="modal-title" id="modalTitle">Novo Registro</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form id="kbForm" onsubmit="saveRecord(event)">
-            <input type="hidden" id="recordId">
-
-            <!-- Navegação de Abas do Modal -->
-            <ul class="nav nav-tabs nav-tabs-cyber mb-3" id="modalTab" role="tablist">
-              <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="modal-solucao-tab" data-bs-toggle="tab" data-bs-target="#modal-solucao-pane" type="button" role="tab"><i class="bi bi-journal-text me-1"></i> 1. Solução / KB</button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="modal-auditoria-tab" data-bs-toggle="tab" data-bs-target="#modal-auditoria-pane" type="button" role="tab"><i class="bi bi-shield-check me-1"></i> 2. Auditoria & QA</button>
-              </li>
-            </ul>
-
-            <div class="tab-content">
-              <!-- Conteúdo da Aba 1: Solução -->
-              <div class="tab-pane fade show active" id="modal-solucao-pane" role="tabpanel">
-                <div class="mb-3">
-                  <label class="form-label">Título do Erro / Procedimento *</label>
-                  <input type="text" id="inputTitulo" class="form-control" required placeholder="Ex: Erro 502 Bad Gateway no Nginx">
-                </div>
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Categoria</label>
-                    <input type="text" id="inputCategoria" class="form-control" placeholder="Ex: Nginx, SSL, PHP">
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Tags (separadas por vírgula)</label>
-                    <input type="text" id="inputTags" class="form-control" placeholder="Ex: erro502, memoria, timeout">
-                  </div>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Descrição do Problema / Metadados</label>
-                  <textarea id="inputDescricao" class="form-control" rows="3" placeholder="Insira detalhes adicionais do atendimento..."></textarea>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Solução / Procedimento *</label>
-                  <textarea id="inputSolucao" class="form-control" rows="5" required placeholder="Descreva os passos executados para solução..."></textarea>
-                </div>
-              </div>
-
-              <!-- Conteúdo da Aba 2: Auditoria -->
-              <div class="tab-pane fade" id="modal-auditoria-pane" role="tabpanel">
-                <div class="row">
-                  <div class="col-md-8 mb-3">
-                    <label class="form-label">Veredito</label>
-                    <input type="text" id="inputVeredito" class="form-control" placeholder="Ex: Resolvido com sucesso, Resolvido Parcialmente">
-                  </div>
-                  <div class="col-md-4 mb-3">
-                    <label class="form-label">Nota Final (0 a 10)</label>
-                    <input type="number" step="0.1" min="0" max="10" id="inputNotaFinal" class="form-control" placeholder="10.0">
-                  </div>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Objetivo do Atendimento</label>
-                  <textarea id="inputObjetivo" class="form-control" rows="2" placeholder="Qual era o objetivo principal do suporte?"></textarea>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Oportunidade de Prestação de Serviços (PS)</label>
-                  <textarea id="inputOportunidadePs" class="form-control" rows="2" placeholder="Oportunidades de upsell ou melhorias identificadas..."></textarea>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Relatório Final (Markdown)</label>
-                  <textarea id="inputRelatorioMarkdown" class="form-control" rows="5" placeholder="Insira o relatório detalhado em formato Markdown..."></textarea>
-                </div>
-              </div>
+    <!-- MODAL DE EDIÇÃO -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen-to-square"></i> Editar Registro</h3>
+                <button class="close-modal" onclick="closeEditModal()">&times;</button>
             </div>
-
-            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top border-secondary">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="submit" class="btn btn-cyber">Salvar Registro</button>
-            </div>
-          </form>
+            <form id="editForm" onsubmit="saveCardEdit(event)">
+                <input type="hidden" id="edit_id">
+                <div class="form-group"><label>Título</label><input type="text" id="edit_titulo" required></div>
+                <div class="form-group"><label>Categoria</label><input type="text" id="edit_categoria" required></div>
+                <div class="form-group"><label>Problema Relatado</label><textarea id="edit_problema" required></textarea></div>
+                <div class="form-group"><label>Solução / Procedimento</label><textarea id="edit_solucao" rows="6" required></textarea></div>
+                <div class="form-group"><label>Tags (separadas por vírgula)</label><input type="text" id="edit_tags"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar Alterações</button>
+                </div>
+            </form>
         </div>
-      </div>
     </div>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    let currentPage = 1;
-    let searchTimeout = null;
-    const modal = new bootstrap.Modal(document.getElementById('kbModal'));
+    <div class="toast" id="toast">Ação realizada com sucesso!</div>
 
-    document.addEventListener('DOMContentLoaded', () => {
-      fetchData(currentPage);
-    });
+    <script>
+        let allRecords = [];
 
-    function onSearchChange() {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        currentPage = 1;
-        fetchData(currentPage);
-      }, 300);
-    }
+        document.addEventListener('DOMContentLoaded', fetchRecords);
 
-    async function fetchData(page = 1) {
-      const search = document.getElementById('searchInput').value.trim();
-      const container = document.getElementById('cardsContainer');
-      
-      try {
-        const res = await fetch(`api.php?search=${encodeURIComponent(search)}&page=${page}&limit=9`);
-        const result = await res.json();
-
-        if (result.error) {
-          container.innerHTML = `<div class="alert alert-danger">${result.error}</div>`;
-          return;
+        async function fetchRecords() {
+            try {
+                const response = await fetch('api.php?action=list');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    allRecords = data.data;
+                    renderCards(allRecords);
+                }
+            } catch (err) {
+                console.error(err);
+            }
         }
 
-        renderCards(result.data);
-        renderPagination(result.total_pages, result.page);
-      } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger">Erro ao carregar dados da API.</div>`;
-      }
-    }
+        function renderCards(records) {
+            const grid = document.getElementById('cardsGrid');
+            document.getElementById('total-count').innerText = `${records.length} registro(s) encontrado(s)`;
+            
+            if (records.length === 0) {
+                grid.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1; text-align: center; padding: 40px;">Nenhum atendimento registrado.</p>';
+                return;
+            }
 
-    function renderCards(data) {
-      const container = document.getElementById('cardsContainer');
-      if (!data || data.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-5 text-muted">
-            <i class="bi bi-inbox fs-1"></i>
-            <p class="mt-2">Nenhum registro encontrado.</p>
-          </div>`;
-        return;
-      }
-
-      container.innerHTML = data.map((item) => {
-        const tagsHtml = item.tags ? item.tags.split(',').map(tag => 
-          `<span class="badge-tag" onclick="filterByTag('${tag.trim()}')">#${tag.trim()}</span>`
-        ).join(' ') : '';
-
-        const hasAuditoria = item.veredito || item.nota_final || item.relatorio_markdown || item.objetivo;
-
-        // Renderiza Markdown do relatório se existir
-        const markdownRendered = item.relatorio_markdown ? marked.parse(item.relatorio_markdown) : '';
-
-        return `
-          <div class="col-md-6 col-lg-4">
-            <div class="card-kb p-4">
-              <!-- Header do Card -->
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <span class="badge-category">${item.categoria || 'Geral'}</span>
-                  ${item.nota_final !== null && item.nota_final !== undefined ? `<span class="badge-score"><i class="bi bi-star-fill me-1"></i>${parseFloat(item.nota_final).toFixed(1)}</span>` : ''}
-                </div>
-                <div class="dropdown">
-                  <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown">
-                    <i class="bi bi-three-dots-vertical"></i>
-                  </button>
-                  <ul class="dropdown-menu dropdown-menu-dark">
-                    <li><a class="dropdown-item" href="#" onclick="editRecord(${JSON.stringify(item).replace(/"/g, '&quot;')})"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteRecord(${item.id})"><i class="bi bi-trash me-2"></i>Excluir</a></li>
-                  </ul>
-                </div>
-              </div>
-              
-              <h5 class="fw-bold mb-2">${item.titulo}</h5>
-
-              <!-- Navegação de Abas do Card -->
-              <ul class="nav nav-tabs nav-tabs-cyber mb-3" role="tablist">
-                <li class="nav-item" role="presentation">
-                  <button class="nav-link active" id="card-sol-${item.id}-tab" data-bs-toggle="tab" data-bs-target="#card-sol-${item.id}" type="button" role="tab"><i class="bi bi-check2-circle me-1"></i>Solução</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                  <button class="nav-link ${!hasAuditoria ? 'disabled' : ''}" id="card-aud-${item.id}-tab" data-bs-toggle="tab" data-bs-target="#card-aud-${item.id}" type="button" role="tab"><i class="bi bi-shield-check me-1"></i>Auditoria</button>
-                </li>
-              </ul>
-
-              <!-- Conteúdo das Abas -->
-              <div class="tab-content flex-grow-1 d-flex flex-column mb-3">
+            grid.innerHTML = records.map(item => {
+                const sol = item.aba_solucao || {};
+                const aud = item.aba_auditoria || item.aba_auditoria_qualidade || {};
                 
-                <!-- Aba Solução -->
-                <div class="tab-pane fade show active flex-grow-1" id="card-sol-${item.id}" role="tabpanel">
-                  ${item.descricao ? `<p class="text-muted small mb-2" style="white-space: pre-line;">${item.descricao}</p>` : ''}
-                  <div class="bg-dark p-3 rounded-3 border border-secondary border-opacity-25 h-100">
-                    <small class="text-info fw-bold d-block mb-1"><i class="bi bi-wrench me-1"></i>Procedimento:</small>
-                    <div class="small" style="white-space: pre-line;">${item.solucao}</div>
-                  </div>
-                </div>
+                const tagsList = Array.isArray(sol.tags) ? sol.tags : (sol.tags ? sol.tags.split(',') : []);
+                const tagsHtml = tagsList.map(t => `<span class="tag">#${t.trim().replace(/^#/, '')}</span>`).join('');
+                
+                const veredito = aud.veredito_exito || aud.veredito || 'Não informado';
+                let badgeClass = 'badge-exito';
+                if (veredito.toLowerCase().includes('parcial')) badgeClass = 'badge-parcial';
+                if (veredito.toLowerCase().includes('não') || veredito.toLowerCase().includes('falha')) badgeClass = 'badge-falha';
 
-                <!-- Aba Auditoria -->
-                <div class="tab-pane fade flex-grow-1" id="card-aud-${item.id}" role="tabpanel">
-                  <div class="bg-dark p-3 rounded-3 border border-secondary border-opacity-25 h-100 small">
-                    ${item.veredito ? `<div class="mb-2"><span class="badge-veredito"><i class="bi bi-award me-1"></i>${item.veredito}</span></div>` : ''}
-                    ${item.objetivo ? `<div class="mb-2"><strong class="text-info">Objetivo:</strong> ${item.objetivo}</div>` : ''}
-                    ${item.oportunidade_ps ? `<div class="mb-2"><strong class="text-warning">Oportunidade PS:</strong> ${item.oportunidade_ps}</div>` : ''}
-                    ${markdownRendered ? `<div class="markdown-body border-top border-secondary border-opacity-25 pt-2 mt-2">${markdownRendered}</div>` : ''}
-                  </div>
-                </div>
+                const fullTextToCopy = `TITULO: ${sol.titulo || ''}\n\nPROBLEMA:\n${sol.problema || ''}\n\nSOLUÇÃO:\n${sol.solucao || ''}`;
 
-              </div>
+                return `
+                <div class="card-kb" id="card-${item.id}">
+                    <div class="card-header">
+                        <div class="card-tabs">
+                            <button class="tab-btn active" onclick="switchTab(this, 'solucao')"><i class="fa-solid fa-circle-check"></i> Solução</button>
+                            <button class="tab-btn" onclick="switchTab(this, 'auditoria')"><i class="fa-solid fa-shield-halved"></i> Auditoria</button>
+                        </div>
+                        <div class="card-actions">
+                            <button class="action-btn copy-btn" title="Copiar Solução" onclick="copyCardContent(\`${escapeText(fullTextToCopy)}\`)"><i class="fa-regular fa-copy"></i></button>
+                            <button class="action-btn edit-btn" title="Editar Registro" onclick="openEditModal(${item.id})"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="action-btn delete-btn" title="Excluir Registro" onclick="deleteCard(${item.id})"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
 
-              <!-- Tags -->
-              <div class="d-flex flex-wrap gap-1 mt-auto">
-                ${tagsHtml}
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
+                    <div class="tab-content solucao active">
+                        <div class="card-title">${sol.titulo || 'Atendimento sem título'}</div>
+                        <div class="meta-info">
+                            <p><strong><i class="fa-solid fa-user-gear"></i> Atendente:</strong> ${item.atendente_nome || 'N/I'}</p>
+                            <p><strong><i class="fa-solid fa-envelope"></i> Email:</strong> ${item.cliente_email || 'N/I'}</p>
+                            <p><strong><i class="fa-regular fa-clock"></i> Início:</strong> ${item.hora_inicio || 'N/I'} | <strong>Fim:</strong> ${item.hora_finalizacao || 'N/I'}</p>
+                        </div>
+                        ${sol.problema ? `<div class="content-block"><h4><i class="fa-solid fa-triangle-exclamation"></i> Problema Relatado:</h4><p style="color: var(--text-secondary);">${sol.problema}</p></div>` : ''}
+                        <div class="content-block">
+                            <h4><i class="fa-solid fa-wrench"></i> Procedimento / Solução:</h4>
+                            <div class="procedure-box">${sol.solucao || 'Sem descrição da solução.'}</div>
+                        </div>
+                    </div>
 
-    function filterByTag(tag) {
-      document.getElementById('searchInput').value = tag;
-      fetchData(1);
-    }
+                    <div class="tab-content auditoria">
+                        <div class="meta-info">
+                            <p><strong><i class="fa-solid fa-bullseye"></i> Objetivo:</strong> ${aud.objetivo_atendimento || aud.objetivo || 'N/I'}</p>
+                            <p><strong><i class="fa-solid fa-chart-line"></i> Veredito:</strong> <span class="badge ${badgeClass}">${veredito}</span></p>
+                            <p><strong><i class="fa-solid fa-star" style="color: #ecc94b;"></i> Nota Final:</strong> ${aud.nota_final || 'N/A'}</p>
+                            ${aud.oportunidade_comercial || aud.oportunidade_ps ? `<p><strong><i class="fa-solid fa-hand-holding-dollar"></i> Oportunidade PS:</strong> ${aud.oportunidade_comercial || aud.oportunidade_ps}</p>` : ''}
+                        </div>
+                        ${aud.relatorio_markdown ? `<div class="content-block"><h4><i class="fa-solid fa-file-contract"></i> Relatório de Auditoria:</h4><div class="markdown-render">${marked.parse(aud.relatorio_markdown)}</div></div>` : ''}
+                    </div>
 
-    function renderPagination(totalPages, page) {
-      const nav = document.getElementById('pagination');
-      if (totalPages <= 1) {
-        nav.innerHTML = '';
-        return;
-      }
-
-      let html = '';
-      for (let i = 1; i <= totalPages; i++) {
-        html += `
-          <li class="page-item ${i === page ? 'active' : ''}">
-            <button class="page-link" onclick="goToPage(${i})">${i}</button>
-          </li>
-        `;
-      }
-      nav.innerHTML = html;
-    }
-
-    function goToPage(page) {
-      currentPage = page;
-      fetchData(currentPage);
-    }
-
-    function openModal() {
-      document.getElementById('recordId').value = '';
-      document.getElementById('kbForm').reset();
-      document.getElementById('modalTitle').innerText = 'Novo Registro';
-      
-      // Reseta para a primeira aba
-      const firstTab = new bootstrap.Tab(document.getElementById('modal-solucao-tab'));
-      firstTab.show();
-
-      modal.show();
-    }
-
-    function editRecord(item) {
-      document.getElementById('recordId').value = item.id;
-      
-      // Aba Solução
-      document.getElementById('inputTitulo').value = item.titulo || '';
-      document.getElementById('inputCategoria').value = item.categoria || '';
-      document.getElementById('inputTags').value = item.tags || '';
-      document.getElementById('inputDescricao').value = item.descricao || '';
-      document.getElementById('inputSolucao').value = item.solucao || '';
-
-      // Aba Auditoria
-      document.getElementById('inputVeredito').value = item.veredito || '';
-      document.getElementById('inputNotaFinal').value = item.nota_final !== null ? item.nota_final : '';
-      document.getElementById('inputObjetivo').value = item.objetivo || '';
-      document.getElementById('inputOportunidadePs').value = item.oportunidade_ps || '';
-      document.getElementById('inputRelatorioMarkdown').value = item.relatorio_markdown || '';
-
-      document.getElementById('modalTitle').innerText = 'Editar Registro';
-
-      // Reseta para a primeira aba
-      const firstTab = new bootstrap.Tab(document.getElementById('modal-solucao-tab'));
-      firstTab.show();
-
-      modal.show();
-    }
-
-    async function saveRecord(event) {
-      event.preventDefault();
-      const id = document.getElementById('recordId').value;
-      
-      const payload = {
-        id: id ? parseInt(id) : undefined,
-        titulo: document.getElementById('inputTitulo').value.trim(),
-        categoria: document.getElementById('inputCategoria').value.trim(),
-        tags: document.getElementById('inputTags').value.trim(),
-        descricao: document.getElementById('inputDescricao').value.trim(),
-        solucao: document.getElementById('inputSolucao').value.trim(),
-        veredito: document.getElementById('inputVeredito').value.trim(),
-        nota_final: document.getElementById('inputNotaFinal').value !== '' ? parseFloat(document.getElementById('inputNotaFinal').value) : null,
-        objetivo: document.getElementById('inputObjetivo').value.trim(),
-        oportunidade_ps: document.getElementById('inputOportunidadePs').value.trim(),
-        relatorio_markdown: document.getElementById('inputRelatorioMarkdown').value.trim()
-      };
-
-      const method = id ? 'PUT' : 'POST';
-
-      try {
-        const res = await fetch('api.php', {
-          method: method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        const result = await res.json();
-        if (result.success) {
-          modal.hide();
-          fetchData(currentPage);
-        } else {
-          alert('Erro ao salvar: ' + (result.error || 'Erro desconhecido'));
+                    <div class="card-footer">
+                        ${sol.categoria ? `<span class="category-badge"><i class="fa-solid fa-folder"></i> ${sol.categoria}</span>` : ''}
+                        ${tagsHtml}
+                    </div>
+                </div>`;
+            }).join('');
         }
-      } catch (err) {
-        alert('Erro de comunicação com o servidor.');
-      }
-    }
 
-    async function deleteRecord(id) {
-      if (!confirm('Deseja realmente excluir este registro?')) return;
-
-      try {
-        const res = await fetch(`api.php?id=${id}`, { method: 'DELETE' });
-        const result = await res.json();
-        if (result.success) {
-          fetchData(currentPage);
-        } else {
-          alert('Erro ao excluir registro.');
+        function switchTab(btnElement, tabName) {
+            const card = btnElement.closest('.card-kb');
+            card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            card.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btnElement.classList.add('active');
+            const target = card.querySelector(`.tab-content.${tabName}`);
+            if (target) target.classList.add('active');
         }
-      } catch (err) {
-        alert('Erro na requisição de exclusão.');
-      }
-    }
-  </script>
+
+        function copyCardContent(text) {
+            navigator.clipboard.writeText(text).then(() => showToast("Conteúdo copiado com sucesso!"));
+        }
+
+        async function deleteCard(id) {
+            if (!confirm('Deseja excluir este registro permanentemente?')) return;
+            const res = await (await fetch(`api.php?action=delete&id=${id}`, { method: 'DELETE' })).json();
+            if (res.status === 'success') {
+                showToast('Registro excluído!');
+                allRecords = allRecords.filter(r => r.id != id);
+                renderCards(allRecords);
+            }
+        }
+
+        function openEditModal(id) {
+            const record = allRecords.find(r => r.id == id);
+            if (!record) return;
+            const sol = record.aba_solucao || {};
+            document.getElementById('edit_id').value = record.id;
+            document.getElementById('edit_titulo').value = sol.titulo || '';
+            document.getElementById('edit_categoria').value = sol.categoria || '';
+            document.getElementById('edit_problema').value = sol.problema || '';
+            document.getElementById('edit_solucao').value = sol.solucao || '';
+            document.getElementById('edit_tags').value = Array.isArray(sol.tags) ? sol.tags.join(', ') : (sol.tags || '');
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() { document.getElementById('editModal').classList.remove('active'); }
+
+        async function saveCardEdit(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit_id').value;
+            const payload = {
+                id: id,
+                aba_solucao: {
+                    titulo: document.getElementById('edit_titulo').value,
+                    categoria: document.getElementById('edit_categoria').value,
+                    problema: document.getElementById('edit_problema').value,
+                    solucao: document.getElementById('edit_solucao').value,
+                    tags: document.getElementById('edit_tags').value.split(',').map(t => t.trim()).filter(t => t)
+                }
+            };
+            const res = await (await fetch('api.php?action=update', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })).json();
+
+            if (res.status === 'success') {
+                showToast('Atualizado com sucesso!');
+                closeEditModal();
+                fetchRecords();
+            }
+        }
+
+        function filterCards() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allRecords.filter(item => {
+                const sol = item.aba_solucao || {};
+                const searchStr = [sol.titulo, sol.problema, sol.solucao, sol.categoria, item.atendente_nome, item.cliente_email].join(' ').toLowerCase();
+                return searchStr.includes(term);
+            });
+            renderCards(filtered);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        function escapeText(str) {
+            return str.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        }
+    </script>
 </body>
 </html>
