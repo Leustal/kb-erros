@@ -10,12 +10,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Configurações do Banco de Dados
-$db_host = 'localhost';
-$db_name = 'seu_banco_de_dados';
-$db_user = 'seu_usuario';
-$db_pass = 'sua_senha';
-$tabela  = 'sua_tabela';
+// -------------------------------------------------------------
+// LEITURA DO .ENV E CONEXÃO COM O BANCO DE DADOS
+// -------------------------------------------------------------
+$envPath = __DIR__ . '/.env';
+
+// Se o arquivo .env não estiver no mesmo diretório público, tenta na raiz (/var/www/webroot/ROOT)
+if (!file_exists($envPath)) {
+    $envPath = dirname(__DIR__) . '/.env';
+}
+
+if (file_exists($envPath)) {
+    $env = parse_ini_file($envPath);
+    $db_host = $env['DB_HOST'] ?? 'localhost';
+    $db_name = $env['DB_DATABASE'] ?? $env['DB_NAME'] ?? '';
+    $db_user = $env['DB_USERNAME'] ?? $env['DB_USER'] ?? '';
+    $db_pass = $env['DB_PASSWORD'] ?? $env['DB_PASS'] ?? '';
+    $tabela  = $env['DB_TABLE'] ?? 'sua_tabela';
+} else {
+    // Fallback para variáveis injetadas no ambiente do servidor
+    $db_host = getenv('DB_HOST') ?: 'localhost';
+    $db_name = getenv('DB_DATABASE') ?: getenv('DB_NAME');
+    $db_user = getenv('DB_USERNAME') ?: getenv('DB_USER');
+    $db_pass = getenv('DB_PASSWORD') ?: getenv('DB_PASS');
+    $tabela  = getenv('DB_TABLE') ?: 'sua_tabela';
+}
 
 try {
     $pdo = new PDO("mysql:host={$db_host};dbname={$db_name};charset=utf8mb4", $db_user, $db_pass, [
@@ -30,7 +49,9 @@ try {
 
 $action = $_GET['action'] ?? 'list';
 
+// -------------------------------------------------------------
 // ROUTER: UPDATE / CREATE (POST)
+// -------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action === 'create') {
     
     // Captura o Payload JSON bruto do corpo da requisição
@@ -44,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action ===
 
     $id = $data['id'] ?? ($_GET['id'] ?? null);
 
-    // Extração flexível do 'titulo' (suporta estrutura aninhada do frontend ou direta)
+    // Extração flexível do 'titulo' (suporta objeto aninhado ou valor na raiz)
     $titulo = '';
     if (isset($data['aba_solucao']['titulo'])) {
         $titulo = trim($data['aba_solucao']['titulo']);
@@ -81,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action ===
 
     try {
         if ($id) {
-            // Lógica de Atualização (UPDATE)
+            // UPDATE
             $sql = "UPDATE {$tabela} SET 
                         titulo = :titulo,
                         categoria = :categoria,
@@ -97,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action ===
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         } else {
-            // Lógica de Criação (INSERT)
+            // INSERT
             $sql = "INSERT INTO {$tabela} 
                         (titulo, categoria, tags, descricao, solucao, nota_final, veredito, objetivo, oportunidade_ps) 
                     VALUES 
@@ -132,7 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action ===
     exit;
 }
 
+// -------------------------------------------------------------
 // ROUTER: DELETE
+// -------------------------------------------------------------
 if ($action === 'delete') {
     $id = $_GET['id'] ?? null;
 
@@ -155,7 +178,9 @@ if ($action === 'delete') {
     exit;
 }
 
+// -------------------------------------------------------------
 // ROUTER: LIST / SEARCH (Default GET)
+// -------------------------------------------------------------
 $search = trim($_GET['search'] ?? '');
 $page   = max(1, intval($_GET['page'] ?? 1));
 $limit  = max(1, intval($_GET['limit'] ?? 10));
