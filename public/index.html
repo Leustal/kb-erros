@@ -1,484 +1,768 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Documentação</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SaveInCloud - KB & Quality Audit</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+  <style>
+    :root {
+      --bg-body: #0b0f19;
+      --bg-card: #151d30;
+      --bg-input: #1b253d;
+      --bg-tag: #0284c720;
+      --bg-badge: #0f172a;
+      --bg-tab-active: #06b6d4;
+      --border-color: #24314d;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-highlight: #38bdf8;
+      --shadow-color: rgba(0, 0, 0, 0.35);
+      --btn-danger: #ef4444;
+      --btn-warning: #f59e0b;
+    }
 
-        body {
-            background-color: #121214;
-            color: #e1e1e6;
-            padding: 20px;
-        }
+    [data-theme="light"] {
+      --bg-body: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-input: #ffffff;
+      --bg-tag: #e0f2fe;
+      --bg-badge: #e2e8f0;
+      --bg-tab-active: #0284c7;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-highlight: #0284c7;
+      --shadow-color: rgba(0, 0, 0, 0.05);
+      --btn-danger: #dc2626;
+      --btn-warning: #d97706;
+    }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+    }
 
-        h1 {
-            margin-bottom: 20px;
-            color: #00b37e;
-        }
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
 
-        .search-bar {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
 
-        .search-bar input {
-            flex: 1;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #29292e;
-            background: #202024;
-            color: #fff;
-        }
+    .title-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #202024;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
+    .title-container h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
 
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #29292e;
-        }
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+      background-color: #06b6d4;
+      border-radius: 50%;
+      box-shadow: 0 0 12px #06b6d480;
+    }
 
-        th {
-            background-color: #29292e;
-            color: #00b37e;
-        }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
 
-        tr:hover {
-            background-color: #29292e;
-        }
+    .theme-toggle-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px var(--shadow-color);
+    }
 
-        .btn {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
+    .status-loading {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
 
-        .btn-primary { background: #00b37e; color: #fff; }
-        .btn-primary:hover { background: #00875f; }
-        .btn-danger { background: #f75a68; color: #fff; }
-        .btn-danger:hover { background: #c8424f; }
-        .btn-secondary { background: #323238; color: #8d8d99; }
-        .btn-secondary:hover { background: #29292e; }
+    .search-container {
+      margin-bottom: 24px;
+    }
 
-        /* Estilos do Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+    .search-input {
+      width: 100%;
+      padding: 16px 20px;
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+      box-shadow: 0 6px 16px var(--shadow-color);
+    }
 
-        .modal-overlay.active {
-            display: flex;
-        }
+    .search-input:focus {
+      border-color: var(--text-highlight);
+    }
 
-        .modal-content {
-            background: #202024;
-            width: 90%;
-            max-width: 700px;
-            border-radius: 8px;
-            padding: 24px;
-            border: 1px solid #323238;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
+    .cards-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 8px 24px var(--shadow-color);
+    }
 
-        /* Abas */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            border-bottom: 1px solid #323238;
-            margin-bottom: 20px;
-        }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
 
-        .tab-btn {
-            background: none;
-            border: none;
-            color: #8d8d99;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 16px;
-            border-bottom: 2px solid transparent;
-        }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-highlight);
+      line-height: 1.4;
+    }
 
-        .tab-btn.active {
-            color: #00b37e;
-            border-bottom-color: #00b37e;
-            font-weight: bold;
-        }
+    .card-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-        .tab-content {
-            display: none;
-        }
+    .badge {
+      background-color: var(--bg-badge);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
 
-        .tab-content.active {
-            display: block;
-        }
+    .btn-action {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+    .btn-action:hover {
+      border-color: var(--text-highlight);
+    }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #c4c4cc;
-        }
+    .btn-edit {
+      color: var(--btn-warning);
+    }
 
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            background: #121214;
-            border: 1px solid #323238;
-            border-radius: 4px;
-            color: #fff;
-            resize: vertical;
-        }
+    .btn-delete {
+      color: var(--btn-danger);
+    }
 
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
+    .card-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
 
-        /* Paginação */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 5px;
-            align-items: center;
-        }
-    </style>
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background-color: var(--bg-tab-active);
+      color: #ffffff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card-section {
+      margin-bottom: 16px;
+    }
+
+    .card-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .card-text {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-main);
+      white-space: pre-wrap;
+    }
+
+    .audit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .audit-item {
+      background-color: var(--bg-body);
+      border: 1px solid var(--border-color);
+      padding: 12px 16px;
+      border-radius: 12px;
+    }
+
+    .audit-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .audit-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .tags-container {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .tag {
+      background-color: var(--bg-tag);
+      color: var(--text-highlight);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-top: 36px;
+    }
+
+    .pagination button {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 4px 12px var(--shadow-color);
+    }
+
+    .pagination button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .empty-message {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    /* Modal de Edição */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      width: 90%;
+      max-width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    textarea.form-control {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn-save {
+      background-color: var(--bg-tab-active);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Documentações e Chamados</h1>
-
-    <div class="search-bar">
-        <input type="text" id="input-search" placeholder="Pesquisar por título, problema, solução, tags..." onkeyup="filtrarDados()">
+  <header class="header">
+    <div class="title-container">
+      <span class="logo-icon"></span>
+      <h1>SaveInCloud - KB & Quality Audit</h1>
     </div>
+    <div class="header-actions">
+      <div id="status-loading" class="status-loading">Carregando registros...</div>
+      <button id="theme-toggle" class="theme-toggle-btn">
+        <span id="theme-icon">🌙</span> <span id="theme-text">Escuro</span>
+      </button>
+    </div>
+  </header>
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Título</th>
-                <th>Categoria</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="table-body">
-            <!-- Os dados serão injetados via JS -->
-        </tbody>
-    </table>
+  <main>
+    <section class="search-container">
+      <input 
+        type="text" 
+        id="search-input" 
+        class="search-input" 
+        placeholder="Pesquisar por título, problema, solução, atendente, categoria ou tags..."
+        autocomplete="off"
+      >
+    </section>
 
-    <div class="pagination" id="pagination"></div>
-</div>
+    <section id="cards-container" class="cards-grid"></section>
 
-<!-- Modal de Edição -->
-<div class="modal-overlay" id="modal-edit">
+    <nav class="pagination">
+      <button id="btn-prev" disabled>Anterior</button>
+      <span id="page-info" style="font-size: 0.9rem; color: var(--text-muted);">Página 1</span>
+      <button id="btn-next" disabled>Próxima</button>
+    </nav>
+  </main>
+
+  <!-- Modal de Edição -->
+  <div id="modal-edit" class="modal-overlay">
     <div class="modal-content">
-        <div class="modal-header">
-            <h2>Editar Registro #<span id="modal-id-label"></span></h2>
-            <button class="btn btn-secondary" onclick="fecharModal()">X</button>
+      <div class="modal-header">
+        <h3 style="color: var(--text-highlight);">Editar Registro</h3>
+        <button class="btn-action" onclick="closeModal()">✕</button>
+      </div>
+      <form id="form-edit" onsubmit="salvarEdicao(event)">
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+          <label>Título</label>
+          <input type="text" id="edit-titulo" class="form-control">
         </div>
-
-        <!-- Navegação das Abas -->
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('aba-solucao')">Solução</button>
-            <button class="tab-btn" onclick="switchTab('aba-auditoria')">Auditoria</button>
+        <div class="form-group">
+          <label>Categoria</label>
+          <input type="text" id="edit-categoria" class="form-control">
         </div>
-
-        <form id="form-edit" onsubmit="salvarEdicao(event)">
-            <input type="hidden" id="edit-id">
-
-            <!-- ABA 1: SOLUÇÃO -->
-            <div id="aba-solucao" class="tab-content active">
-                <div class="form-group">
-                    <label for="edit-titulo">Título</label>
-                    <!-- required removido para permitir salvar vazio -->
-                    <input type="text" id="edit-titulo">
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-categoria">Categoria</label>
-                    <input type="text" id="edit-categoria">
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-tags">Tags</label>
-                    <input type="text" id="edit-tags">
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-descricao">Descrição / Problema</label>
-                    <textarea id="edit-descricao" rows="4"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-solucao">Solução</label>
-                    <!-- required removido para permitir salvar vazio -->
-                    <textarea id="edit-solucao" rows="4"></textarea>
-                </div>
-            </div>
-
-            <!-- ABA 2: AUDITORIA -->
-            <div id="aba-auditoria" class="tab-content">
-                <div class="form-group">
-                    <label for="edit-nota">Nota Final</label>
-                    <input type="number" step="0.1" id="edit-nota">
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-veredito">Veredito</label>
-                    <input type="text" id="edit-veredito">
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-objetivo">Objetivo</label>
-                    <textarea id="edit-objetivo" rows="3"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-oportunidade">Oportunidade PS</label>
-                    <textarea id="edit-oportunidade" rows="3"></textarea>
-                </div>
-            </div>
-
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-            </div>
-        </form>
+        <div class="form-group">
+          <label>Tags (separadas por vírgula)</label>
+          <input type="text" id="edit-tags" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Descrição / Problema</label>
+          <textarea id="edit-descricao" class="form-control"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Solução</label>
+          <textarea id="edit-solucao" class="form-control"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Nota Final</label>
+          <input type="number" step="0.1" id="edit-nota" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Veredito</label>
+          <input type="text" id="edit-veredito" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Objetivo</label>
+          <textarea id="edit-objetivo" class="form-control"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Oportunidade PS</label>
+          <textarea id="edit-oportunidade" class="form-control"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
+          <button type="submit" class="btn-save">Salvar Alterações</button>
+        </div>
+      </form>
     </div>
-</div>
+  </div>
 
-<script>
-    let registros = [];
+  <script>
     let currentPage = 1;
+    let currentSearch = '';
+    let debounceTimer = null;
+    let registrosCache = [];
 
-    document.addEventListener('DOMContentLoaded', () => {
-        carregarDados();
+    const searchInput = document.getElementById('search-input');
+    const cardsContainer = document.getElementById('cards-container');
+    const statusLoading = document.getElementById('status-loading');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    const pageInfo = document.getElementById('page-info');
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem('kb_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeUI(savedTheme);
+    }
+
+    function updateThemeUI(theme) {
+      themeIcon.innerText = theme === 'light' ? '☀️' : '🌙';
+      themeText.innerText = theme === 'light' ? 'Claro' : 'Escuro';
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('kb_theme', newTheme);
+      updateThemeUI(newTheme);
     });
 
-    // Carregar os dados da API
-    async function carregarDados(page = 1) {
-        const search = document.getElementById('input-search').value;
-        try {
-            const response = await fetch(`api.php?action=read&page=${page}&search=${encodeURIComponent(search)}`);
-            const result = await response.json();
-            
-            registros = result.data || [];
-            renderTabela(registros);
-            renderPaginacao(result.total_pages, result.page);
-        } catch (error) {
-            console.error('Erro ao carregar registros:', error);
-        }
+    async function carregarRegistros(busca = '', pagina = 1) {
+      statusLoading.innerText = 'Carregando registros...';
+      try {
+        const response = await fetch(`./api.php?search=${encodeURIComponent(busca)}&page=${pagina}&limit=10`);
+        if (!response.ok) throw new Error(`Erro na requisição: ${response.status}`);
+
+        const json = await response.json();
+        registrosCache = Array.isArray(json) ? json : (json.data || []);
+        const totalPaginas = json.total_pages || 1;
+
+        renderizarCards(registrosCache);
+        atualizarPaginacao(pagina, totalPaginas);
+        statusLoading.innerText = '';
+      } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        statusLoading.innerText = 'Erro ao carregar registros.';
+        cardsContainer.innerHTML = '<div class="empty-message">Erro ao conectar com a API. Verifique o console.</div>';
+      }
     }
 
-    // Renderizar tabela de exibição
-    function renderTabela(dados) {
-        const tbody = document.getElementById('table-body');
-        tbody.innerHTML = '';
+    function renderizarCards(registros) {
+      if (!registros || registros.length === 0) {
+        cardsContainer.innerHTML = '<div class="empty-message">Nenhum registro encontrado.</div>';
+        return;
+      }
 
-        if (dados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Nenhum registro encontrado.</td></tr>';
-            return;
-        }
+      cardsContainer.innerHTML = registros.map(item => {
+        const categoria = item.categoria || 'Geral';
+        const tagsArray = item.tags ? item.tags.split(',').filter(t => t.trim() !== '') : [];
 
-        dados.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${item.id}</td>
-                <td>${escapeHtml(item.titulo || '(Sem título)')}</td>
-                <td>${escapeHtml(item.categoria || '-')}</td>
-                <td>
-                    <button class="btn btn-primary" onclick="abrirModal(${item.id})">Editar</button>
-                    <button class="btn btn-danger" onclick="deletarRegistro(${item.id})">Excluir</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+        return `
+          <article class="card">
+            <header class="card-header">
+              <div>
+                <h2 class="card-title">${escapeHtml(item.titulo || 'Sem Título')}</h2>
+              </div>
+              <div class="card-header-actions">
+                <span class="badge">${escapeHtml(categoria)}</span>
+                <button class="btn-action btn-edit" onclick="openEditModal(${item.id})">✎ Editar</button>
+                <button class="btn-action btn-delete" onclick="excluirRegistro(${item.id})">🗑 Excluir</button>
+              </div>
+            </header>
+
+            <div class="card-tabs">
+              <button class="tab-btn active" onclick="switchTab(this, 'tab-solucao-${item.id}')">Solução KB</button>
+              <button class="tab-btn" onclick="switchTab(this, 'tab-qualidade-${item.id}')">Auditoria de Qualidade</button>
+            </div>
+
+            <div id="tab-solucao-${item.id}" class="tab-content active">
+              ${item.descricao ? `
+                <div class="card-section">
+                  <div class="card-section-title">Descrição / Problema</div>
+                  <div class="card-text">${escapeHtml(item.descricao)}</div>
+                </div>
+              ` : ''}
+              ${item.solucao ? `
+                <div class="card-section">
+                  <div class="card-section-title">Solução</div>
+                  <div class="card-text">${escapeHtml(item.solucao)}</div>
+                </div>
+              ` : ''}
+            </div>
+
+            <div id="tab-qualidade-${item.id}" class="tab-content">
+              <div class="audit-grid">
+                <div class="audit-item">
+                  <div class="audit-label">Nota Final</div>
+                  <div class="audit-value">${item.nota_final !== null && item.nota_final !== undefined ? item.nota_final : 'N/A'}</div>
+                </div>
+                <div class="audit-item">
+                  <div class="audit-label">Veredito</div>
+                  <div class="audit-value">${escapeHtml(item.veredito || 'Não avaliado')}</div>
+                </div>
+              </div>
+              ${item.objetivo ? `
+                <div class="card-section">
+                  <div class="card-section-title">Objetivo</div>
+                  <div class="card-text">${escapeHtml(item.objetivo)}</div>
+                </div>
+              ` : ''}
+              ${item.oportunidade_ps ? `
+                <div class="card-section">
+                  <div class="card-section-title">Oportunidade PS</div>
+                  <div class="card-text">${escapeHtml(item.oportunidade_ps)}</div>
+                </div>
+              ` : ''}
+            </div>
+
+            ${tagsArray.length > 0 ? `
+              <footer class="tags-container">
+                ${tagsArray.map(tag => `<span class="tag">${escapeHtml(tag.trim())}</span>`).join('')}
+              </footer>
+            ` : ''}
+          </article>
+        `;
+      }).join('');
     }
 
-    // Controle das Abas no Modal
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    // Modal & Ações de Edição
+    function openEditModal(id) {
+      const item = registrosCache.find(r => r.id == id);
+      if (!item) return;
 
-        document.getElementById(tabId).classList.add('active');
-        event.currentTarget.classList.add('active');
+      document.getElementById('edit-id').value = item.id;
+      document.getElementById('edit-titulo').value = item.titulo || '';
+      document.getElementById('edit-categoria').value = item.categoria || '';
+      document.getElementById('edit-tags').value = item.tags || '';
+      document.getElementById('edit-descricao').value = item.descricao || '';
+      document.getElementById('edit-solucao').value = item.solucao || '';
+      document.getElementById('edit-nota').value = item.nota_final !== null ? item.nota_final : '';
+      document.getElementById('edit-veredito').value = item.veredito || '';
+      document.getElementById('edit-objetivo').value = item.objetivo || '';
+      document.getElementById('edit-oportunidade').value = item.oportunidade_ps || '';
+
+      document.getElementById('modal-edit').classList.add('active');
     }
 
-    // Abrir Modal e Preencher Campos
-    function abrirModal(id) {
-        const registro = registros.find(r => r.id == id);
-        if (!registro) return;
-
-        document.getElementById('edit-id').value = registro.id;
-        document.getElementById('modal-id-label').innerText = registro.id;
-
-        // Aba Solução
-        document.getElementById('edit-titulo').value = registro.titulo || '';
-        document.getElementById('edit-categoria').value = registro.categoria || '';
-        document.getElementById('edit-tags').value = registro.tags || '';
-        document.getElementById('edit-descricao').value = registro.descricao || '';
-        document.getElementById('edit-solucao').value = registro.solucao || '';
-
-        // Aba Auditoria
-        document.getElementById('edit-nota').value = registro.nota_final ?? '';
-        document.getElementById('edit-veredito').value = registro.veredito || '';
-        document.getElementById('edit-objetivo').value = registro.objetivo || '';
-        document.getElementById('edit-oportunidade').value = registro.oportunidade_ps || '';
-
-        // Reseta para a primeira aba
-        switchTabDirect('aba-solucao');
-
-        document.getElementById('modal-edit').classList.add('active');
+    function closeModal() {
+      document.getElementById('modal-edit').classList.remove('active');
     }
 
-    function switchTabDirect(tabId) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-
-        document.getElementById(tabId).classList.add('active');
-        const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
-        if (activeBtn) activeBtn.classList.add('active');
-    }
-
-    function fecharModal() {
-        document.getElementById('modal-edit').classList.remove('active');
-    }
-
-    // Salvar sem travas ou validações obrigatórias
     async function salvarEdicao(event) {
-        event.preventDefault();
+      event.preventDefault();
+      statusLoading.innerText = 'Salvando...';
 
-        const payload = {
-            id: document.getElementById('edit-id').value,
-            aba_solucao: {
-                titulo: document.getElementById('edit-titulo').value.trim(),
-                categoria: document.getElementById('edit-categoria').value.trim(),
-                tags: document.getElementById('edit-tags').value.trim(),
-                problema: document.getElementById('edit-descricao').value.trim(),
-                solucao: document.getElementById('edit-solucao').value.trim()
-            },
-            aba_auditoria: {
-                nota_final: document.getElementById('edit-nota').value,
-                veredito: document.getElementById('edit-veredito').value.trim(),
-                objetivo: document.getElementById('edit-objetivo').value.trim(),
-                oportunidade_ps: document.getElementById('edit-oportunidade').value.trim()
-            }
-        };
-
-        try {
-            const response = await fetch('api.php?action=update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                fecharModal();
-                carregarDados(currentPage);
-            } else {
-                alert('Erro ao salvar no banco: ' + (result.error || 'Erro desconhecido'));
-            }
-        } catch (error) {
-            console.error('Erro na requisição:', error);
-            alert('Falha na comunicação com o servidor.');
+      const payload = {
+        id: document.getElementById('edit-id').value,
+        aba_solucao: {
+          titulo: document.getElementById('edit-titulo').value,
+          categoria: document.getElementById('edit-categoria').value,
+          tags: document.getElementById('edit-tags').value,
+          problema: document.getElementById('edit-descricao').value,
+          solucao: document.getElementById('edit-solucao').value
+        },
+        aba_auditoria: {
+          nota_final: document.getElementById('edit-nota').value ? parseFloat(document.getElementById('edit-nota').value) : null,
+          veredito: document.getElementById('edit-veredito').value,
+          objetivo: document.getElementById('edit-objetivo').value,
+          oportunidade_ps: document.getElementById('edit-oportunidade').value
         }
-    }
+      };
 
-    // Deletar registro
-    async function deletarRegistro(id) {
-        if (!confirm('Deseja realmente excluir este registro?')) return;
-
-        try {
-            const response = await fetch(`api.php?action=delete&id=${id}`);
-            const result = await response.json();
-
-            if (result.success) {
-                carregarDados(currentPage);
-            } else {
-                alert('Erro ao excluir: ' + result.error);
-            }
-        } catch (error) {
-            console.error('Erro ao excluir:', error);
-        }
-    }
-
-    // Filtro e Paginação
-    let timeoutSearch = null;
-    function filtrarDados() {
-        clearTimeout(timeoutSearch);
-        timeoutSearch = setTimeout(() => {
-            carregarDados(1);
-        }, 300);
-    }
-
-    function renderPaginacao(totalPages, page) {
-        currentPage = page;
-        const container = document.getElementById('pagination');
-        container.innerHTML = '';
-
-        for (let i = 1; i <= totalPages; i++) {
-            const btn = document.createElement('button');
-            btn.className = `btn ${i === page ? 'btn-primary' : 'btn-secondary'}`;
-            btn.innerText = i;
-            btn.onclick = () => carregarDados(i);
-            container.appendChild(btn);
-        }
-    }
-
-    function escapeHtml(text) {
-        return text.replace(/[&<>"']/g, function(m) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+      try {
+        const response = await fetch('./api.php?action=update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
-    }
-</script>
 
+        const res = await response.json();
+        if (res.success) {
+          closeModal();
+          carregarRegistros(currentSearch, currentPage);
+        } else {
+          alert('Erro ao salvar: ' + (res.error || 'Erro desconhecido'));
+        }
+      } catch (err) {
+        console.error('Erro ao atualizar:', err);
+        alert('Erro ao se conectar com a API');
+      } finally {
+        statusLoading.innerText = '';
+      }
+    }
+
+    // Ação de Exclusão
+    async function excluirRegistro(id) {
+      if (!confirm('Tem certeza que deseja excluir este registro permanentemente?')) return;
+
+      statusLoading.innerText = 'Excluindo...';
+      try {
+        const response = await fetch(`./api.php?action=delete&id=${id}`);
+        const res = await response.json();
+        if (res.success) {
+          carregarRegistros(currentSearch, currentPage);
+        } else {
+          alert('Erro ao excluir: ' + (res.error || 'Erro desconhecido'));
+        }
+      } catch (err) {
+        console.error('Erro ao excluir:', err);
+        alert('Erro ao se conectar com a API');
+      } finally {
+        statusLoading.innerText = '';
+      }
+    }
+
+    function switchTab(btnElement, tabId) {
+      const card = btnElement.closest('.card');
+      card.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      card.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      btnElement.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    function atualizarPaginacao(paginaAtual, totalPaginas) {
+      currentPage = paginaAtual;
+      pageInfo.innerText = `Página ${paginaAtual} de ${totalPaginas || 1}`;
+      btnPrev.disabled = paginaAtual <= 1;
+      btnNext.disabled = paginaAtual >= totalPaginas;
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      currentSearch = e.target.value.trim();
+      debounceTimer = setTimeout(() => carregarRegistros(currentSearch, 1), 300);
+    });
+
+    btnPrev.addEventListener('click', () => { if (currentPage > 1) carregarRegistros(currentSearch, currentPage - 1); });
+    btnNext.addEventListener('click', () => carregarRegistros(currentSearch, currentPage + 1));
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      carregarRegistros();
+    });
+  </script>
 </body>
 </html>
