@@ -11,30 +11,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // -------------------------------------------------------------
-// LEITURA DO .ENV E CONEXÃO COM O BANCO DE DADOS
+// LEITOR ROBUSTO DE .ENV (Sem parse_ini_file)
 // -------------------------------------------------------------
-$envPath = __DIR__ . '/.env';
+function loadEnv($path) {
+    if (!file_exists($path)) return [];
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $env = [];
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if (empty($line) || strpos($line, '#') === 0) continue;
+        list($name, $value) = explode('=', $line, 2) + [NULL, NULL];
+        if ($name !== NULL && $value !== NULL) {
+            $env[trim($name)] = trim($value, " \t\n\r\0\x0B\"'");
+        }
+    }
+    return $env;
+}
 
-// Se o arquivo .env não estiver no mesmo diretório público, tenta na raiz (/var/www/webroot/ROOT)
+// Tenta localizar o .env no diretório atual ou na raiz superior
+$envPath = __DIR__ . '/.env';
 if (!file_exists($envPath)) {
     $envPath = dirname(__DIR__) . '/.env';
 }
 
-if (file_exists($envPath)) {
-    $env = parse_ini_file($envPath);
-    $db_host = $env['DB_HOST'] ?? 'localhost';
-    $db_name = $env['DB_DATABASE'] ?? $env['DB_NAME'] ?? '';
-    $db_user = $env['DB_USERNAME'] ?? $env['DB_USER'] ?? '';
-    $db_pass = $env['DB_PASSWORD'] ?? $env['DB_PASS'] ?? '';
-    $tabela  = $env['DB_TABLE'] ?? 'sua_tabela';
-} else {
-    // Fallback para variáveis injetadas no ambiente do servidor
-    $db_host = getenv('DB_HOST') ?: 'localhost';
-    $db_name = getenv('DB_DATABASE') ?: getenv('DB_NAME');
-    $db_user = getenv('DB_USERNAME') ?: getenv('DB_USER');
-    $db_pass = getenv('DB_PASSWORD') ?: getenv('DB_PASS');
-    $tabela  = getenv('DB_TABLE') ?: 'sua_tabela';
-}
+$env = loadEnv($envPath);
+
+$db_host = $env['DB_HOST'] ?? getenv('DB_HOST') ?: 'localhost';
+$db_name = $env['DB_DATABASE'] ?? $env['DB_NAME'] ?? getenv('DB_DATABASE') ?: getenv('DB_NAME');
+$db_user = $env['DB_USERNAME'] ?? $env['DB_USER'] ?? getenv('DB_USERNAME') ?: getenv('DB_USER');
+$db_pass = $env['DB_PASSWORD'] ?? $env['DB_PASS'] ?? getenv('DB_PASSWORD') ?: getenv('DB_PASS');
+$tabela  = $env['DB_TABLE'] ?? getenv('DB_TABLE') ?: 'sua_tabela';
 
 try {
     $pdo = new PDO("mysql:host={$db_host};dbname={$db_name};charset=utf8mb4", $db_user, $db_pass, [
@@ -54,18 +60,16 @@ $action = $_GET['action'] ?? 'list';
 // -------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action === 'create') {
     
-    // Captura o Payload JSON bruto do corpo da requisição
     $rawInput = file_get_contents('php://input');
     $data = json_decode($rawInput, true);
 
-    // Fallback para formulário tradicional POST
     if (!$data) {
         $data = $_POST;
     }
 
     $id = $data['id'] ?? ($_GET['id'] ?? null);
 
-    // Extração flexível do 'titulo' (suporta objeto aninhado ou valor na raiz)
+    // Mapeamento: Aba Solução / Raiz
     $titulo = '';
     if (isset($data['aba_solucao']['titulo'])) {
         $titulo = trim($data['aba_solucao']['titulo']);
@@ -73,7 +77,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action ===
         $titulo = trim($data['titulo']);
     }
 
-    // Extração flexível da 'solucao'
     $solucao = '';
     if (isset($data['aba_solucao']['solucao'])) {
         $solucao = trim($data['aba_solucao']['solucao']);
@@ -81,19 +84,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action ===
         $solucao = trim($data['solucao']);
     }
 
-    // Extração dos demais campos
-    $categoria       = $data['aba_solucao']['categoria'] ?? ($data['categoria'] ?? '');
-    $tags            = $data['aba_solucao']['tags'] ?? ($data['tags'] ?? '');
-    $descricao       = $data['aba_solucao']['problema'] ?? ($data['descricao'] ?? '');
-    
+    $categoria = $data['aba_solucao']['categoria'] ?? ($data['categoria'] ?? '');
+    $tags      = $data['aba_solucao']['tags'] ?? ($data['tags'] ?? '');
+    $descricao = $data['aba_solucao']['problema'] ?? ($data['descricao'] ?? '');
+
+    // Mapeamento: Aba Auditoria / Raiz
     $nota_raw        = $data['aba_auditoria']['nota_final'] ?? ($data['nota_final'] ?? null);
     $nota_final      = (is_numeric($nota_raw) && $nota_raw !== '') ? floatval($nota_raw) : null;
-    
     $veredito        = $data['aba_auditoria']['veredito'] ?? ($data['veredito'] ?? '');
     $objetivo        = $data['aba_auditoria']['objetivo'] ?? ($data['objetivo'] ?? '');
     $oportunidade_ps = $data['aba_auditoria']['oportunidade_ps'] ?? ($data['oportunidade_ps'] ?? '');
 
-    // Validação de obrigatoriedade
+    // Validação
     if (empty($titulo) || empty($solucao)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Título e Solução são obrigatórios.']);
@@ -102,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action ===
 
     try {
         if ($id) {
-            // UPDATE
             $sql = "UPDATE {$tabela} SET 
                         titulo = :titulo,
                         categoria = :categoria,
@@ -118,7 +119,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $action === 'update' || $action ===
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         } else {
-            // INSERT
             $sql = "INSERT INTO {$tabela} 
                         (titulo, categoria, tags, descricao, solucao, nota_final, veredito, objetivo, oportunidade_ps) 
                     VALUES 
