@@ -1,9 +1,6 @@
 <?php
 // api.php - Backend para Knowledge Base com integração Chatwoot/n8n/MySQL
 
-// ----------------------------------------------------------------------
-// 1. CABEÇALHOS CORS E CONFIGURAÇÃO
-// ----------------------------------------------------------------------
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
@@ -14,13 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Oculta warnings para evitar corromper a resposta JSON
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
-// ----------------------------------------------------------------------
-// 2. CARREGAMENTO DE VARIÁVEIS DE AMBIENTE (.env)
-// ----------------------------------------------------------------------
 function loadEnv($path) {
     if (!file_exists($path)) return false;
     $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -43,9 +36,6 @@ if (!loadEnv(__DIR__ . '/.env')) {
     loadEnv(__DIR__ . '/../.env');
 }
 
-// ----------------------------------------------------------------------
-// 3. CONEXÃO COM O BANCO DE DADOS (PDO MySQL)
-// ----------------------------------------------------------------------
 $host    = getenv('DB_HOST') ?: '127.0.0.1';
 $db      = getenv('DB_NAME') ?: getenv('DB_DATABASE');
 $user    = getenv('DB_USER') ?: getenv('DB_USERNAME');
@@ -63,23 +53,19 @@ try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
     http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => 'Erro de conexão com o banco de dados: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Erro de conexão com o banco de dados: ' . $e->getMessage()]);
     exit;
 }
 
-// ----------------------------------------------------------------------
-// 4. PROCESSAMENTO DE REQUISIÇÕES
-// ----------------------------------------------------------------------
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
-// Leitura do payload JSON (para POST e PUT)
 $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true) ?: [];
 
 try {
     // ==========================================
-    // A) GET - LISTAR E PESQUISAR REGISTROS
+    // 1. GET - LISTAR E PESQUISAR (A-Z)
     // ==========================================
     if ($method === 'GET' && $action !== 'delete') {
         $search = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -109,7 +95,7 @@ try {
         $stmtCount->execute();
         $total = (int)$stmtCount->fetch()['total'];
 
-        // Consulta Principal A-Z
+        // Consulta Principal Ordenada por A-Z
         $sql = "SELECT * FROM kb_erros 
                 $whereSql 
                 ORDER BY LOWER(TRIM(BOTH '\"' FROM TRIM(BOTH '\'' FROM TRIM(titulo)))) COLLATE utf8mb4_unicode_ci ASC 
@@ -124,8 +110,8 @@ try {
         $stmt->execute();
         $data = $stmt->fetchAll();
 
+        // Estrutura exata esperada pelo frontend original
         echo json_encode([
-            'status'      => 'success',
             'total'       => $total,
             'page'        => $page,
             'limit'       => $limit,
@@ -136,22 +122,19 @@ try {
     }
 
     // ==========================================
-    // B) POST - INSERIR REGISTRO (n8n ou Manual)
+    // 2. POST - INSERIR REGISTRO
     // ==========================================
     if ($method === 'POST' && $action !== 'update') {
         $abaSolucao   = $input['aba_solucao'] ?? [];
         $abaAuditoria = $input['aba_auditoria'] ?? $input['aba_auditoria_qualidade'] ?? [];
 
-        // Extração dos campos da Solução
         $titulo    = trim($abaSolucao['titulo'] ?? $input['titulo'] ?? '');
         $solucao   = trim($abaSolucao['solucao'] ?? $input['solucao'] ?? '');
         $categoria = trim($abaSolucao['categoria'] ?? $input['categoria'] ?? 'Geral');
 
-        // Tratamento de Tags
         $rawTags = $abaSolucao['tags'] ?? $input['tags'] ?? '';
         $tags    = is_array($rawTags) ? implode(',', $rawTags) : trim($rawTags);
 
-        // Tratamento da Descrição / Metadados de Atendimento
         if (!empty($input['descricao'])) {
             $descricao = trim($input['descricao']);
         } elseif (!empty($abaSolucao['problema'])) {
@@ -166,17 +149,15 @@ try {
             $descricao = '';
         }
 
-        // Extração dos campos da Auditoria
         $objetivo          = trim($abaAuditoria['objetivo'] ?? $input['objetivo'] ?? '');
         $veredito          = trim($abaAuditoria['veredito'] ?? $input['veredito'] ?? '');
         $oportunidadePs    = trim($abaAuditoria['oportunidade_ps'] ?? $input['oportunidade_ps'] ?? '');
         $notaFinal         = isset($abaAuditoria['nota_final']) ? (float)$abaAuditoria['nota_final'] : (isset($input['nota_final']) ? (float)$input['nota_final'] : null);
         $relatorioMarkdown = trim($abaAuditoria['relatorio_markdown'] ?? $input['relatorio_markdown'] ?? '');
 
-        // Validação básica de campos obrigatórios
         if (empty($titulo) || empty($solucao)) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'error' => 'Campos obrigatórios ausentes: titulo e solucao']);
+            echo json_encode(['error' => 'Campos obrigatórios ausentes: titulo e solucao']);
             exit;
         }
 
@@ -200,7 +181,6 @@ try {
         ]);
 
         echo json_encode([
-            'status'  => 'success',
             'success' => $success, 
             'id'      => $pdo->lastInsertId()
         ]);
@@ -208,7 +188,7 @@ try {
     }
 
     // ==========================================
-    // C) PUT / POST (action=update) - ATUALIZAR
+    // 3. PUT / POST (action=update) - ATUALIZAR
     // ==========================================
     if ($method === 'PUT' || ($method === 'POST' && $action === 'update')) {
         $id = $input['id'] ?? $_GET['id'] ?? null;
@@ -216,12 +196,12 @@ try {
         $abaSolucao   = $input['aba_solucao'] ?? [];
         $abaAuditoria = $input['aba_auditoria'] ?? $input['aba_auditoria_qualidade'] ?? [];
 
-        $titulo    = trim($abaSolucao['titulo'] ?? $input['titulo'] ?? '');
-        $solucao   = trim($abaSolucao['solucao'] ?? $input['solucao'] ?? '');
+        $titulo  = trim($abaSolucao['titulo'] ?? $input['titulo'] ?? '');
+        $solucao = trim($abaSolucao['solucao'] ?? $input['solucao'] ?? '');
 
         if (empty($id) || empty($titulo) || empty($solucao)) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'error' => 'Campos obrigatórios ausentes: id, titulo e solucao']);
+            echo json_encode(['error' => 'Campos obrigatórios ausentes: id, titulo e solucao']);
             exit;
         }
 
@@ -263,19 +243,19 @@ try {
             ':relatorio_markdown' => $relatorioMarkdown
         ]);
 
-        echo json_encode(['status' => 'success', 'success' => $success]);
+        echo json_encode(['success' => $success]);
         exit;
     }
 
     // ==========================================
-    // D) DELETE / GET (action=delete) - EXCLUIR
+    // 4. DELETE - EXCLUIR REGISTRO
     // ==========================================
     if ($method === 'DELETE' || ($method === 'GET' && $action === 'delete')) {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($input['id']) ? (int)$input['id'] : 0);
 
         if ($id <= 0) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'error' => 'ID inválido para exclusão']);
+            echo json_encode(['error' => 'ID inválido para exclusão']);
             exit;
         }
 
@@ -283,12 +263,12 @@ try {
         $stmt = $pdo->prepare($sql);
         $success = $stmt->execute([':id' => $id]);
 
-        echo json_encode(['status' => 'success', 'success' => $success]);
+        echo json_encode(['success' => $success]);
         exit;
     }
 
 } catch (\Exception $e) {
     http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => 'Erro interno no servidor: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Erro interno no servidor: ' . $e->getMessage()]);
     exit;
 }
