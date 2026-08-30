@@ -308,16 +308,6 @@
       padding: 2px 0;
     }
 
-    .solution-summary {
-      font-size: 0.82rem;
-      line-height: 1.4;
-      color: var(--text-muted);
-    }
-
-    .solution-summary strong {
-      color: var(--text-highlight);
-    }
-
     .card-section .card-text p {
       margin: 0 0 8px;
     }
@@ -1066,8 +1056,10 @@
                           Solução
                         </div>
 
-                        <div class="card-text solution-summary">
-                          Solução registrada. Clique em <strong>Editar</strong> para visualizar ou alterar o conteúdo completo.
+                        <div class="card-text">
+                          ${escapeHtml(
+                            item.solucao
+                          )}
                         </div>
 
                       </div>
