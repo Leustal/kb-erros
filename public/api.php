@@ -170,13 +170,6 @@ $rawInput =
 
 $data = [];
 
-if ($_GET['action'] ?? '' === 'debug') {
-    responder([
-        'raw_input' => file_get_contents('php://input'),
-        'content_type' => $_SERVER['CONTENT_TYPE'] ?? '',
-        'method' => $_SERVER['REQUEST_METHOD'] ?? '',
-    ]);
-}
 if (
     $rawInput !== false &&
     trim($rawInput) !== ''
