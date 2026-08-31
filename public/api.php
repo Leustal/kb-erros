@@ -307,27 +307,17 @@ switch ($action) {
 
 
         /*
-        |--------------------------------------------------------------------------
-        | VALIDAR TÍTULO E SOLUÇÃO
-        |--------------------------------------------------------------------------
-        */
+|--------------------------------------------------------------------------
+| NORMALIZAR TÍTULO E SOLUÇÃO
+|--------------------------------------------------------------------------
+|
+| Os campos podem ser vazios.
+| Caso não sejam enviados, serão armazenados como string vazia.
+|
+*/
 
-        if (
-            trim((string)$titulo) === '' ||
-            trim((string)$solucao) === ''
-        ) {
-
-            responder(
-                [
-                    'success' => false,
-                    'error' =>
-                        'Título e Solução são obrigatórios.',
-                    'action' =>
-                        $action
-                ],
-                400
-            );
-        }
+$titulo = trim((string)$titulo);
+$solucao = trim((string)$solucao);
 
 
         try {
