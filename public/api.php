@@ -147,6 +147,7 @@ try {
     responder(
         [
             'success' => false,
+
             'error' =>
                 'Erro de conexão com o banco de dados: ' .
                 $e->getMessage()
@@ -169,6 +170,7 @@ $rawInput =
 
 
 $data = [];
+
 
 if (
     $rawInput !== false &&
@@ -203,6 +205,7 @@ if (
 | 2. action enviado no JSON
 | 3. read
 |
+|--------------------------------------------------------------------------
 */
 
 $action =
@@ -238,6 +241,40 @@ switch ($action) {
         $id =
             $data['id']
             ?? ($_GET['id'] ?? null);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CONVERSATION ID
+        |--------------------------------------------------------------------------
+        |
+        | Identificador único do atendimento no Chatwoot.
+        |
+        | Será utilizado para impedir que o mesmo atendimento
+        | seja cadastrado mais de uma vez no KB.
+        |
+        |--------------------------------------------------------------------------
+        */
+
+        $conversation_id =
+            $data['conversation_id']
+            ?? null;
+
+
+        if (
+            $conversation_id !== null &&
+            $conversation_id !== '' &&
+            is_numeric($conversation_id)
+        ) {
+
+            $conversation_id =
+                (int)$conversation_id;
+
+        } else {
+
+            $conversation_id =
+                null;
+        }
 
 
         $titulo =
@@ -307,20 +344,20 @@ switch ($action) {
 
 
         /*
-|--------------------------------------------------------------------------
-| NORMALIZAR TÍTULO E SOLUÇÃO
-|--------------------------------------------------------------------------
-|
-| Os campos podem ser vazios.
-| Caso não sejam enviados, serão armazenados como string vazia.
-|
-*/
+        |--------------------------------------------------------------------------
+        | NORMALIZAR TÍTULO E SOLUÇÃO
+        |--------------------------------------------------------------------------
+        */
 
-$titulo = trim((string)$titulo);
-$solucao = trim((string)$solucao);
+        $titulo =
+            trim((string)$titulo);
+
+        $solucao =
+            trim((string)$solucao);
 
 
         try {
+
 
             /*
             |--------------------------------------------------------------------------
@@ -330,9 +367,13 @@ $solucao = trim((string)$solucao);
 
             if ($action === 'create') {
 
+
                 $sql = "
+
                     INSERT INTO erros
+
                     (
+                        conversation_id,
                         titulo,
                         categoria,
                         tags,
@@ -344,8 +385,11 @@ $solucao = trim((string)$solucao);
                         oportunidade_ps,
                         relatorio_markdown
                     )
+
                     VALUES
+
                     (
+                        ?,
                         ?,
                         ?,
                         ?,
@@ -357,6 +401,7 @@ $solucao = trim((string)$solucao);
                         ?,
                         ?
                     )
+
                 ";
 
 
@@ -369,30 +414,48 @@ $solucao = trim((string)$solucao);
                 $success =
                     $stmt->execute(
                         [
+
+                            $conversation_id,
+
                             $titulo,
+
                             $categoria,
+
                             $tags,
+
                             $descricao,
+
                             $solucao,
+
                             $nota_final,
+
                             $veredito,
+
                             $objetivo,
+
                             $oportunidade_ps,
+
                             $relatorio_markdown
+
                         ]
                     );
 
 
                 responder(
                     [
+
                         'success' =>
                             $success,
 
                         'id' =>
                             (int)$pdo->lastInsertId(),
 
+                        'conversation_id' =>
+                            $conversation_id,
+
                         'action' =>
                             'create'
+
                     ]
                 );
             }
@@ -406,6 +469,7 @@ $solucao = trim((string)$solucao);
 
             if ($action === 'update') {
 
+
                 if (
                     !$id ||
                     !is_numeric($id) ||
@@ -414,11 +478,16 @@ $solucao = trim((string)$solucao);
 
                     responder(
                         [
-                            'success' => false,
+
+                            'success' =>
+                                false,
+
                             'error' =>
                                 'ID não informado para atualização.',
+
                             'action' =>
                                 'update'
+
                         ],
                         400
                     );
@@ -430,19 +499,35 @@ $solucao = trim((string)$solucao);
 
 
                 $sql = "
+
                     UPDATE erros
+
                     SET
+
+                        conversation_id = ?,
+
                         titulo = ?,
+
                         categoria = ?,
+
                         tags = ?,
+
                         descricao = ?,
+
                         solucao = ?,
+
                         nota_final = ?,
+
                         veredito = ?,
+
                         objetivo = ?,
+
                         oportunidade_ps = ?,
+
                         relatorio_markdown = ?
+
                     WHERE id = ?
+
                 ";
 
 
@@ -454,28 +539,53 @@ $solucao = trim((string)$solucao);
 
                 $stmt->execute(
                     [
+
+                        $conversation_id,
+
                         $titulo,
+
                         $categoria,
+
                         $tags,
+
                         $descricao,
+
                         $solucao,
+
                         $nota_final,
+
                         $veredito,
+
                         $objetivo,
+
                         $oportunidade_ps,
+
                         $relatorio_markdown,
+
                         $id
+
                     ]
                 );
 
 
                 responder(
                     [
-                        'success' => true,
-                        'id' => $id,
-                        'action' => 'update',
+
+                        'success' =>
+                            true,
+
+                        'id' =>
+                            $id,
+
+                        'conversation_id' =>
+                            $conversation_id,
+
+                        'action' =>
+                            'update',
+
                         'affected_rows' =>
                             $stmt->rowCount()
+
                     ]
                 );
             }
@@ -485,12 +595,17 @@ $solucao = trim((string)$solucao);
 
             responder(
                 [
-                    'success' => false,
+
+                    'success' =>
+                        false,
+
                     'error' =>
                         'Erro MySQL: ' .
                         $e->getMessage(),
+
                     'action' =>
                         $action
+
                 ],
                 500
             );
@@ -512,14 +627,11 @@ $solucao = trim((string)$solucao);
 
     case 'delete':
 
+
         /*
         |--------------------------------------------------------------------------
         | PEGAR ID
         |--------------------------------------------------------------------------
-        |
-        | Primeiro tenta ?id=123
-        | Depois tenta {"id":123}
-        |
         */
 
         $id =
@@ -541,13 +653,19 @@ $solucao = trim((string)$solucao);
 
             responder(
                 [
-                    'success' => false,
+
+                    'success' =>
+                        false,
+
                     'error' =>
                         'ID é obrigatório para exclusão.',
+
                     'action' =>
                         'delete',
+
                     'received_id' =>
                         $id
+
                 ],
                 400
             );
@@ -562,13 +680,19 @@ $solucao = trim((string)$solucao);
 
             responder(
                 [
-                    'success' => false,
+
+                    'success' =>
+                        false,
+
                     'error' =>
                         'ID inválido para exclusão.',
+
                     'action' =>
                         'delete',
+
                     'received_id' =>
                         $id
+
                 ],
                 400
             );
@@ -608,15 +732,22 @@ $solucao = trim((string)$solucao);
 
                 responder(
                     [
-                        'success' => true,
+
+                        'success' =>
+                            true,
+
                         'message' =>
                             'Registro excluído com sucesso.',
+
                         'action' =>
                             'delete',
+
                         'id' =>
                             $id,
+
                         'affected_rows' =>
                             $affectedRows
+
                     ]
                 );
             }
@@ -630,13 +761,19 @@ $solucao = trim((string)$solucao);
 
             responder(
                 [
-                    'success' => false,
+
+                    'success' =>
+                        false,
+
                     'error' =>
                         'Nenhum registro encontrado com este ID.',
+
                     'action' =>
                         'delete',
+
                     'id' =>
                         $id
+
                 ],
                 404
             );
@@ -646,14 +783,20 @@ $solucao = trim((string)$solucao);
 
             responder(
                 [
-                    'success' => false,
+
+                    'success' =>
+                        false,
+
                     'error' =>
                         'Erro MySQL ao excluir: ' .
                         $e->getMessage(),
+
                     'action' =>
                         'delete',
+
                     'id' =>
                         $id
+
                 ],
                 500
             );
@@ -671,6 +814,7 @@ $solucao = trim((string)$solucao);
     case 'read':
     default:
 
+
         $search =
             trim(
                 $_GET['search'] ?? ''
@@ -680,6 +824,7 @@ $solucao = trim((string)$solucao);
         $page =
             max(
                 1,
+
                 (int)(
                     $_GET['page']
                     ?? 1
@@ -690,8 +835,10 @@ $solucao = trim((string)$solucao);
         $limit =
             max(
                 1,
+
                 min(
                     100,
+
                     (int)(
                         $_GET['limit']
                         ?? 10
@@ -707,6 +854,7 @@ $solucao = trim((string)$solucao);
 
         try {
 
+
             /*
             |--------------------------------------------------------------------------
             | COM PESQUISA
@@ -715,19 +863,29 @@ $solucao = trim((string)$solucao);
 
             if ($search !== '') {
 
+
                 $searchTerm =
                     "%{$search}%";
 
 
                 $countSql = "
+
                     SELECT COUNT(*)
+
                     FROM erros
+
                     WHERE
+
                         titulo LIKE ?
+
                         OR descricao LIKE ?
+
                         OR solucao LIKE ?
+
                         OR categoria LIKE ?
+
                         OR tags LIKE ?
+
                 ";
 
 
@@ -739,11 +897,17 @@ $solucao = trim((string)$solucao);
 
                 $stmtCount->execute(
                     [
+
                         $searchTerm,
+
                         $searchTerm,
+
                         $searchTerm,
+
                         $searchTerm,
+
                         $searchTerm
+
                     ]
                 );
 
@@ -753,17 +917,29 @@ $solucao = trim((string)$solucao);
 
 
                 $dataSql = "
+
                     SELECT *
+
                     FROM erros
+
                     WHERE
+
                         titulo LIKE ?
+
                         OR descricao LIKE ?
+
                         OR solucao LIKE ?
+
                         OR categoria LIKE ?
+
                         OR tags LIKE ?
+
                     ORDER BY id DESC
+
                     LIMIT ?
+
                     OFFSET ?
+
                 ";
 
 
@@ -779,11 +955,13 @@ $solucao = trim((string)$solucao);
                     PDO::PARAM_STR
                 );
 
+
                 $stmtData->bindValue(
                     2,
                     $searchTerm,
                     PDO::PARAM_STR
                 );
+
 
                 $stmtData->bindValue(
                     3,
@@ -791,11 +969,13 @@ $solucao = trim((string)$solucao);
                     PDO::PARAM_STR
                 );
 
+
                 $stmtData->bindValue(
                     4,
                     $searchTerm,
                     PDO::PARAM_STR
                 );
+
 
                 $stmtData->bindValue(
                     5,
@@ -803,11 +983,13 @@ $solucao = trim((string)$solucao);
                     PDO::PARAM_STR
                 );
 
+
                 $stmtData->bindValue(
                     6,
                     $limit,
                     PDO::PARAM_INT
                 );
+
 
                 $stmtData->bindValue(
                     7,
@@ -829,6 +1011,7 @@ $solucao = trim((string)$solucao);
 
             else {
 
+
                 $totalRows =
                     (int)$pdo
                         ->query(
@@ -840,11 +1023,17 @@ $solucao = trim((string)$solucao);
                 $stmtData =
                     $pdo->prepare(
                         "
+
                         SELECT *
+
                         FROM erros
+
                         ORDER BY id DESC
+
                         LIMIT ?
+
                         OFFSET ?
+
                         "
                     );
 
@@ -879,14 +1068,17 @@ $solucao = trim((string)$solucao);
 
             $totalPages =
                 $totalRows > 0
+
                     ? (int)ceil(
                         $totalRows / $limit
                     )
+
                     : 1;
 
 
             responder(
                 [
+
                     'success' =>
                         true,
 
@@ -904,6 +1096,7 @@ $solucao = trim((string)$solucao);
 
                     'action' =>
                         'read'
+
                 ]
             );
 
@@ -912,12 +1105,17 @@ $solucao = trim((string)$solucao);
 
             responder(
                 [
-                    'success' => false,
+
+                    'success' =>
+                        false,
+
                     'error' =>
                         'Erro MySQL ao carregar: ' .
                         $e->getMessage(),
+
                     'action' =>
                         'read'
+
                 ],
                 500
             );
