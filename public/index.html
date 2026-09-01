@@ -1,24 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark">
-
 <head>
-
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>SaveInCloud - KB & Quality Audit</title>
 
   <link
     rel="icon"
-    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🧠</text></svg>'
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>"
   >
 
   <style>
-
     :root {
       --bg-body: #0b0f19;
       --bg-card: #151d30;
@@ -57,15 +50,8 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        Roboto,
-        Helvetica,
-        Arial,
-        sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Helvetica, Arial, sans-serif;
 
       transition:
         background-color 0.25s ease,
@@ -76,22 +62,17 @@
     body {
       background-color: var(--bg-body);
       color: var(--text-main);
-
       padding: 24px;
-
       max-width: 1200px;
       margin: 0 auto;
     }
 
     .header {
       display: flex;
-
       justify-content: space-between;
       align-items: center;
-
       margin-bottom: 24px;
       padding-bottom: 16px;
-
       border-bottom: 1px solid var(--border-color);
     }
 
@@ -110,11 +91,8 @@
     .logo-icon {
       width: 24px;
       height: 24px;
-
       background-color: #06b6d4;
-
       border-radius: 50%;
-
       box-shadow: 0 0 12px #06b6d480;
     }
 
@@ -127,20 +105,13 @@
     .btn-new {
       background-color: var(--btn-primary);
       color: #ffffff;
-
       border: none;
-
       padding: 8px 16px;
-
       border-radius: 20px;
-
       cursor: pointer;
-
       font-size: 0.85rem;
       font-weight: 600;
-
-      box-shadow:
-        0 4px 12px var(--shadow-color);
+      box-shadow: 0 4px 12px var(--shadow-color);
     }
 
     .btn-new:hover {
@@ -149,27 +120,17 @@
 
     .theme-toggle-btn {
       background: var(--bg-card);
-
       border: 1px solid var(--border-color);
-
       color: var(--text-main);
-
       padding: 8px 14px;
-
       border-radius: 20px;
-
       cursor: pointer;
-
       font-size: 0.85rem;
       font-weight: 600;
-
       display: flex;
       align-items: center;
-
       gap: 6px;
-
-      box-shadow:
-        0 4px 12px var(--shadow-color);
+      box-shadow: 0 4px 12px var(--shadow-color);
     }
 
     .status-loading {
@@ -183,23 +144,14 @@
 
     .search-input {
       width: 100%;
-
       padding: 16px 20px;
-
       background-color: var(--bg-input);
-
       border: 1px solid var(--border-color);
-
       border-radius: 16px;
-
       color: var(--text-main);
-
       font-size: 0.95rem;
-
       outline: none;
-
-      box-shadow:
-        0 6px 16px var(--shadow-color);
+      box-shadow: 0 6px 16px var(--shadow-color);
     }
 
     .search-input:focus {
@@ -209,81 +161,56 @@
     .cards-grid {
       display: flex;
       flex-direction: column;
-
       gap: 20px;
     }
 
     .card {
       background-color: var(--bg-card);
-
       border: 1px solid var(--border-color);
-
       border-radius: 20px;
-
       padding: 24px;
-
-      box-shadow:
-        0 8px 24px var(--shadow-color);
+      box-shadow: 0 8px 24px var(--shadow-color);
     }
 
     .card-header {
       display: flex;
-
       justify-content: space-between;
       align-items: flex-start;
-
       margin-bottom: 16px;
-
       gap: 12px;
     }
 
     .card-title {
       font-size: 1.15rem;
-
       font-weight: 700;
-
       color: var(--text-highlight);
-
       line-height: 1.4;
     }
 
     .card-header-actions {
       display: flex;
       align-items: center;
-
       gap: 8px;
     }
 
     .badge {
       background-color: var(--bg-badge);
-
       color: var(--text-muted);
-
       padding: 6px 12px;
-
       border-radius: 12px;
-
       font-size: 0.75rem;
       font-weight: 600;
-
       border: 1px solid var(--border-color);
-
       white-space: nowrap;
     }
 
     .btn-action {
       background: transparent;
-
       border: 1px solid var(--border-color);
-
       color: var(--text-main);
-
       padding: 6px 10px;
-
       border-radius: 10px;
-
       cursor: pointer;
-
       font-size: 0.75rem;
       font-weight: 600;
     }
@@ -302,40 +229,25 @@
 
     .card-tabs {
       display: flex;
-
       gap: 8px;
-
       margin-bottom: 20px;
-
-      padding: 6px;
-
-      background: var(--bg-input);
-
-      border: 1px solid var(--border-color);
-
-      border-radius: 14px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
     }
 
     .tab-btn {
       background: transparent;
-
       border: none;
-
       color: var(--text-muted);
-
       padding: 8px 16px;
-
       border-radius: 10px;
-
       font-size: 0.85rem;
       font-weight: 600;
-
       cursor: pointer;
     }
 
     .tab-btn.active {
       background-color: var(--bg-tab-active);
-
       color: #ffffff;
     }
 
@@ -348,18 +260,32 @@
     }
 
     .card-section {
-      margin-bottom: 18px;
+      margin-bottom: 16px;
+    }
 
-      padding: 18px 20px;
+    .card-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
 
-      background: var(--bg-input);
+    .card-text {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-main);
+      white-space: pre-wrap;
+    }
 
-      border: 1px solid var(--border-color);
 
-      border-radius: 14px;
+    /* =========================
+       CONTEÚDO DAS SEÇÕES
+    ========================= */
 
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    .card-section {
+      margin-bottom: 22px;
     }
 
     .card-section:last-child {
@@ -368,373 +294,400 @@
 
     .card-section-title {
       display: flex;
-
       align-items: center;
-
-      gap: 10px;
-
+      gap: 9px;
       font-size: 0.78rem;
-
-      font-weight: 700;
-
+      font-weight: 800;
       color: var(--text-highlight);
-
       text-transform: uppercase;
-
       letter-spacing: 0.08em;
-
       margin-bottom: 12px;
-
-      padding-bottom: 10px;
-
+      padding-bottom: 9px;
       border-bottom: 1px solid var(--border-color);
     }
 
     .card-section-title::before {
       content: "";
-
-      width: 4px;
-      height: 16px;
-
-      border-radius: 4px;
-
+      width: 5px;
+      height: 22px;
+      border-radius: 6px;
       background: var(--btn-primary);
-
-      flex-shrink: 0;
+      flex: 0 0 auto;
     }
 
     .card-text {
       font-size: 0.95rem;
-
       line-height: 1.65;
-
       color: var(--text-main);
-
-      white-space: pre-wrap;
+      text-align: left;
     }
 
-    .card-section .card-text {
-      padding: 2px 0;
+    .content-bullets {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    .card-section .card-text p {
-      margin: 0 0 8px;
-    }
-
-    .card-section .card-text p:last-child {
-      margin-bottom: 0;
-    }
-
-    /* =========================================================
-       AUDITORIA
-    ========================================================= */
-
-    .audit-grid {
-      display: grid;
-
-      grid-template-columns:
-        repeat(auto-fit, minmax(200px, 1fr));
-
-      gap: 16px;
-
-      margin-bottom: 16px;
-    }
-
-    .audit-item {
-      background-color: var(--bg-body);
-
+    .content-bullets li {
+      position: relative;
+      padding: 11px 14px 11px 35px;
+      background: var(--bg-body);
       border: 1px solid var(--border-color);
-
-      padding: 12px 16px;
-
-      border-radius: 12px;
+      border-radius: 10px;
+      line-height: 1.6;
     }
 
-    .audit-label {
-      font-size: 0.75rem;
-
-      color: var(--text-muted);
-
-      text-transform: uppercase;
-
-      font-weight: 600;
-
-      margin-bottom: 4px;
-    }
-
-    .audit-value {
-      font-size: 0.95rem;
-
-      font-weight: 600;
-
-      color: var(--text-main);
-
-      line-height: 1.5;
-    }
-
-    .audit-score {
+    .content-bullets li::before {
+      content: "•";
+      position: absolute;
+      left: 15px;
+      top: 8px;
       color: var(--text-highlight);
+      font-size: 1.25rem;
+      font-weight: 900;
+    }
 
+    .content-steps {
+      list-style: none;
+      counter-reset: solution-step;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .content-steps li {
+      counter-increment: solution-step;
+      position: relative;
+      padding: 12px 14px 12px 48px;
+      background: var(--bg-body);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      line-height: 1.6;
+    }
+
+    .content-steps li::before {
+      content: counter(solution-step);
+      position: absolute;
+      left: 12px;
+      top: 11px;
+      width: 25px;
+      height: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--bg-tab-active);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .empty-content {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 12px 0;
+    }
+
+    /* =========================
+       AUDITORIA
+    ========================= */
+
+    .audit-value.score {
       font-size: 1.15rem;
+      color: var(--text-highlight);
+    }
 
-      font-weight: 700;
+    .audit-verdict {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      border: 1px solid var(--border-color);
+      background: var(--bg-badge);
+    }
+
+    .audit-verdict.success {
+      color: #22c55e;
+    }
+
+    .audit-verdict.partial {
+      color: #f59e0b;
+    }
+
+    .audit-verdict.fail {
+      color: #ef4444;
     }
 
     .audit-report {
-      margin-top: 18px;
+      margin-top: 24px;
+      padding-top: 22px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .audit-report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .audit-report-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--text-highlight);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .audit-report-title::before {
+      content: "";
+      width: 5px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--btn-primary);
     }
 
     .audit-report-content {
-      color: var(--text-main);
-
-      font-size: 0.92rem;
-
+      background: var(--bg-body);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 22px;
       line-height: 1.7;
-
-      overflow-wrap: anywhere;
+      font-size: 0.9rem;
+      overflow-x: auto;
     }
 
     .audit-report-content h1,
     .audit-report-content h2,
     .audit-report-content h3 {
       color: var(--text-highlight);
-
-      margin-top: 22px;
-
-      margin-bottom: 12px;
-
       line-height: 1.35;
     }
 
     .audit-report-content h1 {
       font-size: 1.25rem;
+      margin: 0 0 16px;
     }
 
     .audit-report-content h2 {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
+      margin: 28px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
     }
 
     .audit-report-content h3 {
-      font-size: 1rem;
+      font-size: 0.95rem;
+      margin: 20px 0 8px;
     }
 
     .audit-report-content p {
-      margin-bottom: 12px;
+      margin: 0 0 14px;
+    }
+
+    .audit-report-content strong {
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .audit-report-content em {
+      opacity: 0.9;
     }
 
     .audit-report-content ul,
     .audit-report-content ol {
-      margin:
-
-        8px 0 14px 24px;
+      margin: 8px 0 16px;
+      padding-left: 25px;
     }
 
     .audit-report-content li {
-      margin-bottom: 6px;
+      margin: 6px 0;
     }
 
     .audit-report-content blockquote {
-      margin: 12px 0;
-
+      margin: 14px 0;
       padding: 10px 14px;
-
       border-left: 3px solid var(--btn-primary);
-
-      background: var(--bg-body);
-
-      color: var(--text-muted);
-
-      border-radius: 8px;
+      background: var(--bg-card);
+      border-radius: 0 8px 8px 0;
     }
 
     .audit-report-content code {
-      background: var(--bg-body);
-
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: var(--bg-card);
       border: 1px solid var(--border-color);
-
-      padding: 2px 6px;
-
-      border-radius: 6px;
-
-      font-family:
-        Consolas,
-        Monaco,
-        monospace;
-
+      font-family: Consolas, Monaco, monospace;
       font-size: 0.85em;
     }
 
-    .audit-report-content pre {
-      background: var(--bg-body);
-
-      border: 1px solid var(--border-color);
-
-      padding: 14px;
-
-      border-radius: 10px;
-
-      overflow-x: auto;
-
-      margin: 12px 0;
-    }
-
-    .audit-report-content pre code {
-      background: transparent;
-
-      border: none;
-
-      padding: 0;
-    }
-
-    .audit-report-content strong {
-      color: var(--text-main);
-
-      font-weight: 700;
-    }
-
-    .audit-report-content em {
-      color: var(--text-highlight);
-    }
-
-    .audit-report-content hr {
-      border: none;
-
-      border-top:
-        1px solid var(--border-color);
-
-      margin: 20px 0;
-    }
-
-    .audit-report-content table {
+    .audit-table-wrapper {
       width: 100%;
-
-      border-collapse: collapse;
-
-      margin: 14px 0 20px;
-
-      display: block;
-
       overflow-x: auto;
+      margin: 14px 0 22px;
     }
 
-    .audit-report-content th,
-    .audit-report-content td {
-      border:
-        1px solid var(--border-color);
+    .audit-table {
+      width: 100%;
+      min-width: 620px;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
 
+    .audit-table th,
+    .audit-table td {
+      border: 1px solid var(--border-color);
       padding: 9px 11px;
-
       text-align: left;
-
-      min-width: 120px;
+      vertical-align: top;
     }
 
-    .audit-report-content th {
-      background: var(--bg-body);
-
+    .audit-table th {
+      background: var(--bg-card);
       color: var(--text-highlight);
-
-      font-weight: 700;
+      font-weight: 800;
     }
 
-    .audit-report-content td {
-      background: var(--bg-input);
+    .audit-table td {
+      line-height: 1.55;
     }
 
-    .audit-empty {
+    .audit-report-empty {
       color: var(--text-muted);
-
       font-style: italic;
+    }
+
+    .record-id {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      margin-top: 4px;
+    }
+
+    .report-textarea {
+      min-height: 260px !important;
+      font-family: Consolas, Monaco, monospace !important;
+      line-height: 1.5 !important;
+    }
+
+    .form-section-divider {
+      margin: 26px 0 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+      color: var(--text-highlight);
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    @media (max-width: 800px) {
+      .audit-report-content {
+        padding: 16px;
+      }
+
+      .content-bullets li,
+      .content-steps li {
+        padding-right: 11px;
+      }
+    }
+
+    .audit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .audit-item {
+      background-color: var(--bg-body);
+      border: 1px solid var(--border-color);
+      padding: 12px 16px;
+      border-radius: 12px;
+    }
+
+    .audit-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .audit-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
     }
 
     .tags-container {
       display: flex;
-
       gap: 8px;
-
       flex-wrap: wrap;
-
       margin-top: 16px;
     }
 
     .tag {
       background-color: var(--bg-tag);
-
       color: var(--text-highlight);
-
       padding: 4px 10px;
-
       border-radius: 8px;
-
       font-size: 0.75rem;
-
       font-weight: 600;
     }
 
     .pagination {
       display: flex;
-
       justify-content: center;
-
       align-items: center;
-
       gap: 16px;
-
       margin-top: 36px;
     }
 
     .pagination button {
       background-color: var(--bg-card);
-
       border: 1px solid var(--border-color);
-
       color: var(--text-main);
-
       padding: 10px 20px;
-
       border-radius: 12px;
-
       cursor: pointer;
-
       font-weight: 600;
-
-      box-shadow:
-        0 4px 12px var(--shadow-color);
+      box-shadow: 0 4px 12px var(--shadow-color);
     }
 
     .pagination button:disabled {
       opacity: 0.4;
-
       cursor: not-allowed;
     }
 
     .empty-message {
       text-align: center;
-
       padding: 60px 20px;
-
       color: var(--text-muted);
     }
 
     .modal-overlay {
       position: fixed;
-
       top: 0;
       left: 0;
-
       width: 100vw;
       height: 100vh;
-
       background: rgba(0, 0, 0, 0.6);
-
       backdrop-filter: blur(4px);
-
       display: none;
-
       justify-content: center;
-
       align-items: center;
-
       z-index: 1000;
     }
 
@@ -744,32 +697,20 @@
 
     .modal-content {
       background: var(--bg-card);
-
       border: 1px solid var(--border-color);
-
       border-radius: 20px;
-
       width: 90%;
-
       max-width: 700px;
-
       max-height: 90vh;
-
       overflow-y: auto;
-
       padding: 24px;
-
-      box-shadow:
-        0 10px 30px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
     .modal-header {
       display: flex;
-
       justify-content: space-between;
-
       align-items: center;
-
       margin-bottom: 20px;
     }
 
@@ -779,114 +720,68 @@
 
     .form-group label {
       display: block;
-
       font-size: 0.8rem;
-
       font-weight: 600;
-
       color: var(--text-muted);
-
       margin-bottom: 6px;
-
       text-transform: uppercase;
     }
 
     .form-control {
       width: 100%;
-
       padding: 12px;
-
       background: var(--bg-input);
-
       border: 1px solid var(--border-color);
-
       border-radius: 10px;
-
       color: var(--text-main);
-
       font-size: 0.9rem;
-
       outline: none;
-    }
-
-    .form-control:focus {
-      border-color: var(--text-highlight);
     }
 
     textarea.form-control {
       min-height: 80px;
-
       resize: vertical;
-    }
-
-    .audit-textarea {
-      min-height: 220px !important;
-
-      font-family:
-        Consolas,
-        Monaco,
-        monospace;
-
-      line-height: 1.5;
     }
 
     .modal-actions {
       display: flex;
-
       justify-content: flex-end;
-
       gap: 12px;
-
       margin-top: 24px;
     }
 
     .btn-save {
       background-color: var(--bg-tab-active);
-
       color: white;
-
       border: none;
-
       padding: 10px 20px;
-
       border-radius: 10px;
-
       cursor: pointer;
-
       font-weight: 600;
     }
 
     .btn-cancel {
       background: transparent;
-
       border: 1px solid var(--border-color);
-
       color: var(--text-muted);
-
       padding: 10px 20px;
-
       border-radius: 10px;
-
       cursor: pointer;
     }
 
     @media (max-width: 800px) {
-
       body {
         padding: 12px;
       }
 
       .header {
         flex-direction: column;
-
         align-items: flex-start;
-
         gap: 16px;
       }
 
       .header-actions {
         width: 100%;
-
         flex-wrap: wrap;
       }
 
@@ -896,22 +791,10 @@
 
       .card-header-actions {
         width: 100%;
-
         flex-wrap: wrap;
       }
-
-      .card-tabs {
-        overflow-x: auto;
-      }
-
-      .tab-btn {
-        white-space: nowrap;
-      }
-
     }
-
   </style>
-
 </head>
 
 <body>
@@ -919,50 +802,26 @@
   <header class="header">
 
     <div class="title-container">
-
       <span class="logo-icon"></span>
-
-      <h1>
-        SaveInCloud - KB & Quality Audit
-      </h1>
-
+      <h1>SaveInCloud — Knowledge Base & Quality Audit</h1>
     </div>
 
     <div class="header-actions">
 
-      <div
-        id="status-loading"
-        class="status-loading"
-      >
+      <div id="status-loading" class="status-loading">
         Carregando registros...
       </div>
 
-      <button
-        class="btn-new"
-        onclick="openCreateModal()"
-        type="button"
-      >
+      <button class="btn-new" onclick="openCreateModal()">
         + Novo Registro
       </button>
 
-      <button
-        id="theme-toggle"
-        class="theme-toggle-btn"
-        type="button"
-      >
-
-        <span id="theme-icon">
-          🌙
-        </span>
-
-        <span id="theme-text">
-          Escuro
-        </span>
-
+      <button id="theme-toggle" class="theme-toggle-btn">
+        <span id="theme-icon">🌙</span>
+        <span id="theme-text">Escuro</span>
       </button>
 
     </div>
-
   </header>
 
   <main>
@@ -979,36 +838,22 @@
 
     </section>
 
-    <section
-      id="cards-container"
-      class="cards-grid"
-    ></section>
+    <section id="cards-container" class="cards-grid"></section>
 
     <nav class="pagination">
 
-      <button
-        id="btn-prev"
-        disabled
-        type="button"
-      >
+      <button id="btn-prev" disabled>
         Anterior
       </button>
 
       <span
         id="page-info"
-        style="
-          font-size: 0.9rem;
-          color: var(--text-muted);
-        "
+        style="font-size: 0.9rem; color: var(--text-muted);"
       >
         Página 1
       </span>
 
-      <button
-        id="btn-next"
-        disabled
-        type="button"
-      >
+      <button id="btn-next" disabled>
         Próxima
       </button>
 
@@ -1016,15 +861,9 @@
 
   </main>
 
+  <!-- MODAL -->
 
-  <!-- =======================================================
-       MODAL
-  ======================================================== -->
-
-  <div
-    id="modal-form"
-    class="modal-overlay"
-  >
+  <div id="modal-form" class="modal-overlay">
 
     <div class="modal-content">
 
@@ -1052,17 +891,10 @@
         onsubmit="salvarRegistro(event)"
       >
 
-        <input
-          type="hidden"
-          id="edit-id"
-        >
-
+        <input type="hidden" id="edit-id">
 
         <div class="form-group">
-
-          <label>
-            Título *
-          </label>
+          <label>Título *</label>
 
           <input
             type="text"
@@ -1070,148 +902,99 @@
             class="form-control"
             required
           >
-
         </div>
 
-
         <div class="form-group">
-
-          <label>
-            Categoria
-          </label>
+          <label>Categoria</label>
 
           <input
             type="text"
             id="edit-categoria"
             class="form-control"
           >
-
         </div>
 
-
         <div class="form-group">
-
-          <label>
-            Tags (separadas por vírgula)
-          </label>
+          <label>Tags (separadas por vírgula)</label>
 
           <input
             type="text"
             id="edit-tags"
             class="form-control"
           >
-
         </div>
 
-
         <div class="form-group">
-
-          <label>
-            Descrição / Problema
-          </label>
+          <label>Descrição / Problema</label>
 
           <textarea
             id="edit-descricao"
             class="form-control"
           ></textarea>
-
         </div>
 
-
         <div class="form-group">
-
-          <label>
-            Solução *
-          </label>
+          <label>Solução *</label>
 
           <textarea
             id="edit-solucao"
             class="form-control"
             required
           ></textarea>
-
         </div>
 
-
-        <!-- ===================================================
-             AUDITORIA
-        ==================================================== -->
-
         <div class="form-group">
-
-          <label>
-            Nota Final
-          </label>
+          <label>Nota Final</label>
 
           <input
             type="number"
             step="0.1"
-            min="0"
-            max="5"
             id="edit-nota"
             class="form-control"
           >
-
         </div>
 
-
         <div class="form-group">
-
-          <label>
-            Veredito
-          </label>
+          <label>Veredito</label>
 
           <input
             type="text"
             id="edit-veredito"
             class="form-control"
           >
-
         </div>
 
-
         <div class="form-group">
-
-          <label>
-            Objetivo
-          </label>
+          <label>Objetivo</label>
 
           <textarea
             id="edit-objetivo"
             class="form-control"
           ></textarea>
-
         </div>
 
-
         <div class="form-group">
-
-          <label>
-            Oportunidade PS
-          </label>
+          <label>Oportunidade PS</label>
 
           <textarea
             id="edit-oportunidade"
             class="form-control"
           ></textarea>
-
         </div>
 
+        <div class="form-section-divider">
+          Relatório completo da auditoria
+        </div>
 
         <div class="form-group">
-
-          <label>
-            Relatório Completo da Auditoria
-          </label>
+          <label>Relatório completo da auditoria (Markdown)</label>
 
           <textarea
             id="edit-relatorio"
-            class="form-control audit-textarea"
+            class="form-control report-textarea"
             placeholder="Relatório completo da auditoria em Markdown..."
           ></textarea>
-
         </div>
-
 
         <div class="modal-actions">
 
@@ -1238,137 +1021,96 @@
 
   </div>
 
-
   <script>
 
     let currentPage = 1;
-
     let currentSearch = '';
-
     let debounceTimer = null;
-
     let registrosCache = [];
 
-
     const searchInput =
-      document.getElementById(
-        'search-input'
-      );
+      document.getElementById('search-input');
 
     const cardsContainer =
-      document.getElementById(
-        'cards-container'
-      );
+      document.getElementById('cards-container');
 
     const statusLoading =
-      document.getElementById(
-        'status-loading'
-      );
+      document.getElementById('status-loading');
 
     const btnPrev =
-      document.getElementById(
-        'btn-prev'
-      );
+      document.getElementById('btn-prev');
 
     const btnNext =
-      document.getElementById(
-        'btn-next'
-      );
+      document.getElementById('btn-next');
 
     const pageInfo =
-      document.getElementById(
-        'page-info'
-      );
+      document.getElementById('page-info');
 
     const themeToggleBtn =
-      document.getElementById(
-        'theme-toggle'
-      );
+      document.getElementById('theme-toggle');
 
     const themeIcon =
-      document.getElementById(
-        'theme-icon'
-      );
+      document.getElementById('theme-icon');
 
     const themeText =
-      document.getElementById(
-        'theme-text'
-      );
+      document.getElementById('theme-text');
 
 
-    /* =========================================================
+    /* =========================
        TEMA
-    ========================================================= */
+    ========================= */
 
     function initTheme() {
 
       const savedTheme =
-        localStorage.getItem(
-          'kb_theme'
-        ) || 'dark';
+        localStorage.getItem('kb_theme') || 'dark';
 
       document.documentElement.setAttribute(
         'data-theme',
         savedTheme
       );
 
-      updateThemeUI(
-        savedTheme
-      );
+      updateThemeUI(savedTheme);
     }
 
 
     function updateThemeUI(theme) {
 
       themeIcon.innerText =
-        theme === 'light'
-          ? '☀️'
-          : '🌙';
+        theme === 'light' ? '☀️' : '🌙';
 
       themeText.innerText =
-        theme === 'light'
-          ? 'Claro'
-          : 'Escuro';
+        theme === 'light' ? 'Claro' : 'Escuro';
     }
 
 
-    themeToggleBtn.addEventListener(
-      'click',
-      () => {
+    themeToggleBtn.addEventListener('click', () => {
 
-        const currentTheme =
-          document.documentElement
-            .getAttribute(
-              'data-theme'
-            );
+      const currentTheme =
+        document.documentElement.getAttribute('data-theme');
 
-        const newTheme =
-          currentTheme === 'dark'
-            ? 'light'
-            : 'dark';
+      const newTheme =
+        currentTheme === 'dark'
+          ? 'light'
+          : 'dark';
 
-        document.documentElement
-          .setAttribute(
-            'data-theme',
-            newTheme
-          );
+      document.documentElement.setAttribute(
+        'data-theme',
+        newTheme
+      );
 
-        localStorage.setItem(
-          'kb_theme',
-          newTheme
-        );
+      localStorage.setItem(
+        'kb_theme',
+        newTheme
+      );
 
-        updateThemeUI(
-          newTheme
-        );
-
-      }
-    );
+      updateThemeUI(newTheme);
+    });
 
 
-    /* =========================================================
+    /* =========================
        CARREGAR REGISTROS
-    ========================================================= */
+    ========================= */
 
     async function carregarRegistros(
       busca = '',
@@ -1387,41 +1129,29 @@
           `&limit=10` +
           `&_=${Date.now()}`;
 
-
         const response =
-          await fetch(
-            url,
-            {
-              method: 'GET',
-              cache: 'no-store'
-            }
-          );
-
+          await fetch(url, {
+            method: 'GET',
+            cache: 'no-store'
+          });
 
         if (!response.ok) {
 
           throw new Error(
             `Erro HTTP: ${response.status}`
           );
-
         }
-
 
         const json =
           await response.json();
-
 
         if (
           json.success === false &&
           json.error
         ) {
 
-          throw new Error(
-            json.error
-          );
-
+          throw new Error(json.error);
         }
-
 
         registrosCache =
           Array.isArray(json.data)
@@ -1430,29 +1160,19 @@
               ? json
               : [];
 
-
         const totalPaginas =
-          Number(
-            json.total_pages || 1
-          );
+          Number(json.total_pages || 1);
 
-
-        renderizarCards(
-          registrosCache
-        );
-
+        renderizarCards(registrosCache);
 
         atualizarPaginacao(
           pagina,
           totalPaginas
         );
 
-
         statusLoading.innerText = '';
 
-      }
-
-      catch (error) {
+      } catch (error) {
 
         console.error(
           'Erro ao buscar dados:',
@@ -1467,24 +1187,467 @@
           'Erro ao conectar com a API. ' +
           'Verifique o console.' +
           '</div>';
-
       }
-
     }
 
 
-    /* =========================================================
+    /* =========================
        RENDERIZAR CARDS
-    ========================================================= */
+    ========================= */
 
-    function renderizarCards(
-      registros
-    ) {
+    function formatarMarkdownInline(texto) {
+
+      let resultado = escapeHtml(texto);
+
+      resultado = resultado.replace(
+        /`([^`]+)`/g,
+        '<code>$1</code>'
+      );
+
+      resultado = resultado.replace(
+        /\*\*([^*]+)\*\*/g,
+        '<strong>$1</strong>'
+      );
+
+      resultado = resultado.replace(
+        /(?<!\*)\*([^*]+)\*(?!\*)/g,
+        '<em>$1</em>'
+      );
+
+      return resultado;
+    }
+
+
+    function ehLinhaTabela(linha) {
+      return /^\s*\|.*\|\s*$/.test(linha);
+    }
+
+
+    function ehSeparadorTabela(linha) {
+      return /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(linha);
+    }
+
+
+    function renderizarTabelaMarkdown(linhas) {
+
+      if (linhas.length < 2) {
+        return '';
+      }
+
+      const cabecalho =
+        linhas[0]
+          .trim()
+          .replace(/^\|/, '')
+          .replace(/\|$/, '')
+          .split('|')
+          .map(c => c.trim());
+
+      let htmlTabela = `
+        <div class="audit-table-wrapper">
+          <table class="audit-table">
+            <thead>
+              <tr>
+      `;
+
+      for (const coluna of cabecalho) {
+        htmlTabela += `
+          <th>${formatarMarkdownInline(coluna)}</th>
+        `;
+      }
+
+      htmlTabela += `
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      for (let i = 2; i < linhas.length; i++) {
+
+        const colunas =
+          linhas[i]
+            .trim()
+            .replace(/^\|/, '')
+            .replace(/\|$/, '')
+            .split('|')
+            .map(c => c.trim());
+
+        htmlTabela += '<tr>';
+
+        for (let j = 0; j < cabecalho.length; j++) {
+
+          htmlTabela += `
+            <td>${formatarMarkdownInline(
+              colunas[j] || ''
+            )}</td>
+          `;
+        }
+
+        htmlTabela += '</tr>';
+      }
+
+      htmlTabela += `
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      return htmlTabela;
+    }
+
+
+    function renderizarMarkdown(markdown) {
+
+      if (!markdown || !String(markdown).trim()) {
+        return `
+          <div class="audit-report-empty">
+            Nenhum relatório de auditoria disponível.
+          </div>
+        `;
+      }
+
+      const linhas =
+        String(markdown)
+          .replace(/\r\n/g, '\n')
+          .split('\n');
+
+      let html = '';
+      let i = 0;
+      let paragrafo = [];
+      let listaAtual = null;
+
+
+      function fecharParagrafo() {
+
+        if (paragrafo.length === 0) {
+          return;
+        }
+
+        const texto =
+          paragrafo
+            .join(' ')
+            .trim();
+
+        if (texto) {
+          html += `
+            <p>
+              ${formatarMarkdownInline(texto)}
+            </p>
+          `;
+        }
+
+        paragrafo = [];
+      }
+
+
+      function fecharLista() {
+
+        if (listaAtual) {
+          html += `</${listaAtual}>`;
+          listaAtual = null;
+        }
+      }
+
+
+      while (i < linhas.length) {
+
+        const linha = linhas[i];
+
+
+        if (!linha.trim()) {
+
+          fecharParagrafo();
+          fecharLista();
+
+          i++;
+          continue;
+        }
+
+
+        // Tabela Markdown
+        if (
+          ehLinhaTabela(linha) &&
+          i + 1 < linhas.length &&
+          ehSeparadorTabela(linhas[i + 1])
+        ) {
+
+          fecharParagrafo();
+          fecharLista();
+
+          const tabela = [
+            linhas[i],
+            linhas[i + 1]
+          ];
+
+          i += 2;
+
+          while (
+            i < linhas.length &&
+            ehLinhaTabela(linhas[i])
+          ) {
+            tabela.push(linhas[i]);
+            i++;
+          }
+
+          html += renderizarTabelaMarkdown(tabela);
+
+          continue;
+        }
+
+
+        // H1
+        let match =
+          linha.match(/^#\s+(.+)$/);
+
+        if (match) {
+
+          fecharParagrafo();
+          fecharLista();
+
+          html += `
+            <h1>${formatarMarkdownInline(match[1])}</h1>
+          `;
+
+          i++;
+          continue;
+        }
+
+
+        // H2
+        match =
+          linha.match(/^##\s+(.+)$/);
+
+        if (match) {
+
+          fecharParagrafo();
+          fecharLista();
+
+          html += `
+            <h2>${formatarMarkdownInline(match[1])}</h2>
+          `;
+
+          i++;
+          continue;
+        }
+
+
+        // H3
+        match =
+          linha.match(/^###\s+(.+)$/);
+
+        if (match) {
+
+          fecharParagrafo();
+          fecharLista();
+
+          html += `
+            <h3>${formatarMarkdownInline(match[1])}</h3>
+          `;
+
+          i++;
+          continue;
+        }
+
+
+        // Lista não ordenada
+        match =
+          linha.match(/^\s*[-*]\s+(.+)$/);
+
+        if (match) {
+
+          fecharParagrafo();
+
+          if (listaAtual !== 'ul') {
+
+            fecharLista();
+
+            html += '<ul>';
+            listaAtual = 'ul';
+          }
+
+          html += `
+            <li>
+              ${formatarMarkdownInline(match[1])}
+            </li>
+          `;
+
+          i++;
+          continue;
+        }
+
+
+        // Lista ordenada
+        match =
+          linha.match(/^\s*\d+\.\s+(.+)$/);
+
+        if (match) {
+
+          fecharParagrafo();
+
+          if (listaAtual !== 'ol') {
+
+            fecharLista();
+
+            html += '<ol>';
+            listaAtual = 'ol';
+          }
+
+          html += `
+            <li>
+              ${formatarMarkdownInline(match[1])}
+            </li>
+          `;
+
+          i++;
+          continue;
+        }
+
+
+        // Blockquote
+        match =
+          linha.match(/^\s*>\s*(.+)$/);
+
+        if (match) {
+
+          fecharParagrafo();
+          fecharLista();
+
+          html += `
+            <blockquote>
+              ${formatarMarkdownInline(match[1])}
+            </blockquote>
+          `;
+
+          i++;
+          continue;
+        }
+
+
+        fecharLista();
+
+        paragrafo.push(linha.trim());
+
+        i++;
+      }
+
+
+      fecharParagrafo();
+      fecharLista();
+
+      return html;
+    }
+
+
+    function normalizarLinhas(texto) {
+      return String(texto ?? '')
+        .replace(/\r\n/g, '\n')
+        .split('\n')
+        .map(linha => linha.trim())
+        .filter(Boolean);
+    }
+
+
+    function renderizarConteudoTopicos(texto, tipo = 'bullet') {
+
+      if (!texto || !String(texto).trim()) {
+        return `
+          <div class="empty-content">
+            Não informado no atendimento.
+          </div>
+        `;
+      }
+
+      const linhas = normalizarLinhas(texto);
+
+      // Se o conteúdo já vier como lista, preserva os itens.
+      const itensExistentes = linhas.filter(linha =>
+        /^[-*•]\s+/.test(linha) ||
+        /^\d+[\.\)]\s+/.test(linha)
+      );
+
+      if (itensExistentes.length === linhas.length && linhas.length > 0) {
+
+        if (tipo === 'steps' || /^\d+[\.\)]/.test(linhas[0])) {
+          return `
+            <ol class="content-steps">
+              ${linhas.map(item => `
+                <li>${escapeHtml(
+                  item.replace(/^\d+[\.\)]\s+/, '')
+                      .replace(/^[-*•]\s+/, '')
+                )}</li>
+              `).join('')}
+            </ol>
+          `;
+        }
+
+        return `
+          <ul class="content-bullets">
+            ${linhas.map(item => `
+              <li>${escapeHtml(
+                item.replace(/^[-*•]\s+/, '')
+              )}</li>
+            `).join('')}
+          </ul>
+        `;
+      }
+
+      // Quando a IA devolve um único parágrafo,
+      // transforma as frases em tópicos sem alterar o conteúdo.
+      const frases = String(texto)
+        .replace(/\s+/g, ' ')
+        .trim()
+        .match(/[^.!?]+(?:[.!?]+|$)/g)
+        ?.map(frase => frase.trim())
+        .filter(Boolean) || [];
+
+      if (frases.length >= 2) {
+
+        return `
+          <ul class="content-bullets">
+            ${frases.map(frase => `
+              <li>${escapeHtml(frase)}</li>
+            `).join('')}
+          </ul>
+        `;
+      }
+
+      return `
+        <ul class="content-bullets">
+          <li>${escapeHtml(String(texto).trim())}</li>
+        </ul>
+      `;
+    }
+
+
+    function obterClasseVeredito(veredito) {
+
+      const texto = String(veredito || '').toLowerCase();
 
       if (
-        !registros ||
-        registros.length === 0
+        texto.includes('exitoso') &&
+        !texto.includes('parcial')
       ) {
+        return 'success';
+      }
+
+      if (texto.includes('parcial')) {
+        return 'partial';
+      }
+
+      if (
+        texto.includes('não exitoso') ||
+        texto.includes('nao exitoso') ||
+        texto.includes('falha')
+      ) {
+        return 'fail';
+      }
+
+      return '';
+    }
+
+
+    function renderizarCards(registros) {
+
+      if (!registros || registros.length === 0) {
 
         cardsContainer.innerHTML =
           '<div class="empty-message">' +
@@ -1496,427 +1659,361 @@
 
 
       cardsContainer.innerHTML =
-        registros
-          .map(item => {
+        registros.map(item => {
 
-            const categoria =
-              item.categoria ||
-              'Geral';
+          const categoria =
+            item.categoria || 'Geral';
 
+          const tagsArray =
+            item.tags
+              ? String(item.tags)
+                  .split(',')
+                  .map(t => t.trim())
+                  .filter(Boolean)
+              : [];
 
-            const tagsArray =
-              item.tags
-                ? String(item.tags)
-                    .split(',')
-                    .filter(
-                      t =>
-                        t.trim() !== ''
-                    )
-                : [];
+          const problemaDescricao =
+            item.descricao ||
+            item.problema ||
+            '';
 
+          const notaFinal =
+            item.nota_final !== null &&
+            item.nota_final !== undefined
+              ? item.nota_final
+              : item.nota;
 
-            const problemaDescricao =
-              item.descricao ||
-              item.problema ||
-              '';
+          const oportunidade =
+            item.oportunidade_ps ||
+            item.oportunidade ||
+            '';
 
+          const veredito =
+            item.veredito ||
+            'Não avaliado';
 
-            const notaFinal =
-              (
-                item.nota_final !== null &&
-                item.nota_final !== undefined
-              )
-                ? item.nota_final
-                : item.nota;
+          const id =
+            Number(item.id);
 
+          const classeVeredito =
+            obterClasseVeredito(veredito);
 
-            const oportunidade =
-              item.oportunidade_ps ||
-              item.oportunidade ||
-              '';
-
-
-            const relatorio =
-              item.relatorio_markdown ||
-              item.relatorio ||
-              '';
+          const relatorio =
+            item.relatorio_markdown ||
+            '';
 
 
-            const id =
-              Number(item.id);
+          return `
+            <article class="card">
 
+              <header class="card-header">
 
-            return `
+                <div>
+                  <h2 class="card-title">
+                    ${escapeHtml(
+                      item.titulo || 'Sem Título'
+                    )}
+                  </h2>
 
-              <article class="card">
-
-                <header class="card-header">
-
-                  <div>
-
-                    <h2 class="card-title">
-
-                      ${escapeHtml(
-                        item.titulo ||
-                        'Sem Título'
-                      )}
-
-                    </h2>
-
+                  <div class="record-id">
+                    Registro #${escapeHtml(id)}
                   </div>
+                </div>
 
 
-                  <div class="card-header-actions">
+                <div class="card-header-actions">
 
-                    <span class="badge">
-
-                      ${escapeHtml(
-                        categoria
-                      )}
-
-                    </span>
-
-
-                    <button
-                      class="btn-action btn-edit"
-                      onclick="openEditModal(${id})"
-                      type="button"
-                    >
-                      ✎ Editar
-                    </button>
-
-
-                    <button
-                      class="btn-action btn-delete"
-                      onclick="excluirRegistro(${id})"
-                      type="button"
-                    >
-                      🗑 Excluir
-                    </button>
-
-                  </div>
-
-                </header>
-
-
-                <!-- ABAS -->
-
-                <div class="card-tabs">
+                  <span class="badge">
+                    ${escapeHtml(categoria)}
+                  </span>
 
                   <button
-                    class="tab-btn active"
-                    onclick="switchTab(
-                      this,
-                      'tab-solucao-${id}'
-                    )"
+                    class="btn-action btn-edit"
+                    onclick="openEditModal(${id})"
                     type="button"
                   >
-                    Solução KB
+                    ✎ Editar
                   </button>
 
-
                   <button
-                    class="tab-btn"
-                    onclick="switchTab(
-                      this,
-                      'tab-qualidade-${id}'
-                    )"
+                    class="btn-action btn-delete"
+                    onclick="excluirRegistro(${id})"
                     type="button"
                   >
-                    Auditoria de Qualidade
+                    🗑 Excluir
                   </button>
 
                 </div>
 
+              </header>
 
-                <!-- =================================================
-                     ABA SOLUÇÃO
-                ================================================== -->
 
-                <div
-                  id="tab-solucao-${id}"
-                  class="tab-content active"
+              <div class="card-tabs">
+
+                <button
+                  class="tab-btn active"
+                  onclick="switchTab(
+                    this,
+                    'tab-solucao-${id}'
+                  )"
+                  type="button"
                 >
-
-                  ${
-                    problemaDescricao
-                      ? `
-
-                        <div class="card-section">
-
-                          <div class="card-section-title">
-                            Descrição / Problema
-                          </div>
-
-                          <div class="card-text">
-
-                            ${escapeHtml(
-                              problemaDescricao
-                            )}
-
-                          </div>
-
-                        </div>
-
-                      `
-                      : ''
-                  }
+                  Solução KB
+                </button>
 
 
-                  ${
-                    item.solucao
-                      ? `
-
-                        <div class="card-section">
-
-                          <div class="card-section-title">
-                            Solução
-                          </div>
-
-                          <div class="card-text">
-
-                            ${escapeHtml(
-                              item.solucao
-                            )}
-
-                          </div>
-
-                        </div>
-
-                      `
-                      : ''
-                  }
-
-                </div>
-
-
-                <!-- =================================================
-                     ABA AUDITORIA
-                ================================================== -->
-
-                <div
-                  id="tab-qualidade-${id}"
-                  class="tab-content"
+                <button
+                  class="tab-btn"
+                  onclick="switchTab(
+                    this,
+                    'tab-qualidade-${id}'
+                  )"
+                  type="button"
                 >
+                  Auditoria de Qualidade
+                </button>
 
-                  <div class="audit-grid">
-
-                    <div class="audit-item">
-
-                      <div class="audit-label">
-                        Nota Final
-                      </div>
-
-                      <div class="audit-value audit-score">
-
-                        ${
-                          notaFinal !== null &&
-                          notaFinal !== undefined &&
-                          notaFinal !== ''
-                            ? escapeHtml(
-                                notaFinal
-                              ) + ' / 5'
-                            : 'N/A'
-                        }
-
-                      </div>
-
-                    </div>
+              </div>
 
 
-                    <div class="audit-item">
+              <!-- =========================
+                   ABA SOLUÇÃO
+              ========================== -->
 
-                      <div class="audit-label">
-                        Veredito
-                      </div>
-
-                      <div class="audit-value">
-
-                        ${escapeHtml(
-                          item.veredito ||
-                          'Não avaliado'
-                        )}
-
-                      </div>
-
-                    </div>
-
-                  </div>
-
-
-                  ${
-                    item.objetivo
-                      ? `
-
-                        <div class="card-section">
-
-                          <div class="card-section-title">
-                            Objetivo
-                          </div>
-
-                          <div class="card-text">
-
-                            ${escapeHtml(
-                              item.objetivo
-                            )}
-
-                          </div>
-
-                        </div>
-
-                      `
-                      : ''
-                  }
-
-
-                  ${
-                    oportunidade
-                      ? `
-
-                        <div class="card-section">
-
-                          <div class="card-section-title">
-                            Oportunidade PS
-                          </div>
-
-                          <div class="card-text">
-
-                            ${escapeHtml(
-                              oportunidade
-                            )}
-
-                          </div>
-
-                        </div>
-
-                      `
-                      : ''
-                  }
-
-
-                  <!-- =================================================
-                       RELATÓRIO COMPLETO
-                  ================================================== -->
-
-                  <div class="card-section audit-report">
-
-                    <div class="card-section-title">
-                      Relatório Completo da Auditoria
-                    </div>
-
-                    <div class="audit-report-content">
-
-                      ${
-                        relatorio
-                          ? markdownToHtml(
-                              relatorio
-                            )
-                          : `
-                            <div class="audit-empty">
-                              Nenhum relatório de auditoria
-                              disponível para este registro.
-                            </div>
-                          `
-                      }
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-
-                <!-- TAGS -->
+              <div
+                id="tab-solucao-${id}"
+                class="tab-content active"
+              >
 
                 ${
-                  tagsArray.length > 0
+                  problemaDescricao
                     ? `
+                      <div class="card-section">
 
-                      <footer class="tags-container">
+                        <div class="card-section-title">
+                          Descrição / Problema
+                        </div>
 
-                        ${tagsArray
-                          .map(
-                            tag =>
-                              `
-                                <span class="tag">
+                        <div class="card-text">
+                          ${renderizarConteudoTopicos(
+                            problemaDescricao,
+                            'bullet'
+                          )}
+                        </div>
 
-                                  ${escapeHtml(
-                                    tag.trim()
-                                  )}
-
-                                </span>
-                              `
-                          )
-                          .join('')}
-
-                      </footer>
-
+                      </div>
                     `
                     : ''
                 }
 
-              </article>
 
-            `;
+                ${
+                  item.solucao
+                    ? `
+                      <div class="card-section">
 
-          })
-          .join('');
+                        <div class="card-section-title">
+                          Solução
+                        </div>
 
+                        <div class="card-text">
+                          ${renderizarConteudoTopicos(
+                            item.solucao,
+                            'steps'
+                          )}
+                        </div>
+
+                      </div>
+                    `
+                    : ''
+                }
+
+              </div>
+
+
+              <!-- =========================
+                   ABA AUDITORIA
+              ========================== -->
+
+              <div
+                id="tab-qualidade-${id}"
+                class="tab-content"
+              >
+
+                <div class="audit-grid">
+
+                  <div class="audit-item">
+
+                    <div class="audit-label">
+                      Nota Final
+                    </div>
+
+                    <div class="audit-value score">
+                      ${
+                        notaFinal !== null &&
+                        notaFinal !== undefined &&
+                        notaFinal !== ''
+                          ? escapeHtml(
+                              `${notaFinal} / 5,0`
+                            )
+                          : 'N/A'
+                      }
+                    </div>
+
+                  </div>
+
+
+                  <div class="audit-item">
+
+                    <div class="audit-label">
+                      Veredito
+                    </div>
+
+                    <div class="audit-value">
+
+                      <span class="audit-verdict ${classeVeredito}">
+                        ${escapeHtml(veredito)}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                ${
+                  item.objetivo
+                    ? `
+                      <div class="card-section">
+
+                        <div class="card-section-title">
+                          Objetivo
+                        </div>
+
+                        <div class="card-text">
+                          ${escapeHtml(
+                            item.objetivo
+                          )}
+                        </div>
+
+                      </div>
+                    `
+                    : ''
+                }
+
+
+                ${
+                  oportunidade
+                    ? `
+                      <div class="card-section">
+
+                        <div class="card-section-title">
+                          Oportunidade PS
+                        </div>
+
+                        <div class="card-text">
+                          ${escapeHtml(
+                            oportunidade
+                          )}
+                        </div>
+
+                      </div>
+                    `
+                    : ''
+                }
+
+
+                <div class="audit-report">
+
+                  <div class="audit-report-header">
+
+                    <div class="audit-report-title">
+                      Relatório completo da auditoria
+                    </div>
+
+                  </div>
+
+                  <div class="audit-report-content">
+
+                    ${
+                      relatorio
+                        ? renderizarMarkdown(relatorio)
+                        : `
+                          <div class="audit-report-empty">
+                            Nenhum relatório de auditoria disponível.
+                          </div>
+                        `
+                    }
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              ${
+                tagsArray.length > 0
+                  ? `
+                    <footer class="tags-container">
+
+                      ${tagsArray
+                        .map(
+                          tag =>
+                            `<span class="tag">${escapeHtml(
+                              tag
+                            )}</span>`
+                        )
+                        .join('')}
+
+                    </footer>
+                  `
+                  : ''
+              }
+
+            </article>
+          `;
+
+        }).join('');
     }
 
 
-    /* =========================================================
+
+    /* =========================
        NOVO REGISTRO
-    ========================================================= */
+    ========================= */
 
     function openCreateModal() {
 
       document
-        .getElementById(
-          'form-registro'
-        )
+        .getElementById('form-registro')
         .reset();
 
-
       document
-        .getElementById(
-          'edit-id'
-        )
+        .getElementById('edit-id')
         .value = '';
 
+      document
+        .getElementById('modal-title')
+        .innerText = 'Novo Registro';
 
       document
-        .getElementById(
-          'modal-title'
-        )
-        .innerText =
-          'Novo Registro';
-
-
-      document
-        .getElementById(
-          'modal-form'
-        )
-        .classList.add(
-          'active'
-        );
-
+        .getElementById('modal-form')
+        .classList.add('active');
     }
 
 
-    /* =========================================================
+    /* =========================
        EDITAR
-    ========================================================= */
+    ========================= */
 
     function openEditModal(id) {
 
       const item =
         registrosCache.find(
-          r =>
-            Number(r.id) ===
-            Number(id)
+          r => Number(r.id) === Number(id)
         );
-
 
       if (!item) {
 
@@ -1928,155 +2025,76 @@
       }
 
 
-      document
-        .getElementById(
-          'edit-id'
+      document.getElementById('edit-id').value =
+        item.id;
+
+      document.getElementById('edit-titulo').value =
+        item.titulo || '';
+
+      document.getElementById('edit-categoria').value =
+        item.categoria || '';
+
+      document.getElementById('edit-tags').value =
+        item.tags || '';
+
+      document.getElementById('edit-descricao').value =
+        item.descricao ||
+        item.problema ||
+        '';
+
+      document.getElementById('edit-solucao').value =
+        item.solucao || '';
+
+      document.getElementById('edit-nota').value =
+        (
+          item.nota_final !== null &&
+          item.nota_final !== undefined
         )
-        .value =
-          item.id;
+          ? item.nota_final
+          : (
+              item.nota || ''
+            );
+
+      document.getElementById('edit-veredito').value =
+        item.veredito || '';
+
+      document.getElementById('edit-objetivo').value =
+        item.objetivo || '';
+
+      document.getElementById('edit-oportunidade').value =
+        item.oportunidade_ps ||
+        item.oportunidade ||
+        '';
 
 
-      document
-        .getElementById(
-          'edit-titulo'
-        )
-        .value =
-          item.titulo || '';
+      document.getElementById('edit-relatorio').value =
+        item.relatorio_markdown || '';
 
 
-      document
-        .getElementById(
-          'edit-categoria'
-        )
-        .value =
-          item.categoria || '';
-
-
-      document
-        .getElementById(
-          'edit-tags'
-        )
-        .value =
-          item.tags || '';
-
-
-      document
-        .getElementById(
-          'edit-descricao'
-        )
-        .value =
-          item.descricao ||
-          item.problema ||
-          '';
-
-
-      document
-        .getElementById(
-          'edit-solucao'
-        )
-        .value =
-          item.solucao || '';
-
-
-      document
-        .getElementById(
-          'edit-nota'
-        )
-        .value =
-          (
-            item.nota_final !== null &&
-            item.nota_final !== undefined
-          )
-            ? item.nota_final
-            : (
-                item.nota ||
-                ''
-              );
-
+      document.getElementById('modal-title').innerText =
+        'Editar Registro';
 
       document
-        .getElementById(
-          'edit-veredito'
-        )
-        .value =
-          item.veredito || '';
-
-
-      document
-        .getElementById(
-          'edit-objetivo'
-        )
-        .value =
-          item.objetivo || '';
-
-
-      document
-        .getElementById(
-          'edit-oportunidade'
-        )
-        .value =
-          item.oportunidade_ps ||
-          item.oportunidade ||
-          '';
-
-
-      /* =======================================================
-         NOVO:
-         CARREGA O RELATÓRIO COMPLETO
-      ======================================================== */
-
-      document
-        .getElementById(
-          'edit-relatorio'
-        )
-        .value =
-          item.relatorio_markdown ||
-          item.relatorio ||
-          '';
-
-
-      document
-        .getElementById(
-          'modal-title'
-        )
-        .innerText =
-          'Editar Registro';
-
-
-      document
-        .getElementById(
-          'modal-form'
-        )
-        .classList.add(
-          'active'
-        );
-
+        .getElementById('modal-form')
+        .classList.add('active');
     }
 
 
     function closeModal() {
 
       document
-        .getElementById(
-          'modal-form'
-        )
-        .classList.remove(
-          'active'
-        );
-
+        .getElementById('modal-form')
+        .classList.remove('active');
     }
 
 
-    /* =========================================================
+    /* =========================
        SALVAR
-    ========================================================= */
+    ========================= */
 
-    async function salvarRegistro(
-      event
-    ) {
+    async function salvarRegistro(event) {
 
       event.preventDefault();
-
 
       statusLoading.innerText =
         'Salvando...';
@@ -2084,12 +2102,9 @@
 
       const id =
         document
-          .getElementById(
-            'edit-id'
-          )
+          .getElementById('edit-id')
           .value
           .trim();
-
 
       const isEdit =
         Boolean(id);
@@ -2099,125 +2114,81 @@
 
         titulo:
           document
-            .getElementById(
-              'edit-titulo'
-            )
+            .getElementById('edit-titulo')
             .value
             .trim(),
-
 
         solucao:
           document
-            .getElementById(
-              'edit-solucao'
-            )
+            .getElementById('edit-solucao')
             .value
             .trim(),
-
 
         categoria:
           document
-            .getElementById(
-              'edit-categoria'
-            )
+            .getElementById('edit-categoria')
             .value
             .trim(),
-
 
         tags:
           document
-            .getElementById(
-              'edit-tags'
-            )
+            .getElementById('edit-tags')
             .value
             .trim(),
-
 
         descricao:
           document
-            .getElementById(
-              'edit-descricao'
-            )
+            .getElementById('edit-descricao')
             .value
             .trim(),
-
 
         problema:
           document
-            .getElementById(
-              'edit-descricao'
-            )
+            .getElementById('edit-descricao')
             .value
             .trim(),
 
-
         nota_final:
           document
-            .getElementById(
-              'edit-nota'
-            )
+            .getElementById('edit-nota')
             .value
             ? parseFloat(
                 document
-                  .getElementById(
-                    'edit-nota'
-                  )
+                  .getElementById('edit-nota')
                   .value
               )
             : null,
 
-
         veredito:
           document
-            .getElementById(
-              'edit-veredito'
-            )
+            .getElementById('edit-veredito')
             .value
             .trim(),
-
 
         objetivo:
           document
-            .getElementById(
-              'edit-objetivo'
-            )
+            .getElementById('edit-objetivo')
             .value
             .trim(),
-
 
         oportunidade_ps:
           document
-            .getElementById(
-              'edit-oportunidade'
-            )
+            .getElementById('edit-oportunidade')
             .value
             .trim(),
 
-
-        /* =====================================================
-           NOVO:
-           SALVA O RELATÓRIO COMPLETO
-        ====================================================== */
-
         relatorio_markdown:
           document
-            .getElementById(
-              'edit-relatorio'
-            )
+            .getElementById('edit-relatorio')
             .value
             .trim()
-
       };
 
 
       if (isEdit) {
 
         payload.id =
-          parseInt(
-            id,
-            10
-          );
-
+          parseInt(id, 10);
       }
 
 
@@ -2238,20 +2209,14 @@
               cache: 'no-store',
 
               headers: {
-
                 'Content-Type':
                   'application/json',
-
                 'Cache-Control':
                   'no-cache'
-
               },
 
               body:
-                JSON.stringify(
-                  payload
-                )
-
+                JSON.stringify(payload)
             }
           );
 
@@ -2270,18 +2235,14 @@
 
           closeModal();
 
-
           await carregarRegistros(
             currentSearch,
-
             isEdit
               ? currentPage
               : 1
           );
 
-        }
-
-        else {
+        } else {
 
           alert(
             'Erro ao salvar: ' +
@@ -2291,53 +2252,38 @@
               'Erro desconhecido'
             )
           );
-
         }
 
-      }
-
-      catch (err) {
+      } catch (err) {
 
         console.error(
           'Erro ao gravar:',
           err
         );
 
-
         alert(
           'Erro ao se conectar com a API.'
         );
 
-      }
-
-      finally {
+      } finally {
 
         statusLoading.innerText = '';
-
       }
-
     }
 
 
-    /* =========================================================
+    /* =========================
        EXCLUIR
-    ========================================================= */
+    ========================= */
 
-    async function excluirRegistro(
-      id
-    ) {
+    async function excluirRegistro(id) {
 
       const registroId =
-        parseInt(
-          id,
-          10
-        );
+        parseInt(id, 10);
 
 
       if (
-        !Number.isInteger(
-          registroId
-        ) ||
+        !Number.isInteger(registroId) ||
         registroId <= 0
       ) {
 
@@ -2351,9 +2297,7 @@
 
       const item =
         registrosCache.find(
-          r =>
-            Number(r.id) ===
-            registroId
+          r => Number(r.id) === registroId
         );
 
 
@@ -2381,11 +2325,15 @@
 
       try {
 
+        /*
+         * IMPORTANTE:
+         * A exclusão é enviada explicitamente
+         * como action=delete e com o ID.
+         */
+
         const url =
           `./api.php?action=delete` +
-          `&id=${encodeURIComponent(
-            registroId
-          )}` +
+          `&id=${encodeURIComponent(registroId)}` +
           `&_=${Date.now()}`;
 
 
@@ -2407,7 +2355,6 @@
               cache: 'no-store',
 
               headers: {
-
                 'Content-Type':
                   'application/json',
 
@@ -2416,14 +2363,12 @@
 
                 'Pragma':
                   'no-cache'
-
               },
 
               body:
                 JSON.stringify({
                   id: registroId
                 })
-
             }
           );
 
@@ -2433,7 +2378,6 @@
           throw new Error(
             `Erro HTTP ${response.status}`
           );
-
         }
 
 
@@ -2454,6 +2398,11 @@
           );
 
 
+          /*
+           * Se a página atual ficar vazia
+           * depois da exclusão, voltamos uma página.
+           */
+
           if (
             registrosCache.length === 1 &&
             currentPage > 1
@@ -2464,20 +2413,15 @@
               currentPage - 1
             );
 
-          }
-
-          else {
+          } else {
 
             await carregarRegistros(
               currentSearch,
               currentPage
             );
-
           }
 
-        }
-
-        else {
+        } else {
 
           alert(
             'Erro ao excluir: ' +
@@ -2487,38 +2431,31 @@
               'Erro desconhecido'
             )
           );
-
         }
 
-      }
 
-      catch (err) {
+      } catch (err) {
 
         console.error(
           'Erro ao excluir:',
           err
         );
 
-
         alert(
           'Erro ao se conectar com a API.\n\n' +
           err.message
         );
 
-      }
-
-      finally {
+      } finally {
 
         statusLoading.innerText = '';
-
       }
-
     }
 
 
-    /* =========================================================
+    /* =========================
        ABAS
-    ========================================================= */
+    ========================= */
 
     function switchTab(
       btnElement,
@@ -2526,60 +2463,35 @@
     ) {
 
       const card =
-        btnElement.closest(
-          '.card'
-        );
-
+        btnElement.closest('.card');
 
       card
-        .querySelectorAll(
-          '.tab-btn'
-        )
-        .forEach(
-          btn =>
-            btn.classList.remove(
-              'active'
-            )
+        .querySelectorAll('.tab-btn')
+        .forEach(btn =>
+          btn.classList.remove('active')
         );
-
 
       card
-        .querySelectorAll(
-          '.tab-content'
-        )
-        .forEach(
-          content =>
-            content.classList.remove(
-              'active'
-            )
+        .querySelectorAll('.tab-content')
+        .forEach(content =>
+          content.classList.remove('active')
         );
 
 
-      btnElement.classList.add(
-        'active'
-      );
-
+      btnElement.classList.add('active');
 
       const tab =
-        document.getElementById(
-          tabId
-        );
-
+        document.getElementById(tabId);
 
       if (tab) {
-
-        tab.classList.add(
-          'active'
-        );
-
+        tab.classList.add('active');
       }
-
     }
 
 
-    /* =========================================================
+    /* =========================
        PAGINAÇÃO
-    ========================================================= */
+    ========================= */
 
     function atualizarPaginacao(
       paginaAtual,
@@ -2587,17 +2499,12 @@
     ) {
 
       currentPage =
-        Number(
-          paginaAtual
-        ) || 1;
-
+        Number(paginaAtual) || 1;
 
       totalPaginas =
         Math.max(
           1,
-          Number(
-            totalPaginas
-          ) || 1
+          Number(totalPaginas) || 1
         );
 
 
@@ -2608,516 +2515,33 @@
       btnPrev.disabled =
         currentPage <= 1;
 
-
       btnNext.disabled =
         currentPage >= totalPaginas;
-
     }
 
 
-    /* =========================================================
+    /* =========================
        SEGURANÇA HTML
-    ========================================================= */
+    ========================= */
 
-    function escapeHtml(
-      value
-    ) {
+    function escapeHtml(value) {
 
-      return String(
-        value ?? ''
-      )
-
-        .replace(
-          /&/g,
-          '&amp;'
-        )
-
-        .replace(
-          /</g,
-          '&lt;'
-        )
-
-        .replace(
-          />/g,
-          '&gt;'
-        )
-
-        .replace(
-          /"/g,
-          '&quot;'
-        )
-
-        .replace(
-          /'/g,
-          '&#039;'
-        );
-
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
 
-    /* =========================================================
-       MARKDOWN → HTML
-       =========================================================
-       O conteúdo primeiro passa por escapeHtml().
-       Isso evita que HTML/JS enviado pela auditoria
-       seja executado no navegador.
-    ========================================================= */
-
-    function markdownToHtml(
-      markdown
-    ) {
-
-      if (!markdown) {
-        return '';
-      }
-
-
-      let text =
-        escapeHtml(
-          String(markdown)
-        );
-
-
-      /* -------------------------------------------------------
-         CODE BLOCKS
-      ------------------------------------------------------- */
-
-      const codeBlocks = [];
-
-
-      text =
-        text.replace(
-          /```([\s\S]*?)```/g,
-          function (
-            match,
-            code
-          ) {
-
-            const index =
-              codeBlocks.length;
-
-
-            codeBlocks.push(
-              `<pre><code>${code.trim()}</code></pre>`
-            );
-
-
-            return `@@CODEBLOCK${index}@@`;
-
-          }
-        );
-
-
-      /* -------------------------------------------------------
-         TABELAS
-      ------------------------------------------------------- */
-
-      const lines =
-        text.split('\n');
-
-
-      const output = [];
-
-      let i = 0;
-
-
-      while (
-        i <
-        lines.length
-      ) {
-
-        const current =
-          lines[i];
-
-
-        const next =
-          lines[i + 1];
-
-
-        if (
-          current.includes('|') &&
-          next &&
-          /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/
-            .test(next)
-        ) {
-
-          const headerCells =
-            current
-              .trim()
-              .replace(
-                /^\|/,
-                ''
-              )
-              .replace(
-                /\|$/,
-                ''
-              )
-              .split('|')
-              .map(
-                cell =>
-                  cell.trim()
-              );
-
-
-          i += 2;
-
-
-          const rows = [];
-
-
-          while (
-            i <
-              lines.length &&
-            lines[i].includes('|') &&
-            lines[i].trim() !== ''
-          ) {
-
-            rows.push(
-              lines[i]
-                .trim()
-                .replace(
-                  /^\|/,
-                  ''
-                )
-                .replace(
-                  /\|$/,
-                  ''
-                )
-                .split('|')
-                .map(
-                  cell =>
-                    cell.trim()
-                )
-            );
-
-
-            i++;
-
-          }
-
-
-          let table =
-            '<table><thead><tr>';
-
-
-          headerCells.forEach(
-            cell => {
-
-              table +=
-                `<th>${inlineMarkdown(
-                  cell
-                )}</th>`;
-
-            }
-          );
-
-
-          table +=
-            '</tr></thead><tbody>';
-
-
-          rows.forEach(
-            row => {
-
-              table +=
-                '<tr>';
-
-
-              headerCells.forEach(
-                (
-                  _,
-                  index
-                ) => {
-
-                  table +=
-                    `<td>${inlineMarkdown(
-                      row[index] || ''
-                    )}</td>`;
-
-                }
-              );
-
-
-              table +=
-                '</tr>';
-
-            }
-          );
-
-
-          table +=
-            '</tbody></table>';
-
-
-          output.push(
-            table
-          );
-
-
-          continue;
-        }
-
-
-        output.push(
-          current
-        );
-
-
-        i++;
-
-      }
-
-
-      text =
-        output.join('\n');
-
-
-      /* -------------------------------------------------------
-         INLINE MARKDOWN
-      ------------------------------------------------------- */
-
-      text =
-        inlineMarkdown(
-          text
-        );
-
-
-      /* -------------------------------------------------------
-         HEADINGS
-      ------------------------------------------------------- */
-
-      text =
-        text.replace(
-          /^### (.+)$/gm,
-          '<h3>$1</h3>'
-        );
-
-
-      text =
-        text.replace(
-          /^## (.+)$/gm,
-          '<h2>$1</h2>'
-        );
-
-
-      text =
-        text.replace(
-          /^# (.+)$/gm,
-          '<h1>$1</h1>'
-        );
-
-
-      /* -------------------------------------------------------
-         HORIZONTAL RULE
-      ------------------------------------------------------- */
-
-      text =
-        text.replace(
-          /^---$/gm,
-          '<hr>'
-        );
-
-
-      /* -------------------------------------------------------
-         BLOCKQUOTE
-      ------------------------------------------------------- */
-
-      text =
-        text.replace(
-          /^&gt; (.+)$/gm,
-          '<blockquote>$1</blockquote>'
-        );
-
-
-      /* -------------------------------------------------------
-         LISTAS
-      ========================================================= */
-
-      text =
-        text.replace(
-          /(?:^|\n)((?:[-*] .+(?:\n|$))+)/g,
-          function (
-            match,
-            list
-          ) {
-
-            const items =
-              list
-                .trim()
-                .split('\n')
-                .map(
-                  line =>
-                    line
-                      .replace(
-                        /^[-*] /,
-                        ''
-                      )
-                )
-                .map(
-                  item =>
-                    `<li>${item}</li>`
-                )
-                .join('');
-
-
-            return `\n<ul>${items}</ul>\n`;
-
-          }
-        );
-
-
-      text =
-        text.replace(
-          /(?:^|\n)((?:\d+\. .+(?:\n|$))+)/g,
-          function (
-            match,
-            list
-          ) {
-
-            const items =
-              list
-                .trim()
-                .split('\n')
-                .map(
-                  line =>
-                    line
-                      .replace(
-                        /^\d+\. /,
-                        ''
-                      )
-                )
-                .map(
-                  item =>
-                    `<li>${item}</li>`
-                )
-                .join('');
-
-
-            return `\n<ol>${items}</ol>\n`;
-
-          }
-        );
-
-
-      /* -------------------------------------------------------
-         PARÁGRAFOS
-      ------------------------------------------------------- */
-
-      const blocks =
-        text
-          .split(/\n{2,}/);
-
-
-      text =
-        blocks
-          .map(
-            block => {
-
-              const trimmed =
-                block.trim();
-
-
-              if (!trimmed) {
-                return '';
-              }
-
-
-              if (
-                /^<(h1|h2|h3|ul|ol|blockquote|table|pre|hr)/i
-                  .test(trimmed)
-              ) {
-
-                return trimmed;
-
-              }
-
-
-              return `
-                <p>
-                  ${trimmed.replace(
-                    /\n/g,
-                    '<br>'
-                  )}
-                </p>
-              `;
-
-            }
-          )
-          .join('');
-
-
-      /* -------------------------------------------------------
-         RESTAURA CODE BLOCKS
-      ------------------------------------------------------- */
-
-      text =
-        text.replace(
-          /@@CODEBLOCK(\d+)@@/g,
-          function (
-            match,
-            index
-          ) {
-
-            return (
-              codeBlocks[
-                Number(index)
-              ] || ''
-            );
-
-          }
-        );
-
-
-      return text;
-
-    }
-
-
-    /* =========================================================
-       MARKDOWN INLINE
-    ========================================================= */
-
-    function inlineMarkdown(
-      text
-    ) {
-
-      return text
-
-        .replace(
-          /`([^`]+)`/g,
-          '<code>$1</code>'
-        )
-
-        .replace(
-          /\*\*([^*]+)\*\*/g,
-          '<strong>$1</strong>'
-        )
-
-        .replace(
-          /__([^_]+)__/g,
-          '<strong>$1</strong>'
-        )
-
-        .replace(
-          /(?<!\*)\*([^*]+)\*(?!\*)/g,
-          '<em>$1</em>'
-        )
-
-        .replace(
-          /(?<!_)_([^_]+)_(?!_)/g,
-          '<em>$1</em>'
-        );
-
-    }
-
-
-    /* =========================================================
+    /* =========================
        PESQUISA
-    ========================================================= */
+    ========================= */
 
     searchInput.addEventListener(
       'input',
-      e => {
+      (e) => {
 
         clearTimeout(
           debounceTimer
@@ -3131,39 +2555,32 @@
         debounceTimer =
           setTimeout(
             () => {
-
               carregarRegistros(
                 currentSearch,
                 1
               );
-
             },
             300
           );
-
       }
     );
 
 
-    /* =========================================================
+    /* =========================
        PAGINAÇÃO
-    ========================================================= */
+    ========================= */
 
     btnPrev.addEventListener(
       'click',
       () => {
 
-        if (
-          currentPage > 1
-        ) {
+        if (currentPage > 1) {
 
           carregarRegistros(
             currentSearch,
             currentPage - 1
           );
-
         }
-
       }
     );
 
@@ -3176,60 +2593,13 @@
           currentSearch,
           currentPage + 1
         );
-
       }
     );
 
 
-    /* =========================================================
-       FECHAR MODAL CLICANDO FORA
-    ========================================================= */
-
-    document
-      .getElementById(
-        'modal-form'
-      )
-      .addEventListener(
-        'click',
-        event => {
-
-          if (
-            event.target.id ===
-            'modal-form'
-          ) {
-
-            closeModal();
-
-          }
-
-        }
-      );
-
-
-    /* =========================================================
-       ESC FECHA MODAL
-    ========================================================= */
-
-    document.addEventListener(
-      'keydown',
-      event => {
-
-        if (
-          event.key ===
-          'Escape'
-        ) {
-
-          closeModal();
-
-        }
-
-      }
-    );
-
-
-    /* =========================================================
+    /* =========================
        INICIALIZAÇÃO
-    ========================================================= */
+    ========================= */
 
     document.addEventListener(
       'DOMContentLoaded',
@@ -3241,12 +2611,10 @@
           '',
           1
         );
-
       }
     );
 
   </script>
 
 </body>
-
 </html>
