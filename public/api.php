@@ -147,7 +147,6 @@ try {
     responder(
         [
             'success' => false,
-
             'error' =>
                 'Erro de conexão com o banco de dados: ' .
                 $e->getMessage()
@@ -277,6 +276,12 @@ switch ($action) {
         }
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | CAMPOS DA SOLUÇÃO
+        |--------------------------------------------------------------------------
+        */
+
         $titulo =
             $data['titulo']
             ?? $data['aba_solucao']['titulo']
@@ -308,15 +313,30 @@ switch ($action) {
             ?? '';
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | NOTA FINAL
+        |--------------------------------------------------------------------------
+        */
+
         $nota_final =
+
             (
                 isset($data['nota_final']) &&
                 $data['nota_final'] !== '' &&
                 $data['nota_final'] !== null
             )
+
                 ? (float)$data['nota_final']
+
                 : null;
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | CAMPOS DA AUDITORIA
+        |--------------------------------------------------------------------------
+        */
 
         $veredito =
             $data['veredito']
@@ -352,9 +372,16 @@ switch ($action) {
         $titulo =
             trim((string)$titulo);
 
+
         $solucao =
             trim((string)$solucao);
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE / UPDATE
+        |--------------------------------------------------------------------------
+        */
 
         try {
 
@@ -368,10 +395,125 @@ switch ($action) {
             if ($action === 'create') {
 
 
+                /*
+                |--------------------------------------------------------------------------
+                | VALIDAR CAMPOS OBRIGATÓRIOS
+                |--------------------------------------------------------------------------
+                */
+
+                if ($titulo === '') {
+
+                    responder(
+                        [
+                            'success' =>
+                                false,
+
+                            'error' =>
+                                'O campo titulo é obrigatório.',
+
+                            'action' =>
+                                'create'
+                        ],
+                        400
+                    );
+                }
+
+
+                if ($solucao === '') {
+
+                    responder(
+                        [
+                            'success' =>
+                                false,
+
+                            'error' =>
+                                'O campo solucao é obrigatório.',
+
+                            'action' =>
+                                'create'
+                        ],
+                        400
+                    );
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | VERIFICAR DUPLICIDADE
+                |--------------------------------------------------------------------------
+                |
+                | Se já existir um registro com o mesmo conversation_id,
+                | não criaremos outro.
+                |
+                |--------------------------------------------------------------------------
+                */
+
+                if ($conversation_id !== null) {
+
+                    $checkSql = "
+
+                        SELECT id
+
+                        FROM erros
+
+                        WHERE conversation_id = ?
+
+                        LIMIT 1
+
+                    ";
+
+
+                    $checkStmt =
+                        $pdo->prepare(
+                            $checkSql
+                        );
+
+
+                    $checkStmt->execute(
+                        [
+                            $conversation_id
+                        ]
+                    );
+
+
+                    $existingId =
+                        $checkStmt->fetchColumn();
+
+
+                    if ($existingId !== false) {
+
+                        responder(
+                            [
+                                'success' =>
+                                    true,
+
+                                'id' =>
+                                    (int)$existingId,
+
+                                'conversation_id' =>
+                                    $conversation_id,
+
+                                'action' =>
+                                    'duplicate',
+
+                                'created' =>
+                                    false
+                            ],
+                            200
+                        );
+                    }
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | INSERT
+                |--------------------------------------------------------------------------
+                */
+
                 $sql = "
 
                     INSERT INTO erros
-
                     (
                         conversation_id,
                         titulo,
@@ -387,7 +529,6 @@ switch ($action) {
                     )
 
                     VALUES
-
                     (
                         ?,
                         ?,
@@ -454,7 +595,10 @@ switch ($action) {
                             $conversation_id,
 
                         'action' =>
-                            'create'
+                            'create',
+
+                        'created' =>
+                            true
 
                     ]
                 );
@@ -470,6 +614,12 @@ switch ($action) {
             if ($action === 'update') {
 
 
+                /*
+                |--------------------------------------------------------------------------
+                | VALIDAR ID
+                |--------------------------------------------------------------------------
+                */
+
                 if (
                     !$id ||
                     !is_numeric($id) ||
@@ -478,7 +628,6 @@ switch ($action) {
 
                     responder(
                         [
-
                             'success' =>
                                 false,
 
@@ -487,7 +636,6 @@ switch ($action) {
 
                             'action' =>
                                 'update'
-
                         ],
                         400
                     );
@@ -497,6 +645,229 @@ switch ($action) {
                 $id =
                     (int)$id;
 
+
+                /*
+                |--------------------------------------------------------------------------
+                | BUSCAR REGISTRO ATUAL
+                |--------------------------------------------------------------------------
+                |
+                | Precisamos recuperar o conversation_id existente
+                | caso ele não tenha sido enviado pelo frontend.
+                |
+                |--------------------------------------------------------------------------
+                */
+
+                $currentSql = "
+
+                    SELECT conversation_id
+
+                    FROM erros
+
+                    WHERE id = ?
+
+                    LIMIT 1
+
+                ";
+
+
+                $currentStmt =
+                    $pdo->prepare(
+                        $currentSql
+                    );
+
+
+                $currentStmt->execute(
+                    [
+                        $id
+                    ]
+                );
+
+
+                $currentConversationId =
+                    $currentStmt->fetchColumn();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | REGISTRO NÃO EXISTE
+                |--------------------------------------------------------------------------
+                */
+
+                if ($currentConversationId === false) {
+
+                    responder(
+                        [
+                            'success' =>
+                                false,
+
+                            'error' =>
+                                'Registro não encontrado.',
+
+                            'action' =>
+                                'update',
+
+                            'id' =>
+                                $id
+                        ],
+                        404
+                    );
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | PRESERVAR CONVERSATION_ID
+                |--------------------------------------------------------------------------
+                |
+                | Se conversation_id não foi enviado no request,
+                | preservamos o valor já existente.
+                |
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    !array_key_exists(
+                        'conversation_id',
+                        $data
+                    )
+                ) {
+
+                    if (
+                        $currentConversationId !== null &&
+                        $currentConversationId !== ''
+                    ) {
+
+                        $conversation_id =
+                            (int)$currentConversationId;
+
+                    } else {
+
+                        $conversation_id =
+                            null;
+                    }
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | VALIDAR CAMPOS
+                |--------------------------------------------------------------------------
+                */
+
+                if ($titulo === '') {
+
+                    responder(
+                        [
+                            'success' =>
+                                false,
+
+                            'error' =>
+                                'O campo titulo é obrigatório.',
+
+                            'action' =>
+                                'update'
+                        ],
+                        400
+                    );
+                }
+
+
+                if ($solucao === '') {
+
+                    responder(
+                        [
+                            'success' =>
+                                false,
+
+                            'error' =>
+                                'O campo solucao é obrigatório.',
+
+                            'action' =>
+                                'update'
+                        ],
+                        400
+                    );
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | VERIFICAR CONVERSATION_ID DUPLICADO
+                |--------------------------------------------------------------------------
+                |
+                | Permite o próprio conversation_id do registro,
+                | mas não permite que ele pertença a outro registro.
+                |
+                |--------------------------------------------------------------------------
+                */
+
+                if ($conversation_id !== null) {
+
+                    $checkSql = "
+
+                        SELECT id
+
+                        FROM erros
+
+                        WHERE conversation_id = ?
+
+                        AND id <> ?
+
+                        LIMIT 1
+
+                    ";
+
+
+                    $checkStmt =
+                        $pdo->prepare(
+                            $checkSql
+                        );
+
+
+                    $checkStmt->execute(
+                        [
+                            $conversation_id,
+                            $id
+                        ]
+                    );
+
+
+                    $existingId =
+                        $checkStmt->fetchColumn();
+
+
+                    if ($existingId !== false) {
+
+                        responder(
+                            [
+
+                                'success' =>
+                                    false,
+
+                                'error' =>
+                                    'Este conversation_id já está associado a outro registro.',
+
+                                'conversation_id' =>
+                                    $conversation_id,
+
+                                'existing_id' =>
+                                    (int)$existingId,
+
+                                'action' =>
+                                    'update'
+
+                            ],
+                            409
+                        );
+                    }
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | UPDATE
+                |--------------------------------------------------------------------------
+                */
 
                 $sql = "
 
@@ -592,6 +963,91 @@ switch ($action) {
 
 
         } catch (PDOException $e) {
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | TRATAMENTO DO MYSQL 1062
+            |--------------------------------------------------------------------------
+            |
+            | A UNIQUE KEY protege contra duas requisições simultâneas.
+            |
+            | Caso isso aconteça, retornamos duplicate em vez de erro 500.
+            |
+            |--------------------------------------------------------------------------
+            */
+
+            $mysqlCode =
+                $e->errorInfo[1] ?? null;
+
+
+            if (
+                $mysqlCode == 1062 &&
+                $conversation_id !== null
+            ) {
+
+                $checkSql = "
+
+                    SELECT id
+
+                    FROM erros
+
+                    WHERE conversation_id = ?
+
+                    LIMIT 1
+
+                ";
+
+
+                $checkStmt =
+                    $pdo->prepare(
+                        $checkSql
+                    );
+
+
+                $checkStmt->execute(
+                    [
+                        $conversation_id
+                    ]
+                );
+
+
+                $existingId =
+                    $checkStmt->fetchColumn();
+
+
+                if ($existingId !== false) {
+
+                    responder(
+                        [
+
+                            'success' =>
+                                true,
+
+                            'id' =>
+                                (int)$existingId,
+
+                            'conversation_id' =>
+                                $conversation_id,
+
+                            'action' =>
+                                'duplicate',
+
+                            'created' =>
+                                false
+
+                        ],
+                        200
+                    );
+                }
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | OUTROS ERROS
+            |--------------------------------------------------------------------------
+            */
 
             responder(
                 [
@@ -824,7 +1280,6 @@ switch ($action) {
         $page =
             max(
                 1,
-
                 (int)(
                     $_GET['page']
                     ?? 1
@@ -835,10 +1290,8 @@ switch ($action) {
         $limit =
             max(
                 1,
-
                 min(
                     100,
-
                     (int)(
                         $_GET['limit']
                         ?? 10
@@ -862,7 +1315,6 @@ switch ($action) {
             */
 
             if ($search !== '') {
-
 
                 $searchTerm =
                     "%{$search}%";
@@ -999,7 +1451,6 @@ switch ($action) {
 
 
                 $stmtData->execute();
-
             }
 
 
@@ -1010,7 +1461,6 @@ switch ($action) {
             */
 
             else {
-
 
                 $totalRows =
                     (int)$pdo
