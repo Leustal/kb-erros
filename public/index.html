@@ -590,6 +590,86 @@
       letter-spacing: 0.08em;
     }
 
+    .audit-agent {
+      background: var(--bg-body);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .audit-agent:last-child { margin-bottom: 0; }
+
+    .audit-agent-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .audit-agent-name {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text-highlight);
+    }
+
+    .audit-agent-number {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .audit-editors {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .audit-editor {
+      background: var(--bg-body);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .audit-editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .audit-editor-title {
+      color: var(--text-highlight);
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .audit-editor-remove {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--btn-danger);
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .btn-add-audit {
+      margin-top: 14px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-highlight);
+      padding: 9px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
     @media (max-width: 800px) {
       .audit-report-content {
         padding: 16px;
@@ -973,58 +1053,19 @@
           ></textarea>
         </div>
 
-        <div class="form-group">
-          <label>Nota Final</label>
-
-          <input
-            type="number"
-            step="0.1"
-            id="edit-nota"
-            class="form-control"
-          >
-        </div>
-
-        <div class="form-group">
-          <label>Veredito</label>
-
-          <input
-            type="text"
-            id="edit-veredito"
-            class="form-control"
-          >
-        </div>
-
-        <div class="form-group">
-          <label>Objetivo</label>
-
-          <textarea
-            id="edit-objetivo"
-            class="form-control"
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label>Oportunidade PS</label>
-
-          <textarea
-            id="edit-oportunidade"
-            class="form-control"
-          ></textarea>
-        </div>
-
         <div class="form-section-divider">
-          Relatório completo da auditoria
+          Auditorias de qualidade
         </div>
 
-        <div class="form-group">
-          <label>Relatório completo da auditoria (Markdown)</label>
+        <div id="audit-editors" class="audit-editors"></div>
 
-          <textarea
-            id="edit-relatorio"
-            class="form-control report-textarea"
-            placeholder="Relatório completo da auditoria em Markdown..."
-          ></textarea>
-        </div>
+        <button
+          type="button"
+          class="btn-add-audit"
+          onclick="adicionarAuditoriaEditor()"
+        >
+          + Adicionar auditoria
+        </button>
 
         <div class="modal-actions">
 
@@ -1625,7 +1666,7 @@
       const frases = String(texto)
         .replace(/\s+/g, ' ')
         .trim()
-        .match(/[^.!?]+(?:[.!?]+|$)/g)
+        .match(/(?:[^.!?]|\.(?=\d)|\.(?=[A-Za-z0-9_@/-]))+(?:[.!?]+|$)/g)
         ?.map(frase => frase.trim())
         .filter(Boolean) || [];
 
@@ -1675,337 +1716,246 @@
     }
 
 
+    function normalizarAuditorias(item) {
+
+      if (Array.isArray(item?.auditorias)) {
+        return item.auditorias;
+      }
+
+      if (typeof item?.auditorias === 'string' && item.auditorias.trim()) {
+        try {
+          const parsed = JSON.parse(item.auditorias);
+          if (Array.isArray(parsed)) return parsed;
+        } catch (e) {
+          console.warn('Não foi possível interpretar auditorias:', e);
+        }
+      }
+
+      const temAuditoriaLegada =
+        (item?.nota_final !== null && item?.nota_final !== undefined) ||
+        Boolean(item?.veredito) ||
+        Boolean(item?.objetivo) ||
+        Boolean(item?.oportunidade_ps) ||
+        Boolean(item?.relatorio_markdown);
+
+      if (temAuditoriaLegada) {
+        return [{
+          atendente: item?.atendente || 'Não informado no atendimento',
+          nota_final:
+            item?.nota_final !== null && item?.nota_final !== undefined
+              ? item.nota_final
+              : item?.nota ?? null,
+          veredito: item?.veredito || '',
+          objetivo: item?.objetivo || '',
+          oportunidade_ps: item?.oportunidade_ps || item?.oportunidade || '',
+          oferta_ps: item?.oferta_ps || '',
+          relatorio_markdown: item?.relatorio_markdown || ''
+        }];
+      }
+
+      return [];
+    }
+
+
     function renderizarCards(registros) {
 
       if (!registros || registros.length === 0) {
-
         cardsContainer.innerHTML =
-          '<div class="empty-message">' +
-          'Nenhum registro encontrado.' +
-          '</div>';
-
+          '<div class="empty-message">Nenhum registro encontrado.</div>';
         return;
       }
 
+      cardsContainer.innerHTML = registros.map(item => {
 
-      cardsContainer.innerHTML =
-        registros.map(item => {
+        const categoria = item.categoria || 'Geral';
 
-          const categoria =
-            item.categoria || 'Geral';
+        const tagsArray = item.tags
+          ? String(item.tags).split(',').map(t => t.trim()).filter(Boolean)
+          : [];
 
-          const tagsArray =
-            item.tags
-              ? String(item.tags)
-                  .split(',')
-                  .map(t => t.trim())
-                  .filter(Boolean)
-              : [];
+        const problemaDescricao =
+          item.descricao || item.problema || '';
 
-          const problemaDescricao =
-            item.descricao ||
-            item.problema ||
-            '';
+        const auditorias = normalizarAuditorias(item);
+        const id = Number(item.id);
 
-          const notaFinal =
-            item.nota_final !== null &&
-            item.nota_final !== undefined
-              ? item.nota_final
-              : item.nota;
+        return `
+          <article class="card">
 
-          const oportunidade =
-            item.oportunidade_ps ||
-            item.oportunidade ||
-            '';
-
-          const veredito =
-            item.veredito ||
-            'Não avaliado';
-
-          const id =
-            Number(item.id);
-
-          const classeVeredito =
-            obterClasseVeredito(veredito);
-
-          const relatorio =
-            item.relatorio_markdown ||
-            '';
-
-
-          return `
-            <article class="card">
-
-              <header class="card-header">
-
-                <div>
-                  <h2 class="card-title">
-                    ${escapeHtml(
-                      item.titulo || 'Sem Título'
-                    )}
-                  </h2>
-
-                  <div class="record-id">
-                    Registro #${escapeHtml(id)}
-                  </div>
+            <header class="card-header">
+              <div>
+                <h2 class="card-title">
+                  ${escapeHtml(item.titulo || 'Sem Título')}
+                </h2>
+                <div class="record-id">
+                  Registro #${escapeHtml(id)}
                 </div>
+              </div>
 
-
-                <div class="card-header-actions">
-
-                  <span class="badge">
-                    ${escapeHtml(categoria)}
-                  </span>
-
-                  <button
-                    class="btn-action btn-edit"
-                    onclick="openEditModal(${id})"
-                    type="button"
-                  >
-                    ✎ Editar
-                  </button>
-
-                  <button
-                    class="btn-action btn-delete"
-                    onclick="excluirRegistro(${id})"
-                    type="button"
-                  >
-                    🗑 Excluir
-                  </button>
-
-                </div>
-
-              </header>
-
-
-              <div class="card-tabs">
+              <div class="card-header-actions">
+                <span class="badge">
+                  ${escapeHtml(categoria)}
+                </span>
 
                 <button
-                  class="tab-btn active"
-                  onclick="switchTab(
-                    this,
-                    'tab-solucao-${id}'
-                  )"
+                  class="btn-action btn-edit"
+                  onclick="openEditModal(${id})"
                   type="button"
                 >
-                  Solução KB
+                  ✎ Editar
                 </button>
-
 
                 <button
-                  class="tab-btn"
-                  onclick="switchTab(
-                    this,
-                    'tab-qualidade-${id}'
-                  )"
+                  class="btn-action btn-delete"
+                  onclick="excluirRegistro(${id})"
                   type="button"
                 >
-                  Auditoria de Qualidade
+                  🗑 Excluir
                 </button>
-
               </div>
+            </header>
 
-
-              <!-- =========================
-                   ABA SOLUÇÃO
-              ========================== -->
-
-              <div
-                id="tab-solucao-${id}"
-                class="tab-content active"
+            <div class="card-tabs">
+              <button
+                class="tab-btn active"
+                onclick="switchTab(this, 'tab-solucao-${id}')"
+                type="button"
               >
+                Solução KB
+              </button>
 
-                ${
-                  problemaDescricao
-                    ? `
-                      <div class="card-section">
-
-                        <div class="card-section-title">
-                          Descrição / Problema
-                        </div>
-
-                        <div class="card-text">
-                          ${renderizarConteudoTopicos(
-                            problemaDescricao,
-                            'bullet'
-                          )}
-                        </div>
-
-                      </div>
-                    `
-                    : ''
-                }
-
-
-                ${
-                  item.solucao
-                    ? `
-                      <div class="card-section">
-
-                        <div class="card-section-title">
-                          Solução
-                        </div>
-
-                        <div class="card-text">
-                          ${renderizarConteudoTopicos(
-                            item.solucao,
-                            'steps'
-                          )}
-                        </div>
-
-                      </div>
-                    `
-                    : ''
-                }
-
-              </div>
-
-
-              <!-- =========================
-                   ABA AUDITORIA
-              ========================== -->
-
-              <div
-                id="tab-qualidade-${id}"
-                class="tab-content"
+              <button
+                class="tab-btn"
+                onclick="switchTab(this, 'tab-qualidade-${id}')"
+                type="button"
               >
+                Auditoria de Qualidade
+              </button>
+            </div>
 
-                <div class="audit-grid">
-
-                  <div class="audit-item">
-
-                    <div class="audit-label">
-                      Nota Final
-                    </div>
-
-                    <div class="audit-value score">
-                      ${
-                        notaFinal !== null &&
-                        notaFinal !== undefined &&
-                        notaFinal !== ''
-                          ? escapeHtml(
-                              `${notaFinal} / 5,0`
-                            )
-                          : 'N/A'
-                      }
-                    </div>
-
+            <div
+              id="tab-solucao-${id}"
+              class="tab-content active"
+            >
+              ${problemaDescricao ? `
+                <div class="card-section">
+                  <div class="card-section-title">Descrição / Problema</div>
+                  <div class="card-text">
+                    ${renderizarConteudoTopicos(problemaDescricao, 'bullet')}
                   </div>
-
-
-                  <div class="audit-item">
-
-                    <div class="audit-label">
-                      Veredito
-                    </div>
-
-                    <div class="audit-value">
-
-                      <span class="audit-verdict ${classeVeredito}">
-                        ${escapeHtml(veredito)}
-                      </span>
-
-                    </div>
-
-                  </div>
-
                 </div>
+              ` : ''}
 
+              ${item.solucao ? `
+                <div class="card-section">
+                  <div class="card-section-title">Solução</div>
+                  <div class="card-text">
+                    ${renderizarConteudoTopicos(item.solucao, 'steps')}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
 
-                ${
-                  item.objetivo
-                    ? `
-                      <div class="card-section">
+            <div
+              id="tab-qualidade-${id}"
+              class="tab-content"
+            >
+              ${auditorias.length > 0 ? auditorias.map((auditoria, indice) => {
 
-                        <div class="card-section-title">
-                          Objetivo
-                        </div>
+                const nota = auditoria?.nota_final;
+                const veredito = auditoria?.veredito || 'Não avaliado';
+                const classeVeredito = obterClasseVeredito(veredito);
+                const objetivo = auditoria?.objetivo || '';
+                const oportunidade = auditoria?.oportunidade_ps || '';
+                const oferta = auditoria?.oferta_ps || '';
+                const relatorio = auditoria?.relatorio_markdown || '';
 
-                        <div class="card-text">
-                          ${escapeHtml(
-                            item.objetivo
-                          )}
-                        </div>
-
+                return `
+                  <div class="audit-agent">
+                    <div class="audit-agent-header">
+                      <div class="audit-agent-name">
+                        👤 ${escapeHtml(auditoria?.atendente || 'Não informado no atendimento')}
                       </div>
-                    `
-                    : ''
-                }
-
-
-                ${
-                  oportunidade
-                    ? `
-                      <div class="card-section">
-
-                        <div class="card-section-title">
-                          Oportunidade PS
-                        </div>
-
-                        <div class="card-text">
-                          ${escapeHtml(
-                            oportunidade
-                          )}
-                        </div>
-
+                      <div class="audit-agent-number">
+                        Auditoria ${indice + 1}
                       </div>
-                    `
-                    : ''
-                }
-
-
-                <div class="audit-report">
-
-                  <div class="audit-report-header">
-
-                    <div class="audit-report-title">
-                      Relatório completo da auditoria
                     </div>
 
+                    <div class="audit-grid">
+                      <div class="audit-item">
+                        <div class="audit-label">Nota Final</div>
+                        <div class="audit-value score">
+                          ${nota !== null && nota !== undefined && nota !== ''
+                            ? escapeHtml(`${nota} / 5,0`)
+                            : 'N/A'}
+                        </div>
+                      </div>
+
+                      <div class="audit-item">
+                        <div class="audit-label">Veredito</div>
+                        <div class="audit-value">
+                          <span class="audit-verdict ${classeVeredito}">
+                            ${escapeHtml(veredito)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    ${objetivo ? `
+                      <div class="card-section">
+                        <div class="card-section-title">Objetivo</div>
+                        <div class="card-text">${escapeHtml(objetivo)}</div>
+                      </div>
+                    ` : ''}
+
+                    ${oportunidade ? `
+                      <div class="card-section">
+                        <div class="card-section-title">Oportunidade PS</div>
+                        <div class="card-text">${escapeHtml(oportunidade)}</div>
+                      </div>
+                    ` : ''}
+
+                    ${oferta ? `
+                      <div class="card-section">
+                        <div class="card-section-title">Oferta PS</div>
+                        <div class="card-text">${escapeHtml(oferta)}</div>
+                      </div>
+                    ` : ''}
+
+                    <div class="audit-report">
+                      <div class="audit-report-header">
+                        <div class="audit-report-title">
+                          Relatório completo da auditoria
+                        </div>
+                      </div>
+                      <div class="audit-report-content">
+                        ${relatorio
+                          ? renderizarMarkdown(relatorio)
+                          : '<div class="audit-report-empty">Nenhum relatório de auditoria disponível.</div>'}
+                      </div>
+                    </div>
                   </div>
-
-                  <div class="audit-report-content">
-
-                    ${
-                      relatorio
-                        ? renderizarMarkdown(relatorio)
-                        : `
-                          <div class="audit-report-empty">
-                            Nenhum relatório de auditoria disponível.
-                          </div>
-                        `
-                    }
-
+                `;
+              }).join('') : `
+                <div class="audit-report-content">
+                  <div class="audit-report-empty">
+                    Nenhuma auditoria de qualidade disponível.
                   </div>
-
                 </div>
+              `}
+            </div>
 
-              </div>
+            ${tagsArray.length > 0 ? `
+              <footer class="tags-container">
+                ${tagsArray.map(tag =>
+                  `<span class="tag">${escapeHtml(tag)}</span>`
+                ).join('')}
+              </footer>
+            ` : ''}
 
-
-              ${
-                tagsArray.length > 0
-                  ? `
-                    <footer class="tags-container">
-
-                      ${tagsArray
-                        .map(
-                          tag =>
-                            `<span class="tag">${escapeHtml(
-                              tag
-                            )}</span>`
-                        )
-                        .join('')}
-
-                    </footer>
-                  `
-                  : ''
-              }
-
-            </article>
-          `;
-
-        }).join('');
+          </article>
+        `;
+      }).join('');
     }
 
 
@@ -2016,21 +1966,13 @@
 
     function openCreateModal() {
 
-      document
-        .getElementById('form-registro')
-        .reset();
+      document.getElementById('form-registro').reset();
+      document.getElementById('edit-id').value = '';
+      document.getElementById('modal-title').innerText = 'Novo Registro';
 
-      document
-        .getElementById('edit-id')
-        .value = '';
+      renderizarEditoresAuditoria([]);
 
-      document
-        .getElementById('modal-title')
-        .innerText = 'Novo Registro';
-
-      document
-        .getElementById('modal-form')
-        .classList.add('active');
+      document.getElementById('modal-form').classList.add('active');
     }
 
 
@@ -2040,75 +1982,171 @@
 
     function openEditModal(id) {
 
-      const item =
-        registrosCache.find(
-          r => Number(r.id) === Number(id)
-        );
+      const item = registrosCache.find(
+        r => Number(r.id) === Number(id)
+      );
 
       if (!item) {
-
-        alert(
-          'Registro não encontrado.'
-        );
-
+        alert('Registro não encontrado.');
         return;
       }
 
-
-      document.getElementById('edit-id').value =
-        item.id;
-
-      document.getElementById('edit-titulo').value =
-        item.titulo || '';
-
-      document.getElementById('edit-categoria').value =
-        item.categoria || '';
-
-      document.getElementById('edit-tags').value =
-        item.tags || '';
-
+      document.getElementById('edit-id').value = item.id;
+      document.getElementById('edit-titulo').value = item.titulo || '';
+      document.getElementById('edit-categoria').value = item.categoria || '';
+      document.getElementById('edit-tags').value = item.tags || '';
       document.getElementById('edit-descricao').value =
-        item.descricao ||
-        item.problema ||
-        '';
+        item.descricao || item.problema || '';
+      document.getElementById('edit-solucao').value = item.solucao || '';
 
-      document.getElementById('edit-solucao').value =
-        item.solucao || '';
+      renderizarEditoresAuditoria(normalizarAuditorias(item));
 
-      document.getElementById('edit-nota').value =
-        (
-          item.nota_final !== null &&
-          item.nota_final !== undefined
-        )
-          ? item.nota_final
-          : (
-              item.nota || ''
-            );
-
-      document.getElementById('edit-veredito').value =
-        item.veredito || '';
-
-      document.getElementById('edit-objetivo').value =
-        item.objetivo || '';
-
-      document.getElementById('edit-oportunidade').value =
-        item.oportunidade_ps ||
-        item.oportunidade ||
-        '';
-
-
-      document.getElementById('edit-relatorio').value =
-        item.relatorio_markdown || '';
-
-
-      document.getElementById('modal-title').innerText =
-        'Editar Registro';
-
-      document
-        .getElementById('modal-form')
-        .classList.add('active');
+      document.getElementById('modal-title').innerText = 'Editar Registro';
+      document.getElementById('modal-form').classList.add('active');
     }
 
+
+    function adicionarAuditoriaEditor(auditoria = {}) {
+
+      const container = document.getElementById('audit-editors');
+      if (!container) return;
+
+      const index = container.querySelectorAll('.audit-editor').length + 1;
+      const editor = document.createElement('div');
+      editor.className = 'audit-editor';
+
+      const atendente = auditoria.atendente || '';
+      const nota =
+        auditoria.nota_final !== null && auditoria.nota_final !== undefined
+          ? auditoria.nota_final
+          : '';
+
+      editor.innerHTML = `
+        <div class="audit-editor-header">
+          <div class="audit-editor-title">Auditoria ${index}</div>
+          <button
+            type="button"
+            class="audit-editor-remove"
+            onclick="this.closest('.audit-editor').remove(); atualizarNumeracaoAuditorias();"
+          >
+            Remover
+          </button>
+        </div>
+
+        <div class="form-group">
+          <label>Atendente</label>
+          <input
+            type="text"
+            class="form-control audit-atendente"
+            value="${escapeHtml(atendente)}"
+          >
+        </div>
+
+        <div class="form-group">
+          <label>Nota Final</label>
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            max="5"
+            class="form-control audit-nota"
+            value="${escapeHtml(nota)}"
+          >
+        </div>
+
+        <div class="form-group">
+          <label>Veredito</label>
+          <input
+            type="text"
+            class="form-control audit-veredito"
+            value="${escapeHtml(auditoria.veredito || '')}"
+          >
+        </div>
+
+        <div class="form-group">
+          <label>Objetivo</label>
+          <textarea class="form-control audit-objetivo">${escapeHtml(auditoria.objetivo || '')}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Oportunidade PS</label>
+          <textarea class="form-control audit-oportunidade">${escapeHtml(auditoria.oportunidade_ps || '')}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Oferta PS</label>
+          <textarea class="form-control audit-oferta">${escapeHtml(auditoria.oferta_ps || '')}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Relatório completo da auditoria (Markdown)</label>
+          <textarea class="form-control report-textarea audit-relatorio">${escapeHtml(auditoria.relatorio_markdown || '')}</textarea>
+        </div>
+      `;
+
+      container.appendChild(editor);
+      atualizarNumeracaoAuditorias();
+    }
+
+
+    function renderizarEditoresAuditoria(auditorias) {
+
+      const container = document.getElementById('audit-editors');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      if (!Array.isArray(auditorias)) {
+        auditorias = [];
+      }
+
+      auditorias.forEach(auditoria => {
+        adicionarAuditoriaEditor(auditoria || {});
+      });
+    }
+
+
+    function atualizarNumeracaoAuditorias() {
+
+      document
+        .querySelectorAll('#audit-editors .audit-editor')
+        .forEach((editor, index) => {
+          const titulo = editor.querySelector('.audit-editor-title');
+          if (titulo) titulo.innerText = `Auditoria ${index + 1}`;
+        });
+    }
+
+
+    function coletarAuditoriasEditor() {
+
+      return Array.from(
+        document.querySelectorAll('#audit-editors .audit-editor')
+      ).map(editor => {
+
+        const notaElement = editor.querySelector('.audit-nota');
+        const nota = notaElement?.value !== ''
+          ? parseFloat(notaElement.value)
+          : null;
+
+        return {
+          atendente:
+            editor.querySelector('.audit-atendente')?.value.trim() ||
+            'Não informado no atendimento',
+          nota_final:
+            Number.isFinite(nota) ? nota : null,
+          veredito:
+            editor.querySelector('.audit-veredito')?.value.trim() || '',
+          objetivo:
+            editor.querySelector('.audit-objetivo')?.value.trim() || '',
+          oportunidade_ps:
+            editor.querySelector('.audit-oportunidade')?.value.trim() || '',
+          oferta_ps:
+            editor.querySelector('.audit-oferta')?.value.trim() || '',
+          relatorio_markdown:
+            editor.querySelector('.audit-relatorio')?.value.trim() || ''
+        };
+      });
+    }
 
     function closeModal() {
 
@@ -2125,181 +2163,74 @@
     async function salvarRegistro(event) {
 
       event.preventDefault();
+      statusLoading.innerText = 'Salvando...';
 
-      statusLoading.innerText =
-        'Salvando...';
-
-
-      const id =
-        document
-          .getElementById('edit-id')
-          .value
-          .trim();
-
-      const isEdit =
-        Boolean(id);
-
+      const id = document.getElementById('edit-id').value.trim();
+      const isEdit = Boolean(id);
+      const auditorias = coletarAuditoriasEditor();
+      const primeiraAuditoria = auditorias[0] || {};
 
       const payload = {
+        titulo: document.getElementById('edit-titulo').value.trim(),
+        solucao: document.getElementById('edit-solucao').value.trim(),
+        categoria: document.getElementById('edit-categoria').value.trim(),
+        tags: document.getElementById('edit-tags').value.trim(),
+        descricao: document.getElementById('edit-descricao').value.trim(),
+        problema: document.getElementById('edit-descricao').value.trim(),
+        auditorias: auditorias,
 
-        titulo:
-          document
-            .getElementById('edit-titulo')
-            .value
-            .trim(),
-
-        solucao:
-          document
-            .getElementById('edit-solucao')
-            .value
-            .trim(),
-
-        categoria:
-          document
-            .getElementById('edit-categoria')
-            .value
-            .trim(),
-
-        tags:
-          document
-            .getElementById('edit-tags')
-            .value
-            .trim(),
-
-        descricao:
-          document
-            .getElementById('edit-descricao')
-            .value
-            .trim(),
-
-        problema:
-          document
-            .getElementById('edit-descricao')
-            .value
-            .trim(),
-
-        nota_final:
-          document
-            .getElementById('edit-nota')
-            .value
-            ? parseFloat(
-                document
-                  .getElementById('edit-nota')
-                  .value
-              )
-            : null,
-
-        veredito:
-          document
-            .getElementById('edit-veredito')
-            .value
-            .trim(),
-
-        objetivo:
-          document
-            .getElementById('edit-objetivo')
-            .value
-            .trim(),
-
-        oportunidade_ps:
-          document
-            .getElementById('edit-oportunidade')
-            .value
-            .trim(),
-
-        relatorio_markdown:
-          document
-            .getElementById('edit-relatorio')
-            .value
-            .trim()
+        // Compatibilidade com o formato antigo.
+        nota_final: primeiraAuditoria.nota_final ?? null,
+        veredito: primeiraAuditoria.veredito || '',
+        objetivo: primeiraAuditoria.objetivo || '',
+        oportunidade_ps: primeiraAuditoria.oportunidade_ps || '',
+        oferta_ps: primeiraAuditoria.oferta_ps || '',
+        relatorio_markdown: primeiraAuditoria.relatorio_markdown || ''
       };
 
-
       if (isEdit) {
-
-        payload.id =
-          parseInt(id, 10);
+        payload.id = parseInt(id, 10);
       }
 
-
-      const action =
-        isEdit
-          ? 'update'
-          : 'create';
-
+      const action = isEdit ? 'update' : 'create';
 
       try {
-
-        const response =
-          await fetch(
-            `./api.php?action=${action}&_=${Date.now()}`,
-            {
-              method: 'POST',
-
-              cache: 'no-store',
-
-              headers: {
-                'Content-Type':
-                  'application/json',
-                'Cache-Control':
-                  'no-cache'
-              },
-
-              body:
-                JSON.stringify(payload)
-            }
-          );
-
-
-        const res =
-          await response.json();
-
-
-        console.log(
-          'Resposta ao salvar:',
-          res
+        const response = await fetch(
+          `./api.php?action=${action}&_=${Date.now()}`,
+          {
+            method: 'POST',
+            cache: 'no-store',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache'
+            },
+            body: JSON.stringify(payload)
+          }
         );
 
+        const res = await response.json();
+        console.log('Resposta ao salvar:', res);
 
         if (res.success) {
-
           closeModal();
-
           await carregarRegistros(
             currentSearch,
-            isEdit
-              ? currentPage
-              : 1
+            isEdit ? currentPage : 1
           );
-
         } else {
-
           alert(
             'Erro ao salvar: ' +
-            (
-              res.error ||
-              res.message ||
-              'Erro desconhecido'
-            )
+            (res.error || res.message || 'Erro desconhecido')
           );
         }
-
       } catch (err) {
-
-        console.error(
-          'Erro ao gravar:',
-          err
-        );
-
-        alert(
-          'Erro ao se conectar com a API.'
-        );
-
+        console.error('Erro ao gravar:', err);
+        alert('Erro ao se conectar com a API.');
       } finally {
-
         statusLoading.innerText = '';
       }
     }
+
 
 
     /* =========================

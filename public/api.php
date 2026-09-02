@@ -305,6 +305,10 @@ switch ($action) {
             ?? $data['aba_solucao']['tags']
             ?? '';
 
+        if (is_array($tags)) {
+            $tags = implode(', ', $tags);
+        }
+
 
         $descricao =
             $data['descricao']
@@ -315,52 +319,94 @@ switch ($action) {
 
         /*
         |--------------------------------------------------------------------------
-        | NOTA FINAL
+        | AUDITORIAS
+        |--------------------------------------------------------------------------
+        | A Tess pode retornar várias auditorias, uma para cada atendente.
+        | O array completo é armazenado em JSON na coluna auditorias.
+        | Os campos antigos continuam sendo preenchidos com a primeira
+        | auditoria para compatibilidade com registros existentes.
         |--------------------------------------------------------------------------
         */
 
-        $nota_final =
+        $auditorias = [];
 
-            (
-                isset($data['nota_final']) &&
-                $data['nota_final'] !== '' &&
-                $data['nota_final'] !== null
-            )
+        if (isset($data['auditorias'])) {
+            if (is_array($data['auditorias'])) {
+                $auditorias = $data['auditorias'];
+            } elseif (is_string($data['auditorias']) && trim($data['auditorias']) !== '') {
+                $decodedAuditorias = json_decode($data['auditorias'], true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decodedAuditorias)) {
+                    $auditorias = $decodedAuditorias;
+                }
+            }
+        }
 
+        // Compatibilidade com o formato antigo de uma única auditoria.
+        if (empty($auditorias)) {
+            $legacyNota = (isset($data['nota_final']) && $data['nota_final'] !== '' && $data['nota_final'] !== null)
                 ? (float)$data['nota_final']
-
                 : null;
 
+            $legacyVeredito = $data['veredito'] ?? $data['aba_auditoria']['veredito'] ?? '';
+            $legacyObjetivo = $data['objetivo'] ?? $data['aba_auditoria']['objetivo'] ?? '';
+            $legacyOportunidade = $data['oportunidade_ps'] ?? $data['oportunidade'] ?? $data['aba_auditoria']['oportunidade_ps'] ?? '';
+            $legacyOferta = $data['oferta_ps'] ?? $data['aba_auditoria']['oferta_ps'] ?? '';
+            $legacyRelatorio = $data['relatorio_markdown'] ?? $data['aba_auditoria']['relatorio_markdown'] ?? '';
 
-        /*
-        |--------------------------------------------------------------------------
-        | CAMPOS DA AUDITORIA
-        |--------------------------------------------------------------------------
-        */
+            if (
+                $legacyNota !== null ||
+                trim((string)$legacyVeredito) !== '' ||
+                trim((string)$legacyObjetivo) !== '' ||
+                trim((string)$legacyOportunidade) !== '' ||
+                trim((string)$legacyOferta) !== '' ||
+                trim((string)$legacyRelatorio) !== ''
+            ) {
+                $auditorias[] = [
+                    'atendente' => $data['atendente'] ?? 'Não informado no atendimento',
+                    'nota_final' => $legacyNota,
+                    'veredito' => (string)$legacyVeredito,
+                    'objetivo' => (string)$legacyObjetivo,
+                    'oportunidade_ps' => (string)$legacyOportunidade,
+                    'oferta_ps' => (string)$legacyOferta,
+                    'relatorio_markdown' => (string)$legacyRelatorio
+                ];
+            }
+        }
 
-        $veredito =
-            $data['veredito']
-            ?? $data['aba_auditoria']['veredito']
-            ?? null;
+        $auditoriasNormalizadas = [];
 
+        foreach ($auditorias as $auditoria) {
+            if (!is_array($auditoria)) {
+                continue;
+            }
 
-        $objetivo =
-            $data['objetivo']
-            ?? $data['aba_auditoria']['objetivo']
-            ?? null;
+            $notaAuditoria = (isset($auditoria['nota_final']) && $auditoria['nota_final'] !== '' && $auditoria['nota_final'] !== null)
+                ? (float)$auditoria['nota_final']
+                : null;
 
+            $auditoriasNormalizadas[] = [
+                'atendente' => trim((string)($auditoria['atendente'] ?? 'Não informado no atendimento')),
+                'nota_final' => $notaAuditoria,
+                'veredito' => trim((string)($auditoria['veredito'] ?? '')),
+                'objetivo' => trim((string)($auditoria['objetivo'] ?? '')),
+                'oportunidade_ps' => trim((string)($auditoria['oportunidade_ps'] ?? '')),
+                'oferta_ps' => trim((string)($auditoria['oferta_ps'] ?? '')),
+                'relatorio_markdown' => trim((string)($auditoria['relatorio_markdown'] ?? ''))
+            ];
+        }
 
-        $oportunidade_ps =
-            $data['oportunidade_ps']
-            ?? $data['oportunidade']
-            ?? $data['aba_auditoria']['oportunidade_ps']
-            ?? null;
+        $auditoriasJson = !empty($auditoriasNormalizadas)
+            ? json_encode($auditoriasNormalizadas, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            : null;
 
+        $primeiraAuditoria = $auditoriasNormalizadas[0] ?? [];
 
-        $relatorio_markdown =
-            $data['relatorio_markdown']
-            ?? $data['aba_auditoria']['relatorio_markdown']
-            ?? null;
+        $nota_final = $primeiraAuditoria['nota_final'] ?? null;
+        $veredito = $primeiraAuditoria['veredito'] ?? null;
+        $objetivo = $primeiraAuditoria['objetivo'] ?? null;
+        $oportunidade_ps = $primeiraAuditoria['oportunidade_ps'] ?? null;
+        $oferta_ps = $primeiraAuditoria['oferta_ps'] ?? null;
+        $relatorio_markdown = $primeiraAuditoria['relatorio_markdown'] ?? null;
 
 
         /*
@@ -521,6 +567,7 @@ switch ($action) {
                         tags,
                         descricao,
                         solucao,
+                        auditorias,
                         nota_final,
                         veredito,
                         objetivo,
@@ -567,6 +614,8 @@ switch ($action) {
                             $descricao,
 
                             $solucao,
+
+                            $auditoriasJson,
 
                             $nota_final,
 
@@ -887,6 +936,8 @@ switch ($action) {
 
                         solucao = ?,
 
+                        auditorias = ?,
+
                         nota_final = ?,
 
                         veredito = ?,
@@ -922,6 +973,8 @@ switch ($action) {
                         $descricao,
 
                         $solucao,
+
+                        $auditoriasJson,
 
                         $nota_final,
 
@@ -1338,6 +1391,8 @@ switch ($action) {
 
                         OR tags LIKE ?
 
+                        OR auditorias LIKE ?
+
                 ";
 
 
@@ -1349,6 +1404,8 @@ switch ($action) {
 
                 $stmtCount->execute(
                     [
+
+                        $searchTerm,
 
                         $searchTerm,
 
@@ -1385,6 +1442,8 @@ switch ($action) {
                         OR categoria LIKE ?
 
                         OR tags LIKE ?
+
+                        OR auditorias LIKE ?
 
                     ORDER BY id DESC
 
@@ -1438,13 +1497,20 @@ switch ($action) {
 
                 $stmtData->bindValue(
                     6,
+                    $searchTerm,
+                    PDO::PARAM_STR
+                );
+
+
+                $stmtData->bindValue(
+                    7,
                     $limit,
                     PDO::PARAM_INT
                 );
 
 
                 $stmtData->bindValue(
-                    7,
+                    8,
                     $offset,
                     PDO::PARAM_INT
                 );
@@ -1514,6 +1580,63 @@ switch ($action) {
 
             $records =
                 $stmtData->fetchAll();
+
+            foreach ($records as &$record) {
+
+                $auditoriasRecord = [];
+
+                if (
+                    isset($record['auditorias']) &&
+                    $record['auditorias'] !== null &&
+                    trim((string)$record['auditorias']) !== ''
+                ) {
+                    $decoded = json_decode(
+                        $record['auditorias'],
+                        true
+                    );
+
+                    if (
+                        json_last_error() === JSON_ERROR_NONE &&
+                        is_array($decoded)
+                    ) {
+                        $auditoriasRecord = $decoded;
+                    }
+                }
+
+                // Compatibilidade com registros antigos.
+                if (empty($auditoriasRecord)) {
+                    $temAuditoriaLegada =
+                        $record['nota_final'] !== null ||
+                        trim((string)($record['veredito'] ?? '')) !== '' ||
+                        trim((string)($record['objetivo'] ?? '')) !== '' ||
+                        trim((string)($record['oportunidade_ps'] ?? '')) !== '' ||
+                        trim((string)($record['relatorio_markdown'] ?? '')) !== '';
+
+                    if ($temAuditoriaLegada) {
+                        $auditoriasRecord[] = [
+                            'atendente' =>
+                                $record['atendente'] ??
+                                'Não informado no atendimento',
+                            'nota_final' =>
+                                $record['nota_final'] !== null
+                                    ? (float)$record['nota_final']
+                                    : null,
+                            'veredito' =>
+                                $record['veredito'] ?? '',
+                            'objetivo' =>
+                                $record['objetivo'] ?? '',
+                            'oportunidade_ps' =>
+                                $record['oportunidade_ps'] ?? '',
+                            'oferta_ps' => '',
+                            'relatorio_markdown' =>
+                                $record['relatorio_markdown'] ?? ''
+                        ];
+                    }
+                }
+
+                $record['auditorias'] = $auditoriasRecord;
+            }
+            unset($record);
 
 
             $totalPages =
