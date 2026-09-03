@@ -1723,7 +1723,6 @@ switch ($action) {
                     if ($temAuditoriaLegada) {
                         $auditoriasRecord[] = [
                             'atendente' =>
-                                $record['atendente'] ??
                                 'Não informado no atendimento',
                             'nota_final' =>
                                 $record['nota_final'] !== null
