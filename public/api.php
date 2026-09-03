@@ -1320,6 +1320,114 @@ switch ($action) {
     |--------------------------------------------------------------------------
     */
 
+    /*
+     |--------------------------------------------------------------------------
+     | RELATÓRIO FINAL
+     |--------------------------------------------------------------------------
+     | Estatísticas calculadas em tempo real a partir da tabela erros.
+     | Não cria nem altera tabelas/colunas.
+     |--------------------------------------------------------------------------
+     */
+
+    case 'relatorio':
+
+        try {
+            $stmtRelatorio = $pdo->query("SELECT id, conversation_id, atendente, auditorias, nota_final, veredito, objetivo, oportunidade_ps, relatorio_markdown FROM erros ORDER BY id DESC");
+            $recordsRelatorio = $stmtRelatorio->fetchAll();
+
+            $totalAtendimentos = count($recordsRelatorio);
+            $totalAuditorias = 0;
+            $somaNotas = 0.0;
+            $quantidadeNotas = 0;
+            $atendentesMap = [];
+            $atendimentosUmAtendente = 0;
+            $atendimentosMultiplosAtendentes = 0;
+            $atendimentosSemAtendente = 0;
+            $distribuicaoNotas = ['0_1'=>0,'1_2'=>0,'2_3'=>0,'3_4'=>0,'4_5'=>0];
+            $psCounts = ['SEM_OPORTUNIDADE'=>0,'OPORTUNIDADE_FRACA'=>0,'OPORTUNIDADE_MODERADA'=>0,'OPORTUNIDADE_CLARA'=>0,'NAO_INFORMADO'=>0];
+
+            $normalizarAtendente = static function($nome): string {
+                $nome = trim((string)$nome);
+                if ($nome === '') return 'Não informado no atendimento';
+                return trim(preg_replace('/\s+/', ' ', $nome));
+            };
+            $chaveAtendente = static function(string $nome): string {
+                return function_exists('mb_strtolower') ? mb_strtolower($nome, 'UTF-8') : strtolower($nome);
+            };
+
+            foreach ($recordsRelatorio as $record) {
+                $auditoriasRecord = [];
+                if (isset($record['auditorias']) && $record['auditorias'] !== null && trim((string)$record['auditorias']) !== '') {
+                    $decoded = json_decode($record['auditorias'], true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) $auditoriasRecord = $decoded;
+                }
+                if (empty($auditoriasRecord)) {
+                    $temLegada = $record['nota_final'] !== null || trim((string)($record['veredito']??'')) !== '' || trim((string)($record['objetivo']??'')) !== '' || trim((string)($record['oportunidade_ps']??'')) !== '' || trim((string)($record['relatorio_markdown']??'')) !== '';
+                    if ($temLegada) $auditoriasRecord[] = [
+                        'atendente'=>$record['atendente']??'Não informado no atendimento',
+                        'nota_final'=>$record['nota_final'] !== null ? (float)$record['nota_final'] : null,
+                        'veredito'=>$record['veredito']??'', 'objetivo'=>$record['objetivo']??'',
+                        'oportunidade_ps'=>$record['oportunidade_ps']??'', 'relatorio_markdown'=>$record['relatorio_markdown']??''
+                    ];
+                }
+
+                $atendentesDoAtendimento = [];
+                foreach ($auditoriasRecord as $auditoria) {
+                    if (!is_array($auditoria)) continue;
+                    $totalAuditorias++;
+                    $nome = $normalizarAtendente($auditoria['atendente'] ?? $record['atendente'] ?? 'Não informado no atendimento');
+                    if ($chaveAtendente($nome) === $chaveAtendente('Não informado no atendimento')) continue;
+                    $chave = $chaveAtendente($nome);
+                    $atendentesDoAtendimento[$chave] = $nome;
+                    if (!isset($atendentesMap[$chave])) $atendentesMap[$chave] = [
+                        'atendente'=>$nome, 'atendimentos'=>0, 'participacoes'=>0,
+                        'soma_notas'=>0.0, 'quantidade_notas'=>0, 'media_nota'=>null,
+                        'ps'=>['SEM_OPORTUNIDADE'=>0,'OPORTUNIDADE_FRACA'=>0,'OPORTUNIDADE_MODERADA'=>0,'OPORTUNIDADE_CLARA'=>0,'NAO_INFORMADO'=>0]
+                    ];
+                    $atendentesMap[$chave]['participacoes']++;
+                    $nota = (isset($auditoria['nota_final']) && $auditoria['nota_final'] !== '' && $auditoria['nota_final'] !== null) ? (float)$auditoria['nota_final'] : null;
+                    if ($nota !== null) {
+                        $somaNotas += $nota; $quantidadeNotas++;
+                        $atendentesMap[$chave]['soma_notas'] += $nota; $atendentesMap[$chave]['quantidade_notas']++;
+                        if ($nota < 1) $distribuicaoNotas['0_1']++; elseif ($nota < 2) $distribuicaoNotas['1_2']++; elseif ($nota < 3) $distribuicaoNotas['2_3']++; elseif ($nota < 4) $distribuicaoNotas['3_4']++; else $distribuicaoNotas['4_5']++;
+                    }
+                    $ps = strtoupper(trim((string)($auditoria['oportunidade_ps'] ?? '')));
+                    if (!in_array($ps, ['SEM_OPORTUNIDADE','OPORTUNIDADE_FRACA','OPORTUNIDADE_MODERADA','OPORTUNIDADE_CLARA'], true)) $ps='NAO_INFORMADO';
+                    $psCounts[$ps]++; $atendentesMap[$chave]['ps'][$ps]++;
+                }
+                $qtd=count($atendentesDoAtendimento);
+                if ($qtd===0) $atendimentosSemAtendente++;
+                elseif ($qtd===1) $atendimentosUmAtendente++;
+                else $atendimentosMultiplosAtendentes++;
+                foreach ($atendentesDoAtendimento as $chave=>$nome) $atendentesMap[$chave]['atendimentos']++;
+            }
+
+            foreach ($atendentesMap as &$a) {
+                $a['media_nota']=$a['quantidade_notas']>0 ? round($a['soma_notas']/$a['quantidade_notas'],2) : null;
+                unset($a['soma_notas'], $a['quantidade_notas']);
+            }
+            unset($a);
+            $atendentes=array_values($atendentesMap);
+            usort($atendentes, static function($a,$b){ return $a['participacoes']===$b['participacoes'] ? strcasecmp($a['atendente'],$b['atendente']) : ($b['participacoes']<=>$a['participacoes']); });
+
+            responder(['success'=>true,'action'=>'relatorio','data'=>[
+                'total_atendimentos'=>$totalAtendimentos,
+                'total_auditorias'=>$totalAuditorias,
+                'total_participacoes_atendentes'=>$totalAuditorias,
+                'total_atendentes'=>count($atendentes),
+                'atendimentos_um_atendente'=>$atendimentosUmAtendente,
+                'atendimentos_multiplos_atendentes'=>$atendimentosMultiplosAtendentes,
+                'atendimentos_sem_atendente'=>$atendimentosSemAtendente,
+                'media_nota_geral'=>$quantidadeNotas>0 ? round($somaNotas/$quantidadeNotas,2) : null,
+                'distribuicao_notas'=>$distribuicaoNotas,
+                'oportunidades_ps'=>$psCounts,
+                'atendentes'=>$atendentes
+            ]]);
+        } catch (PDOException $e) {
+            responder(['success'=>false,'action'=>'relatorio','error'=>'Erro MySQL ao gerar relatório: '.$e->getMessage()],500);
+        }
+        break;
+
     case 'read':
     default:
 
