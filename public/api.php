@@ -391,7 +391,12 @@ switch ($action) {
                 'objetivo' => trim((string)($auditoria['objetivo'] ?? '')),
                 'oportunidade_ps' => trim((string)($auditoria['oportunidade_ps'] ?? '')),
                 'oferta_ps' => trim((string)($auditoria['oferta_ps'] ?? '')),
-                'relatorio_markdown' => trim((string)($auditoria['relatorio_markdown'] ?? ''))
+                'relatorio_markdown' => trim((string)($auditoria['relatorio_markdown'] ?? '')),
+                'avaliacoes' => is_array($auditoria['avaliacoes'] ?? null) ? $auditoria['avaliacoes'] : [],
+                'inicio_participacao' => $auditoria['inicio_participacao'] ?? null,
+                'fim_participacao' => $auditoria['fim_participacao'] ?? null,
+                'duracao_participacao' => $auditoria['duracao_participacao'] ?? null,
+                'duracao_participacao_segundos' => isset($auditoria['duracao_participacao_segundos']) && is_numeric($auditoria['duracao_participacao_segundos']) ? (int)$auditoria['duracao_participacao_segundos'] : null
             ];
         }
 
@@ -1338,6 +1343,7 @@ switch ($action) {
 
             $totalAtendimentos = count($recordsRelatorio);
             $totalAuditorias = 0;
+            $totalParticipacoesAtendentes = 0;
             $somaNotas = 0.0;
             $quantidadeNotas = 0;
             $atendentesMap = [];
@@ -1368,7 +1374,8 @@ switch ($action) {
                         'atendente'=>'Não informado no atendimento',
                         'nota_final'=>$record['nota_final'] !== null ? (float)$record['nota_final'] : null,
                         'veredito'=>$record['veredito']??'', 'objetivo'=>$record['objetivo']??'',
-                        'oportunidade_ps'=>$record['oportunidade_ps']??'', 'relatorio_markdown'=>$record['relatorio_markdown']??''
+                        'oportunidade_ps'=>$record['oportunidade_ps']??'', 'relatorio_markdown'=>$record['relatorio_markdown']??'',
+                        'avaliacoes'=>[]
                     ];
                 }
 
@@ -1386,6 +1393,7 @@ switch ($action) {
                         'ps'=>['SEM_OPORTUNIDADE'=>0,'OPORTUNIDADE_FRACA'=>0,'OPORTUNIDADE_MODERADA'=>0,'OPORTUNIDADE_CLARA'=>0,'NAO_INFORMADO'=>0]
                     ];
                     $atendentesMap[$chave]['participacoes']++;
+                    $totalParticipacoesAtendentes++;
                     $nota = (isset($auditoria['nota_final']) && $auditoria['nota_final'] !== '' && $auditoria['nota_final'] !== null) ? (float)$auditoria['nota_final'] : null;
                     if ($nota !== null) {
                         $somaNotas += $nota; $quantidadeNotas++;
@@ -1414,7 +1422,7 @@ switch ($action) {
             responder(['success'=>true,'action'=>'relatorio','data'=>[
                 'total_atendimentos'=>$totalAtendimentos,
                 'total_auditorias'=>$totalAuditorias,
-                'total_participacoes_atendentes'=>$totalAuditorias,
+                'total_participacoes_atendentes'=>$totalParticipacoesAtendentes,
                 'total_atendentes'=>count($atendentes),
                 'atendimentos_um_atendente'=>$atendimentosUmAtendente,
                 'atendimentos_multiplos_atendentes'=>$atendimentosMultiplosAtendentes,
