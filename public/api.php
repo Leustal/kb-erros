@@ -1332,7 +1332,7 @@ switch ($action) {
     case 'relatorio':
 
         try {
-            $stmtRelatorio = $pdo->query("SELECT id, conversation_id, atendente, auditorias, nota_final, veredito, objetivo, oportunidade_ps, relatorio_markdown FROM erros ORDER BY id DESC");
+            $stmtRelatorio = $pdo->query("SELECT id, conversation_id, auditorias, nota_final, veredito, objetivo, oportunidade_ps, relatorio_markdown FROM erros ORDER BY id DESC");
             $recordsRelatorio = $stmtRelatorio->fetchAll();
 
             $totalAtendimentos = count($recordsRelatorio);
@@ -1364,7 +1364,7 @@ switch ($action) {
                 if (empty($auditoriasRecord)) {
                     $temLegada = $record['nota_final'] !== null || trim((string)($record['veredito']??'')) !== '' || trim((string)($record['objetivo']??'')) !== '' || trim((string)($record['oportunidade_ps']??'')) !== '' || trim((string)($record['relatorio_markdown']??'')) !== '';
                     if ($temLegada) $auditoriasRecord[] = [
-                        'atendente'=>$record['atendente']??'Não informado no atendimento',
+                        'atendente'=>'Não informado no atendimento',
                         'nota_final'=>$record['nota_final'] !== null ? (float)$record['nota_final'] : null,
                         'veredito'=>$record['veredito']??'', 'objetivo'=>$record['objetivo']??'',
                         'oportunidade_ps'=>$record['oportunidade_ps']??'', 'relatorio_markdown'=>$record['relatorio_markdown']??''
@@ -1375,7 +1375,7 @@ switch ($action) {
                 foreach ($auditoriasRecord as $auditoria) {
                     if (!is_array($auditoria)) continue;
                     $totalAuditorias++;
-                    $nome = $normalizarAtendente($auditoria['atendente'] ?? $record['atendente'] ?? 'Não informado no atendimento');
+                    $nome = $normalizarAtendente($auditoria['atendente'] ?? 'Não informado no atendimento');
                     if ($chaveAtendente($nome) === $chaveAtendente('Não informado no atendimento')) continue;
                     $chave = $chaveAtendente($nome);
                     $atendentesDoAtendimento[$chave] = $nome;
