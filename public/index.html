@@ -594,31 +594,55 @@
       flex: 0 0 auto;
     }
 
-    .evaluation-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .evaluation-item {
-      background: var(--bg-body);
+    .evaluation-table-wrapper {
+      width: 100%;
+      overflow-x: auto;
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 13px 15px;
+      background: var(--bg-body);
     }
 
-    .evaluation-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 8px;
+    .evaluation-table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
     }
 
-    .evaluation-item-name {
+    .evaluation-table th,
+    .evaluation-table td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .evaluation-table th {
+      background: var(--bg-card);
+      color: var(--text-highlight);
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .evaluation-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .evaluation-table td:first-child {
+      width: 25%;
       font-weight: 800;
       color: var(--text-main);
-      line-height: 1.45;
+    }
+
+    .evaluation-table td:nth-child(2) {
+      width: 20%;
+      white-space: nowrap;
+    }
+
+    .evaluation-table td:nth-child(3) {
+      color: var(--text-main);
+      line-height: 1.5;
     }
 
     .evaluation-badge {
@@ -630,7 +654,7 @@
       font-size: 0.7rem;
       font-weight: 800;
       border: 1px solid var(--border-color);
-      background: var(--bg-badge);
+      background: var(--bg-card);
     }
 
     .evaluation-badge.correct {
@@ -649,29 +673,57 @@
       color: var(--text-muted);
     }
 
-    .evaluation-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-      margin-bottom: 8px;
-    }
-
-    .evaluation-responsibility {
-      display: inline-flex;
-      align-items: center;
-      padding: 4px 8px;
-      border-radius: 8px;
-      background: var(--bg-card);
+    .evaluation-editor-table-wrapper {
+      width: 100%;
+      overflow-x: auto;
       border: 1px solid var(--border-color);
-      color: var(--text-muted);
-      font-size: 0.7rem;
-      font-weight: 700;
+      border-radius: 12px;
+      margin-bottom: 18px;
     }
 
-    .evaluation-observation {
+    .evaluation-editor-table {
+      width: 100%;
+      min-width: 820px;
+      border-collapse: collapse;
+    }
+
+    .evaluation-editor-table th,
+    .evaluation-editor-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .evaluation-editor-table th {
+      background: var(--bg-card);
+      color: var(--text-highlight);
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    .evaluation-editor-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .evaluation-editor-table .evaluation-criterion-cell {
+      width: 25%;
+      font-weight: 800;
       color: var(--text-main);
-      font-size: 0.88rem;
-      line-height: 1.55;
+      line-height: 1.4;
+    }
+
+    .evaluation-editor-table .evaluation-status-cell {
+      width: 190px;
+    }
+
+    .evaluation-editor-table textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    .evaluation-editor-table select {
+      width: 100%;
     }
 
     .evaluation-empty {
@@ -680,64 +732,10 @@
       padding: 10px 0;
     }
 
-    .audit-evaluation-editor {
-      background: var(--bg-body);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-
-    .audit-evaluation-editor-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .audit-evaluation-editor-title {
-      color: var(--text-highlight);
-      font-weight: 800;
-      font-size: 0.82rem;
-    }
-
-    .audit-evaluation-remove {
-      background: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--btn-danger);
-      padding: 5px 9px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.72rem;
-      font-weight: 700;
-    }
-
-    .btn-add-evaluation {
-      background: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--text-highlight);
-      padding: 8px 12px;
-      border-radius: 9px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.78rem;
-      margin-bottom: 16px;
-    }
-
-    .evaluation-editor-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
     @media (max-width: 800px) {
-      .evaluation-editor-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .evaluation-item-header {
-        flex-direction: column;
+      .evaluation-table,
+      .evaluation-editor-table {
+        min-width: 680px;
       }
     }
 
@@ -1923,6 +1921,7 @@
           objetivo: item?.objetivo || '',
           oportunidade_ps: item?.oportunidade_ps || item?.oportunidade || '',
           oferta_ps: item?.oferta_ps || '',
+          avaliacoes: normalizarAvaliacoes(item),
           relatorio_markdown: item?.relatorio_markdown || ''
         }];
       }
@@ -1931,25 +1930,71 @@
     }
 
 
+    const CRITERIOS_AVALIACAO_FIXOS = [
+      'Compreensão do problema',
+      'Investigação e diagnóstico',
+      'Raciocínio técnico',
+      'Testes e validações',
+      'Interpretação dos resultados',
+      'Precisão das orientações',
+      'Segurança das orientações',
+      'Comunicação com o cliente',
+      'Próximos passos e encaminhamento',
+      'Validação da solução'
+    ];
+
+    const STATUS_AVALIACAO_VALIDOS = [
+      'CORRETO',
+      'PARCIALMENTE_CORRETO',
+      'INCORRETO',
+      'NAO_APLICAVEL',
+      'SEM_EVIDENCIA'
+    ];
+
     function normalizarAvaliacoes(auditoria) {
-      if (!auditoria || typeof auditoria !== 'object') {
-        return [];
-      }
+      const lista = Array.isArray(auditoria?.avaliacoes)
+        ? auditoria.avaliacoes
+        : (() => {
+            if (typeof auditoria?.avaliacoes !== 'string' || !auditoria.avaliacoes.trim()) {
+              return [];
+            }
 
-      if (Array.isArray(auditoria.avaliacoes)) {
-        return auditoria.avaliacoes;
-      }
+            try {
+              const parsed = JSON.parse(auditoria.avaliacoes);
+              return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+              console.warn('Não foi possível interpretar avaliações:', e);
+              return [];
+            }
+          })();
 
-      if (typeof auditoria.avaliacoes === 'string' && auditoria.avaliacoes.trim()) {
-        try {
-          const parsed = JSON.parse(auditoria.avaliacoes);
-          if (Array.isArray(parsed)) return parsed;
-        } catch (e) {
-          console.warn('Não foi possível interpretar avaliações:', e);
+      const mapa = new Map();
+
+      lista.forEach(avaliacao => {
+        if (!avaliacao || typeof avaliacao !== 'object') return;
+        const item = String(avaliacao.item || '').trim().toLowerCase();
+        if (item && !mapa.has(item)) {
+          mapa.set(item, avaliacao);
         }
-      }
+      });
 
-      return [];
+      return CRITERIOS_AVALIACAO_FIXOS.map(criterio => {
+        const original = mapa.get(criterio.toLowerCase());
+        const status = String(original?.avaliacao || 'SEM_EVIDENCIA').toUpperCase();
+
+        return {
+          item: criterio,
+          avaliacao: STATUS_AVALIACAO_VALIDOS.includes(status)
+            ? status
+            : 'SEM_EVIDENCIA',
+          observacao: String(
+            original?.observacao ||
+            (status === 'NAO_APLICAVEL'
+              ? 'Este critério não era aplicável ao contexto observado.'
+              : 'Não há evidência suficiente no atendimento para avaliar este critério.')
+          ).trim()
+        };
+      });
     }
 
     function traduzirAvaliacao(status) {
@@ -1962,7 +2007,7 @@
       };
 
       const chave = String(status || '').trim().toUpperCase();
-      return mapa[chave] || String(status || 'Sem evidência');
+      return mapa[chave] || 'Sem evidência';
     }
 
     function classeAvaliacao(status) {
@@ -1975,71 +2020,38 @@
       return 'neutral';
     }
 
-    function traduzirResponsabilidade(valor) {
-      const mapa = {
-        ATENDENTE: 'Atendente',
-        INFRAESTRUTURA: 'Infraestrutura',
-        CLIENTE: 'Cliente',
-        OUTRO_ATENDENTE: 'Outro atendente',
-        TERCEIRO: 'Terceiro',
-        PS: 'PS',
-        APLICACAO: 'Aplicação',
-        PROCESSO: 'Processo',
-        NAO_DETERMINADO: 'Não determinado'
-      };
-
-      const chave = String(valor || '').trim().toUpperCase();
-      return mapa[chave] || String(valor || 'Não determinado');
-    }
-
     function renderizarAvaliacoes(auditoria) {
       const avaliacoes = normalizarAvaliacoes(auditoria);
-
-      if (avaliacoes.length === 0) {
-        return '';
-      }
 
       return `
         <div class="audit-evaluations">
           <div class="audit-evaluations-title">
-            Avaliações das ações
+            Checklist de avaliação
           </div>
 
-          <div class="evaluation-list">
-            ${avaliacoes.map((avaliacao, indice) => {
-              const item = avaliacao?.item || `Avaliação ${indice + 1}`;
-              const status = avaliacao?.avaliacao || 'SEM_EVIDENCIA';
-              const responsabilidade =
-                avaliacao?.responsabilidade || 'NAO_DETERMINADO';
-              const observacao = avaliacao?.observacao || '';
-
-              return `
-                <div class="evaluation-item">
-                  <div class="evaluation-item-header">
-                    <div class="evaluation-item-name">
-                      ${escapeHtml(item)}
-                    </div>
-
-                    <span class="evaluation-badge ${classeAvaliacao(status)}">
-                      ${escapeHtml(traduzirAvaliacao(status))}
-                    </span>
-                  </div>
-
-                  <div class="evaluation-meta">
-                    <span class="evaluation-responsibility">
-                      Responsabilidade:
-                      ${escapeHtml(traduzirResponsabilidade(responsabilidade))}
-                    </span>
-                  </div>
-
-                  ${observacao ? `
-                    <div class="evaluation-observation">
-                      ${escapeHtml(observacao)}
-                    </div>
-                  ` : ''}
-                </div>
-              `;
-            }).join('')}
+          <div class="evaluation-table-wrapper">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Critério</th>
+                  <th>Avaliação</th>
+                  <th>Observação</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${avaliacoes.map(avaliacao => `
+                  <tr>
+                    <td>${escapeHtml(avaliacao.item)}</td>
+                    <td>
+                      <span class="evaluation-badge ${classeAvaliacao(avaliacao.avaliacao)}">
+                        ${escapeHtml(traduzirAvaliacao(avaliacao.avaliacao))}
+                      </span>
+                    </td>
+                    <td>${escapeHtml(avaliacao.observacao || '')}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
           </div>
         </div>
       `;
@@ -2369,18 +2381,21 @@
         </div>
 
         <div class="form-section-divider">
-          Avaliações das ações
+          Checklist de avaliação
         </div>
 
-        <div class="audit-evaluation-editors"></div>
-
-        <button
-          type="button"
-          class="btn-add-evaluation"
-          onclick="adicionarAvaliacaoEditor(this.closest('.audit-editor'), {})"
-        >
-          + Adicionar avaliação
-        </button>
+        <div class="evaluation-editor-table-wrapper">
+          <table class="evaluation-editor-table">
+            <thead>
+              <tr>
+                <th>Critério</th>
+                <th>Avaliação</th>
+                <th>Observação</th>
+              </tr>
+            </thead>
+            <tbody class="audit-evaluation-rows"></tbody>
+          </table>
+        </div>
 
         <div class="form-group">
           <label>Relatório completo da auditoria (Markdown)</label>
@@ -2390,99 +2405,44 @@
 
       container.appendChild(editor);
 
-      const evaluationContainer =
-        editor.querySelector('.audit-evaluation-editors');
-
       const avaliacoes = normalizarAvaliacoes(auditoria);
+      const evaluationRows = editor.querySelector('.audit-evaluation-rows');
 
-      if (evaluationContainer && avaliacoes.length > 0) {
-        avaliacoes.forEach(avaliacao => {
-          adicionarAvaliacaoEditor(editor, avaliacao || {});
+      if (evaluationRows) {
+        avaliacoes.forEach((avaliacao) => {
+          const row = document.createElement('tr');
+          const status = String(avaliacao.avaliacao || 'SEM_EVIDENCIA').toUpperCase();
+
+          row.innerHTML = `
+            <td class="evaluation-criterion-cell">
+              ${escapeHtml(avaliacao.item)}
+              <input
+                type="hidden"
+                class="evaluation-item-input"
+                value="${escapeHtml(avaliacao.item)}"
+              >
+            </td>
+
+            <td class="evaluation-status-cell">
+              <select class="form-control evaluation-status">
+                <option value="CORRETO" ${status === 'CORRETO' ? 'selected' : ''}>Correto</option>
+                <option value="PARCIALMENTE_CORRETO" ${status === 'PARCIALMENTE_CORRETO' ? 'selected' : ''}>Parcialmente correto</option>
+                <option value="INCORRETO" ${status === 'INCORRETO' ? 'selected' : ''}>Incorreto</option>
+                <option value="NAO_APLICAVEL" ${status === 'NAO_APLICAVEL' ? 'selected' : ''}>Não aplicável</option>
+                <option value="SEM_EVIDENCIA" ${status === 'SEM_EVIDENCIA' ? 'selected' : ''}>Sem evidência</option>
+              </select>
+            </td>
+
+            <td>
+              <textarea class="form-control evaluation-observation-input">${escapeHtml(avaliacao.observacao || '')}</textarea>
+            </td>
+          `;
+
+          evaluationRows.appendChild(row);
         });
       }
 
       atualizarNumeracaoAuditorias();
-    }
-
-
-    function adicionarAvaliacaoEditor(auditEditor, avaliacao = {}) {
-      if (!auditEditor) return;
-
-      const container =
-        auditEditor.querySelector('.audit-evaluation-editors');
-
-      if (!container) return;
-
-      const editor = document.createElement('div');
-      editor.className = 'audit-evaluation-editor';
-
-      const status = String(
-        avaliacao.avaliacao || 'SEM_EVIDENCIA'
-      ).toUpperCase();
-
-      const responsabilidade = String(
-        avaliacao.responsabilidade || 'NAO_DETERMINADO'
-      ).toUpperCase();
-
-      editor.innerHTML = `
-        <div class="audit-evaluation-editor-header">
-          <div class="audit-evaluation-editor-title">
-            Avaliação
-          </div>
-
-          <button
-            type="button"
-            class="audit-evaluation-remove"
-            onclick="this.closest('.audit-evaluation-editor').remove();"
-          >
-            Remover
-          </button>
-        </div>
-
-        <div class="form-group">
-          <label>Item / ação avaliada</label>
-          <input
-            type="text"
-            class="form-control evaluation-item-input"
-            value="${escapeHtml(avaliacao.item || '')}"
-          >
-        </div>
-
-        <div class="evaluation-editor-grid">
-          <div class="form-group">
-            <label>Classificação</label>
-            <select class="form-control evaluation-status">
-              <option value="CORRETO" ${status === 'CORRETO' ? 'selected' : ''}>Correto</option>
-              <option value="PARCIALMENTE_CORRETO" ${status === 'PARCIALMENTE_CORRETO' ? 'selected' : ''}>Parcialmente correto</option>
-              <option value="INCORRETO" ${status === 'INCORRETO' ? 'selected' : ''}>Incorreto</option>
-              <option value="NAO_APLICAVEL" ${status === 'NAO_APLICAVEL' ? 'selected' : ''}>Não aplicável</option>
-              <option value="SEM_EVIDENCIA" ${status === 'SEM_EVIDENCIA' ? 'selected' : ''}>Sem evidência</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Responsabilidade</label>
-            <select class="form-control evaluation-responsibility">
-              <option value="ATENDENTE" ${responsabilidade === 'ATENDENTE' ? 'selected' : ''}>Atendente</option>
-              <option value="INFRAESTRUTURA" ${responsabilidade === 'INFRAESTRUTURA' ? 'selected' : ''}>Infraestrutura</option>
-              <option value="CLIENTE" ${responsabilidade === 'CLIENTE' ? 'selected' : ''}>Cliente</option>
-              <option value="OUTRO_ATENDENTE" ${responsabilidade === 'OUTRO_ATENDENTE' ? 'selected' : ''}>Outro atendente</option>
-              <option value="TERCEIRO" ${responsabilidade === 'TERCEIRO' ? 'selected' : ''}>Terceiro</option>
-              <option value="PS" ${responsabilidade === 'PS' ? 'selected' : ''}>PS</option>
-              <option value="APLICACAO" ${responsabilidade === 'APLICACAO' ? 'selected' : ''}>Aplicação</option>
-              <option value="PROCESSO" ${responsabilidade === 'PROCESSO' ? 'selected' : ''}>Processo</option>
-              <option value="NAO_DETERMINADO" ${responsabilidade === 'NAO_DETERMINADO' ? 'selected' : ''}>Não determinado</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Observação</label>
-          <textarea class="form-control evaluation-observation-input">${escapeHtml(avaliacao.observacao || '')}</textarea>
-        </div>
-      `;
-
-      container.appendChild(editor);
     }
 
 
@@ -2527,16 +2487,18 @@
 
         const avaliacoes =
           Array.from(
-            editor.querySelectorAll('.audit-evaluation-editor')
-          ).map(evaluationEditor => ({
+            editor.querySelectorAll('.audit-evaluation-rows tr')
+          ).map(evaluationRow => ({
             item:
-              evaluationEditor.querySelector('.evaluation-item-input')?.value.trim() || '',
+              evaluationRow.querySelector('.evaluation-item-input')?.value.trim() || '',
             avaliacao:
-              evaluationEditor.querySelector('.evaluation-status')?.value || 'SEM_EVIDENCIA',
-            responsabilidade:
-              evaluationEditor.querySelector('.evaluation-responsibility')?.value || 'NAO_DETERMINADO',
+              STATUS_AVALIACAO_VALIDOS.includes(
+                evaluationRow.querySelector('.evaluation-status')?.value || ''
+              )
+                ? evaluationRow.querySelector('.evaluation-status').value
+                : 'SEM_EVIDENCIA',
             observacao:
-              evaluationEditor.querySelector('.evaluation-observation-input')?.value.trim() || ''
+              evaluationRow.querySelector('.evaluation-observation-input')?.value.trim() || ''
           }));
 
         return {
