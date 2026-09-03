@@ -373,85 +373,6 @@ switch ($action) {
             }
         }
 
-        /*
-         * Normalização das auditorias.
-         *
-         * IMPORTANTE:
-         * A matriz "avaliacoes" faz parte da auditoria e deve ser
-         * preservada integralmente no JSON gravado na coluna auditorias.
-         *
-         * Cada avaliação possui:
-         * - item
-         * - avaliacao
-         * - responsabilidade
-         * - observacao
-         */
-
-        $valoresAvaliacaoPermitidos = [
-            'CORRETO',
-            'PARCIALMENTE_CORRETO',
-            'INCORRETO',
-            'NAO_APLICAVEL',
-            'SEM_EVIDENCIA'
-        ];
-
-        $valoresResponsabilidadePermitidos = [
-            'ATENDENTE',
-            'INFRAESTRUTURA',
-            'CLIENTE',
-            'OUTRO_ATENDENTE',
-            'TERCEIRO',
-            'PS',
-            'APLICACAO',
-            'PROCESSO',
-            'NAO_DETERMINADO'
-        ];
-
-        $normalizarAvaliacoes = function ($avaliacoes) use (
-            $valoresAvaliacaoPermitidos,
-            $valoresResponsabilidadePermitidos
-        ) {
-            if (!is_array($avaliacoes)) {
-                return [];
-            }
-
-            $resultado = [];
-
-            foreach ($avaliacoes as $avaliacao) {
-                if (!is_array($avaliacao)) {
-                    continue;
-                }
-
-                $item = trim((string)($avaliacao['item'] ?? ''));
-                $observacao = trim((string)($avaliacao['observacao'] ?? ''));
-
-                $status = strtoupper(
-                    trim((string)($avaliacao['avaliacao'] ?? 'SEM_EVIDENCIA'))
-                );
-
-                $responsabilidade = strtoupper(
-                    trim((string)($avaliacao['responsabilidade'] ?? 'NAO_DETERMINADO'))
-                );
-
-                if (!in_array($status, $valoresAvaliacaoPermitidos, true)) {
-                    $status = 'SEM_EVIDENCIA';
-                }
-
-                if (!in_array($responsabilidade, $valoresResponsabilidadePermitidos, true)) {
-                    $responsabilidade = 'NAO_DETERMINADO';
-                }
-
-                $resultado[] = [
-                    'item' => $item,
-                    'avaliacao' => $status,
-                    'responsabilidade' => $responsabilidade,
-                    'observacao' => $observacao
-                ];
-            }
-
-            return $resultado;
-        };
-
         $auditoriasNormalizadas = [];
 
         foreach ($auditorias as $auditoria) {
@@ -459,57 +380,24 @@ switch ($action) {
                 continue;
             }
 
-            $notaAuditoria = (
-                isset($auditoria['nota_final']) &&
-                $auditoria['nota_final'] !== '' &&
-                $auditoria['nota_final'] !== null
-            )
+            $notaAuditoria = (isset($auditoria['nota_final']) && $auditoria['nota_final'] !== '' && $auditoria['nota_final'] !== null)
                 ? (float)$auditoria['nota_final']
                 : null;
 
-            /*
-             * Preserva a matriz de avaliações enviada pela Tess.
-             * Se não existir, permanece como array vazio para manter
-             * compatibilidade com registros antigos.
-             */
-            $avaliacoesAuditoria = $normalizarAvaliacoes(
-                $auditoria['avaliacoes'] ?? []
-            );
-
             $auditoriasNormalizadas[] = [
-                'atendente' => trim(
-                    (string)($auditoria['atendente'] ?? 'Não informado no atendimento')
-                ),
+                'atendente' => trim((string)($auditoria['atendente'] ?? 'Não informado no atendimento')),
                 'nota_final' => $notaAuditoria,
-                'veredito' => trim(
-                    (string)($auditoria['veredito'] ?? '')
-                ),
-                'objetivo' => trim(
-                    (string)($auditoria['objetivo'] ?? '')
-                ),
-                'oportunidade_ps' => trim(
-                    (string)($auditoria['oportunidade_ps'] ?? '')
-                ),
-                'oferta_ps' => trim(
-                    (string)($auditoria['oferta_ps'] ?? '')
-                ),
-                'avaliacoes' => $avaliacoesAuditoria,
-                'relatorio_markdown' => trim(
-                    (string)($auditoria['relatorio_markdown'] ?? '')
-                )
+                'veredito' => trim((string)($auditoria['veredito'] ?? '')),
+                'objetivo' => trim((string)($auditoria['objetivo'] ?? '')),
+                'oportunidade_ps' => trim((string)($auditoria['oportunidade_ps'] ?? '')),
+                'oferta_ps' => trim((string)($auditoria['oferta_ps'] ?? '')),
+                'relatorio_markdown' => trim((string)($auditoria['relatorio_markdown'] ?? ''))
             ];
         }
 
-        $auditoriasJson = null;
-
-        if (!empty($auditoriasNormalizadas)) {
-            $auditoriasJson = json_encode(
-                $auditoriasNormalizadas,
-                JSON_UNESCAPED_UNICODE |
-                JSON_UNESCAPED_SLASHES |
-                JSON_THROW_ON_ERROR
-            );
-        }
+        $auditoriasJson = !empty($auditoriasNormalizadas)
+            ? json_encode($auditoriasNormalizadas, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            : null;
 
         $primeiraAuditoria = $auditoriasNormalizadas[0] ?? [];
 
@@ -689,7 +577,6 @@ switch ($action) {
 
                     VALUES
                     (
-                        ?,
                         ?,
                         ?,
                         ?,
@@ -1741,7 +1628,6 @@ switch ($action) {
                             'oportunidade_ps' =>
                                 $record['oportunidade_ps'] ?? '',
                             'oferta_ps' => '',
-                            'avaliacoes' => [],
                             'relatorio_markdown' =>
                                 $record['relatorio_markdown'] ?? ''
                         ];
