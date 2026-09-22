@@ -1648,11 +1648,19 @@
               ? 'active'
               : ''
           }"
-          onclick="selecionarAbaAtendente(${JSON.stringify(aba.valor)})"
+          data-atendente="${escapeHtml(aba.valor)}"
         >
           ${escapeHtml(aba.nome)}
         </button>
       `).join('');
+
+      attendantTabsContainer
+        .querySelectorAll('.attendant-tab-btn')
+        .forEach(botao => {
+          botao.addEventListener('click', () => {
+            selecionarAbaAtendente(botao.dataset.atendente || '');
+          });
+        });
     }
 
 
