@@ -158,6 +158,45 @@
       border-color: var(--text-highlight);
     }
 
+
+    /* =========================
+       ABAS DE ATENDENTES
+    ========================= */
+
+    .attendant-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      box-shadow: 0 4px 12px var(--shadow-color);
+    }
+
+    .attendant-tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 9px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .attendant-tab-btn:hover {
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+
+    .attendant-tab-btn.active {
+      background: var(--bg-tab-active);
+      color: #ffffff;
+      border-color: var(--bg-tab-active);
+    }
+
     .cards-grid {
       display: flex;
       flex-direction: column;
@@ -1120,6 +1159,13 @@
 
     </section>
 
+
+    <section
+      id="attendant-tabs"
+      class="attendant-tabs"
+      aria-label="Filtrar por atendente"
+    ></section>
+
     <section id="cards-container" class="cards-grid"></section>
 
     <nav class="pagination">
@@ -1270,12 +1316,16 @@
     let currentSearch = '';
     let debounceTimer = null;
     let registrosCache = [];
+    let filtroAtendente = '';
 
     const searchInput =
       document.getElementById('search-input');
 
     const cardsContainer =
       document.getElementById('cards-container');
+
+    const attendantTabsContainer =
+      document.getElementById('attendant-tabs');
 
     const statusLoading =
       document.getElementById('status-loading');
@@ -1365,53 +1415,79 @@
 
       try {
 
-        const url =
-          `./api.php?action=read` +
-          `&search=${encodeURIComponent(busca)}` +
-          `&page=${encodeURIComponent(pagina)}` +
-          `&limit=10` +
-          `&_=${Date.now()}`;
+        const registrosTodos = [];
+        let paginaApi = 1;
+        let totalPaginasApi = 1;
 
-        const response =
-          await fetch(url, {
-            method: 'GET',
-            cache: 'no-store'
-          });
+        do {
 
-        if (!response.ok) {
+          const url =
+            `./api.php?action=read` +
+            `&page=${encodeURIComponent(paginaApi)}` +
+            `&limit=100` +
+            `&_=${Date.now()}`;
 
-          throw new Error(
-            `Erro HTTP: ${response.status}`
-          );
-        }
+          const response =
+            await fetch(url, {
+              method: 'GET',
+              cache: 'no-store'
+            });
 
-        const json =
-          await response.json();
+          if (!response.ok) {
+            throw new Error(
+              `Erro HTTP: ${response.status}`
+            );
+          }
 
-        if (
-          json.success === false &&
-          json.error
-        ) {
+          const json = await response.json();
 
-          throw new Error(json.error);
-        }
+          if (
+            json.success === false &&
+            json.error
+          ) {
+            throw new Error(json.error);
+          }
 
-        registrosCache =
-          Array.isArray(json.data)
-            ? json.data
-            : Array.isArray(json)
-              ? json
-              : [];
+          const dadosPagina =
+            Array.isArray(json.data)
+              ? json.data
+              : Array.isArray(json)
+                ? json
+                : [];
 
-        const totalPaginas =
-          Number(json.total_pages || 1);
+          registrosTodos.push(...dadosPagina);
 
-        renderizarCards(registrosCache);
+          totalPaginasApi =
+            Math.max(1, Number(json.total_pages || 1));
 
-        atualizarPaginacao(
-          pagina,
-          totalPaginas
-        );
+          paginaApi++;
+
+        } while (paginaApi <= totalPaginasApi);
+
+        // Mantém apenas uma cópia de cada registro.
+        const ids = new Set();
+        registrosCache = registrosTodos.filter(registro => {
+          const id = registro?.id;
+
+          if (id === undefined || id === null) {
+            return true;
+          }
+
+          const chave = String(id);
+
+          if (ids.has(chave)) {
+            return false;
+          }
+
+          ids.add(chave);
+          return true;
+        });
+
+        currentSearch = String(busca || '').trim();
+        currentPage = Number(pagina) || 1;
+
+        renderizarAbasAtendentes();
+        aplicarFiltros();
 
         statusLoading.innerText = '';
 
@@ -1431,6 +1507,208 @@
           'Verifique o console.' +
           '</div>';
       }
+    }
+
+
+    /* =========================
+       FILTRO POR ATENDENTE
+    ========================= */
+
+    function obterNomeAtendente(auditoria) {
+      return String(
+        auditoria?.atendente || ''
+      ).trim();
+    }
+
+
+    function normalizarNomeAtendente(nome) {
+      return String(nome || '')
+        .trim()
+        .toLocaleLowerCase('pt-BR');
+    }
+
+
+    function obterAtendentesDosRegistros(registros) {
+
+      const mapa = new Map();
+
+      registros.forEach(registro => {
+
+        const auditorias =
+          normalizarAuditorias(registro);
+
+        auditorias.forEach(auditoria => {
+
+          const nome =
+            obterNomeAtendente(auditoria);
+
+          if (!nome) return;
+
+          if (
+            normalizarNomeAtendente(nome) ===
+            'não informado no atendimento'
+          ) {
+            return;
+          }
+
+          const chave =
+            normalizarNomeAtendente(nome);
+
+          if (!mapa.has(chave)) {
+            mapa.set(chave, nome);
+          }
+        });
+      });
+
+      return Array.from(mapa.values()).sort((a, b) =>
+        a.localeCompare(b, 'pt-BR')
+      );
+    }
+
+
+    function registroTemAtendente(registro, nomeAtendente) {
+
+      if (!nomeAtendente) {
+        return true;
+      }
+
+      const alvo =
+        normalizarNomeAtendente(nomeAtendente);
+
+      return normalizarAuditorias(registro).some(auditoria =>
+        normalizarNomeAtendente(
+          obterNomeAtendente(auditoria)
+        ) === alvo
+      );
+    }
+
+
+    function registroCorrespondeBusca(registro, busca) {
+
+      if (!busca) {
+        return true;
+      }
+
+      const termo =
+        String(busca).trim().toLocaleLowerCase('pt-BR');
+
+      if (!termo) {
+        return true;
+      }
+
+      const auditorias = normalizarAuditorias(registro);
+
+      const textoAuditorias = auditorias
+        .map(auditoria => [
+          auditoria?.atendente,
+          auditoria?.veredito,
+          auditoria?.objetivo,
+          auditoria?.oportunidade_ps,
+          auditoria?.oferta_ps,
+          auditoria?.relatorio_markdown
+        ].join(' '))
+        .join(' ');
+
+      const textoRegistro = [
+        registro?.titulo,
+        registro?.categoria,
+        registro?.tags,
+        registro?.descricao,
+        registro?.problema,
+        registro?.solucao,
+        textoAuditorias
+      ].join(' ').toLocaleLowerCase('pt-BR');
+
+      return textoRegistro.includes(termo);
+    }
+
+
+    function renderizarAbasAtendentes() {
+
+      const atendentes =
+        obterAtendentesDosRegistros(registrosCache);
+
+      const abas = [
+        {
+          nome: 'Todos',
+          valor: ''
+        },
+        ...atendentes.map(nome => ({
+          nome,
+          valor: nome
+        }))
+      ];
+
+      attendantTabsContainer.innerHTML = abas.map(aba => `
+        <button
+          type="button"
+          class="attendant-tab-btn ${
+            normalizarNomeAtendente(filtroAtendente) ===
+            normalizarNomeAtendente(aba.valor)
+              ? 'active'
+              : ''
+          }"
+          onclick="selecionarAbaAtendente(${JSON.stringify(aba.valor)})"
+        >
+          ${escapeHtml(aba.nome)}
+        </button>
+      `).join('');
+    }
+
+
+    function selecionarAbaAtendente(nomeAtendente) {
+
+      filtroAtendente =
+        String(nomeAtendente || '').trim();
+
+      currentPage = 1;
+
+      renderizarAbasAtendentes();
+      aplicarFiltros();
+    }
+
+
+    function aplicarFiltros() {
+
+      const registrosFiltrados =
+        registrosCache.filter(registro =>
+          registroTemAtendente(
+            registro,
+            filtroAtendente
+          ) &&
+          registroCorrespondeBusca(
+            registro,
+            currentSearch
+          )
+        );
+
+      const itensPorPagina = 10;
+      const totalPaginas = Math.max(
+        1,
+        Math.ceil(
+          registrosFiltrados.length / itensPorPagina
+        )
+      );
+
+      if (currentPage > totalPaginas) {
+        currentPage = totalPaginas;
+      }
+
+      const inicio =
+        (currentPage - 1) * itensPorPagina;
+
+      const registrosPagina =
+        registrosFiltrados.slice(
+          inicio,
+          inicio + itensPorPagina
+        );
+
+      renderizarCards(registrosPagina);
+
+      atualizarPaginacao(
+        currentPage,
+        totalPaginas
+      );
     }
 
 
@@ -2882,18 +3160,14 @@
           debounceTimer
         );
 
-
         currentSearch =
           e.target.value.trim();
-
 
         debounceTimer =
           setTimeout(
             () => {
-              carregarRegistros(
-                currentSearch,
-                1
-              );
+              currentPage = 1;
+              aplicarFiltros();
             },
             300
           );
@@ -2910,11 +3184,8 @@
       () => {
 
         if (currentPage > 1) {
-
-          carregarRegistros(
-            currentSearch,
-            currentPage - 1
-          );
+          currentPage--;
+          aplicarFiltros();
         }
       }
     );
@@ -2924,10 +3195,8 @@
       'click',
       () => {
 
-        carregarRegistros(
-          currentSearch,
-          currentPage + 1
-        );
+        currentPage++;
+        aplicarFiltros();
       }
     );
 
