@@ -773,17 +773,64 @@
       renderizar();
     });
 
-    async function iniciar() {
+    async function carregarDashboard(preservarFiltros = true) {
+      const mesAnterior = mesSelecionado;
+      const atendenteAnterior = atendenteSelecionado;
+
       try {
+        status.textContent = preservarFiltros
+          ? 'Atualizando dados da KB...'
+          : 'Carregando registros...';
+
         await buscarTodosRegistros();
         gerarDadosAgregados();
-        preencherFiltros();
+
+        if (!preservarFiltros || !mesAnterior) {
+          preencherFiltros();
+        } else {
+          const meses = descobrirMeses();
+          monthSelect.innerHTML = meses.map(mes =>
+            `<option value="${mes}">${escapeHtml(capitalizar(nomeMes(mes)))}</option>`
+          ).join('');
+
+          // Mantém o mês selecionado se ele ainda existir.
+          if (meses.includes(mesAnterior)) {
+            mesSelecionado = mesAnterior;
+          } else {
+            mesSelecionado = meses[0] || '';
+          }
+          monthSelect.value = mesSelecionado;
+
+          atualizarAtendentes();
+
+          // Mantém o atendente selecionado se ele ainda existir no mês.
+          const existeAtendente = Array.from(attendantSelect.options)
+            .some(option => option.value === atendenteAnterior);
+
+          if (atendenteAnterior && existeAtendente) {
+            atendenteSelecionado = atendenteAnterior;
+            attendantSelect.value = atendenteAnterior;
+          } else {
+            atendenteSelecionado = '';
+            attendantSelect.value = '';
+          }
+        }
+
         renderizar();
       } catch (error) {
         console.error(error);
         status.textContent = 'Erro ao carregar os dados da API.';
         gridBody.innerHTML = `<tr><td colspan="35" class="empty">Não foi possível carregar o dashboard. Verifique o acesso à API.</td></tr>`;
       }
+    }
+
+    async function iniciar() {
+      await carregarDashboard(false);
+
+      // Atualiza automaticamente a cada 5 minutos sem precisar dar F5.
+      setInterval(() => {
+        carregarDashboard(true);
+      }, 5 * 60 * 1000);
     }
 
     iniciar();
