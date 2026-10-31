@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Atendimentos</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --good: #15803d;
+      --good-soft: #f0fdf4;
+      --warn: #b45309;
+      --warn-soft: #fffbeb;
+      --bad: #b91c1c;
+      --bad-soft: #fef2f2;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .container {
+      width: min(1500px, calc(100% - 32px));
+      margin: 24px auto 40px;
+    }
+
+    .header {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, .04);
+      margin-bottom: 18px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    h1 { margin: 0 0 6px; font-size: 26px; }
+    .subtitle { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .filters {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+    }
+
+    .field { min-width: 210px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+
+    select, button {
+      font: inherit;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    select:focus { border-color: var(--accent); }
+
+    .status {
+      min-height: 18px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, .035);
+    }
+
+    .card-label { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+    .card-value { font-size: 27px; font-weight: 700; }
+    .card-detail { color: var(--muted); font-size: 12px; margin-top: 5px; }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, .04);
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title { margin: 0; font-size: 18px; }
+    .panel-subtitle { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      min-width: 850px;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    th, td {
+      padding: 10px 9px;
+      border-right: 1px solid #edf0f3;
+      border-bottom: 1px solid #edf0f3;
+      text-align: center;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #4b5563;
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    th:first-child, td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      text-align: left;
+      min-width: 190px;
+      background: #fff;
+      font-weight: 700;
+    }
+
+    th:first-child { background: #f8fafc; }
+    th:last-child, td:last-child {
+      position: sticky;
+      right: 0;
+      z-index: 3;
+      background: #fff;
+      font-weight: 700;
+      border-left: 1px solid var(--border);
+    }
+    th:last-child { background: #f8fafc; }
+
+    .score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      min-height: 32px;
+      border-radius: 7px;
+      font-weight: 700;
+    }
+
+    .score-good { background: var(--good-soft); color: var(--good); }
+    .score-ok { background: var(--accent-soft); color: #1d4ed8; }
+    .score-warn { background: var(--warn-soft); color: var(--warn); }
+    .score-bad { background: var(--bad-soft); color: var(--bad); }
+    .score-empty { color: #9ca3af; background: #f8fafc; }
+
+    .attendant-name { font-size: 13px; }
+    .attendant-count { display: block; color: var(--muted); font-size: 11px; font-weight: 400; margin-top: 3px; }
+
+    .empty {
+      padding: 35px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .legend {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      padding: 14px 22px 20px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+    .legend .g { background: var(--good-soft); border: 1px solid #bbf7d0; }
+    .legend .o { background: var(--accent-soft); border: 1px solid #bfdbfe; }
+    .legend .w { background: var(--warn-soft); border: 1px solid #fde68a; }
+    .legend .b { background: var(--bad-soft); border: 1px solid #fecaca; }
+
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      .container { width: min(100% - 18px, 1500px); margin-top: 10px; }
+      .header { padding: 18px; }
+      .cards { grid-template-columns: 1fr; }
+      .field { min-width: 100%; }
+      h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="header">
+      <div class="header-top">
+        <div>
+          <h1>📊 Dashboard de Atendimentos</h1>
+          <p class="subtitle">Acompanhamento diário das avaliações por atendente.</p>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="field">
+          <label for="month-select">Mês</label>
+          <select id="month-select"></select>
+        </div>
+
+        <div class="field">
+          <label for="attendant-select">Atendente</label>
+          <select id="attendant-select">
+            <option value="">Todos os atendentes</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="status" class="status">Carregando dados...</div>
+    </section>
+
+    <section class="cards">
+      <div class="card">
+        <div class="card-label">Atendimentos no mês</div>
+        <div id="total-attendances" class="card-value">—</div>
+        <div id="total-attendances-detail" class="card-detail"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Avaliações no mês</div>
+        <div id="total-evaluations" class="card-value">—</div>
+        <div class="card-detail">Avaliações consideradas no cálculo</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Média geral</div>
+        <div id="overall-average" class="card-value">—</div>
+        <div class="card-detail">Somente avaliações com nota válida</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Atendentes avaliados</div>
+        <div id="attendant-count" class="card-value">—</div>
+        <div class="card-detail">No período selecionado</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title">📅 Média diária por atendente</h2>
+        <p class="panel-subtitle">Cada célula mostra a média das avaliações daquele atendente no dia. O número abaixo indica a quantidade de avaliações.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead id="grid-head"></thead>
+          <tbody id="grid-body"></tbody>
+        </table>
+      </div>
+
+      <div class="legend">
+        <span><i class="g"></i> 4,50 a 5,00</span>
+        <span><i class="o"></i> 4,00 a 4,49</span>
+        <span><i class="w"></i> 3,00 a 3,99</span>
+        <span><i class="b"></i> abaixo de 3,00</span>
+      </div>
+    </section>
+
+    <div class="footer">Dashboard automático de avaliações de atendimentos</div>
+  </main>
+
+  <script>
+    const API_URL = './api.php?action=read';
+    const TIME_ZONE = 'America/Sao_Paulo';
+
+    let registros = [];
+    let dadosAgregados = [];
+    let mesSelecionado = '';
+    let atendenteSelecionado = '';
+
+    const monthSelect = document.getElementById('month-select');
+    const attendantSelect = document.getElementById('attendant-select');
+    const status = document.getElementById('status');
+    const gridHead = document.getElementById('grid-head');
+    const gridBody = document.getElementById('grid-body');
+
+    function normalizarAuditorias(registro) {
+      if (Array.isArray(registro?.auditorias)) {
+        return registro.auditorias;
+      }
+
+      return [];
+    }
+
+    function extrairDataAtendimento(auditoria, registro) {
+      const textos = [
+        auditoria?.relatorio_markdown,
+        registro?.relatorio_markdown
+      ];
+
+      for (const texto of textos) {
+        const markdown = String(texto || '');
+        const match = markdown.match(
+          /\|\s*\*\*Data\*\*\s*\|\s*(\d{2}\/\d{2}\/\d{4})\s*\|/i
+        );
+
+        if (match) {
+          return match[1];
+        }
+      }
+
+      return null;
+    }
+
+    function dataParaIso(dataBr) {
+      if (!dataBr) return null;
+      const match = String(dataBr).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (!match) return null;
+      return `${match[3]}-${match[2]}-${match[1]}`;
+    }
+
+    function normalizarNome(nome) {
+      return String(nome || '').trim();
+    }
+
+    function numeroValido(valor) {
+      const numero = Number(valor);
+      return Number.isFinite(numero) ? numero : null;
+    }
+
+    async function buscarTodosRegistros() {
+      const todos = [];
+      let pagina = 1;
+      let totalPaginas = 1;
+
+      do {
+        const url = `${API_URL}&page=${pagina}&limit=100&_=${Date.now()}`;
+        const response = await fetch(url, {
+          method: 'GET',
+          cache: 'no-store'
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erro HTTP ${response.status}`);
+        }
+
+        const json = await response.json();
+
+        if (json.success === false) {
+          throw new Error(json.error || 'Erro retornado pela API.');
+        }
+
+        if (Array.isArray(json.data)) {
+          todos.push(...json.data);
+        }
+
+        totalPaginas = Math.max(1, Number(json.total_pages || 1));
+        pagina++;
+      } while (pagina <= totalPaginas);
+
+      const ids = new Set();
+      registros = todos.filter(registro => {
+        if (registro?.id === undefined || registro?.id === null) return true;
+        const id = String(registro.id);
+        if (ids.has(id)) return false;
+        ids.add(id);
+        return true;
+      });
+    }
+
+    function gerarDadosAgregados() {
+      const mapa = new Map();
+
+      registros.forEach(registro => {
+        normalizarAuditorias(registro).forEach(auditoria => {
+          const atendente = normalizarNome(auditoria?.atendente);
+          const nota = numeroValido(auditoria?.nota_final);
+          const dataBr = extrairDataAtendimento(auditoria, registro);
+          const dataIso = dataParaIso(dataBr);
+
+          if (!atendente || !dataIso || nota === null) return;
+          if (atendente.toLocaleLowerCase('pt-BR') === 'não informado no atendimento') return;
+
+          const mes = dataIso.slice(0, 7);
+          const chave = `${mes}|${atendente}`;
+
+          if (!mapa.has(chave)) {
+            mapa.set(chave, {
+              mes,
+              atendente,
+              total: 0,
+              soma: 0,
+              dias: new Map(),
+              registros: new Set()
+            });
+          }
+
+          const item = mapa.get(chave);
+          item.total++;
+          item.soma += nota;
+          item.registros.add(String(registro?.id ?? `${dataIso}-${atendente}-${item.total}`));
+
+          if (!item.dias.has(dataIso)) {
+            item.dias.set(dataIso, { total: 0, soma: 0, registros: new Set() });
+          }
+
+          const dia = item.dias.get(dataIso);
+          dia.total++;
+          dia.soma += nota;
+          dia.registros.add(String(registro?.id ?? `${dataIso}-${atendente}-${dia.total}`));
+        });
+      });
+
+      dadosAgregados = Array.from(mapa.values());
+    }
+
+    function descobrirMeses() {
+      const meses = new Set(dadosAgregados.map(item => item.mes));
+
+      const agora = new Intl.DateTimeFormat('en-CA', {
+        timeZone: TIME_ZONE,
+        year: 'numeric',
+        month: '2-digit'
+      }).formatToParts(new Date());
+
+      const ano = agora.find(p => p.type === 'year')?.value;
+      const mes = agora.find(p => p.type === 'month')?.value;
+      const atual = `${ano}-${mes}`;
+      meses.add(atual);
+
+      return Array.from(meses).sort().reverse();
+    }
+
+    function nomeMes(mes) {
+      const [ano, numero] = mes.split('-').map(Number);
+      return new Intl.DateTimeFormat('pt-BR', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: TIME_ZONE
+      }).format(new Date(Date.UTC(ano, numero - 1, 1)));
+    }
+
+    function preencherFiltros() {
+      const meses = descobrirMeses();
+      monthSelect.innerHTML = meses.map(mes =>
+        `<option value="${mes}">${escapeHtml(capitalizar(nomeMes(mes)))}</option>`
+      ).join('');
+
+      const mesAtual = meses[0];
+      mesSelecionado = mesAtual;
+      monthSelect.value = mesSelecionado;
+
+      atualizarAtendentes();
+    }
+
+    function atualizarAtendentes() {
+      const nomes = new Set();
+
+      dadosAgregados
+        .filter(item => item.mes === mesSelecionado)
+        .forEach(item => nomes.add(item.atendente));
+
+      const ordenados = Array.from(nomes).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+      attendantSelect.innerHTML =
+        '<option value="">Todos os atendentes</option>' +
+        ordenados.map(nome => `<option value="${escapeAttribute(nome)}">${escapeHtml(nome)}</option>`).join('');
+
+      if (atendenteSelecionado && nomes.has(atendenteSelecionado)) {
+        attendantSelect.value = atendenteSelecionado;
+      } else {
+        atendenteSelecionado = '';
+        attendantSelect.value = '';
+      }
+    }
+
+    function quantidadeDiasDoMes(mes) {
+      const [ano, numero] = mes.split('-').map(Number);
+      return new Date(Date.UTC(ano, numero, 0)).getUTCDate();
+    }
+
+    function registrosUnicosNoMes() {
+      const ids = new Set();
+
+      registros.forEach(registro => {
+        normalizarAuditorias(registro).forEach(auditoria => {
+          const dataIso = dataParaIso(extrairDataAtendimento(auditoria, registro));
+          const nota = numeroValido(auditoria?.nota_final);
+          if (!dataIso || !dataIso.startsWith(mesSelecionado) || nota === null) return;
+          ids.add(String(registro?.id ?? `${dataIso}-${auditoria?.atendente}`));
+        });
+      });
+
+      return ids.size;
+    }
+
+    function atualizarResumo() {
+      const itens = dadosAgregados.filter(item =>
+        item.mes === mesSelecionado &&
+        (!atendenteSelecionado || item.atendente === atendenteSelecionado)
+      );
+
+      const totalAvaliacoes = itens.reduce((soma, item) => soma + item.total, 0);
+      const somaNotas = itens.reduce((soma, item) => soma + item.soma, 0);
+      const media = totalAvaliacoes ? somaNotas / totalAvaliacoes : 0;
+      const atendentes = new Set(itens.map(item => item.atendente));
+
+      document.getElementById('total-attendances').textContent =
+        registrosUnicosNoMes();
+      document.getElementById('total-attendances-detail').textContent =
+        atendenteSelecionado ? `Registros do mês com avaliação válida` : 'Registros únicos com avaliação válida';
+      document.getElementById('total-evaluations').textContent = totalAvaliacoes;
+      document.getElementById('overall-average').textContent =
+        totalAvaliacoes ? `${media.toFixed(2).replace('.', ',')} / 5` : '—';
+      document.getElementById('attendant-count').textContent = atendentes.size;
+    }
+
+    function classeNota(nota) {
+      if (nota >= 4.5) return 'score-good';
+      if (nota >= 4) return 'score-ok';
+      if (nota >= 3) return 'score-warn';
+      return 'score-bad';
+    }
+
+    function formatarNota(nota) {
+      return Number(nota).toFixed(2).replace('.', ',');
+    }
+
+    function renderizarGrade() {
+      const dias = quantidadeDiasDoMes(mesSelecionado);
+      const itens = dadosAgregados
+        .filter(item =>
+          item.mes === mesSelecionado &&
+          (!atendenteSelecionado || item.atendente === atendenteSelecionado)
+        )
+        .sort((a, b) => a.atendente.localeCompare(b.atendente, 'pt-BR'));
+
+      gridHead.innerHTML = `
+        <tr>
+          <th>Atendente</th>
+          ${Array.from({ length: dias }, (_, i) => `<th>${String(i + 1).padStart(2, '0')}</th>`).join('')}
+          <th>Média mês</th>
+        </tr>
+      `;
+
+      if (!itens.length) {
+        gridBody.innerHTML = `<tr><td colspan="${dias + 2}" class="empty">Nenhuma avaliação encontrada para o período selecionado.</td></tr>`;
+        return;
+      }
+
+      gridBody.innerHTML = itens.map(item => {
+        const mediaMes = item.soma / item.total;
+
+        const diasHtml = Array.from({ length: dias }, (_, index) => {
+          const diaNumero = String(index + 1).padStart(2, '0');
+          const dataIso = `${mesSelecionado}-${diaNumero}`;
+          const dadosDia = item.dias.get(dataIso);
+
+          if (!dadosDia) {
+            return '<td><span class="score score-empty">—</span></td>';
+          }
+
+          const mediaDia = dadosDia.soma / dadosDia.total;
+          return `
+            <td title="${dadosDia.total} avaliação(ões)">
+              <span class="score ${classeNota(mediaDia)}">
+                ${formatarNota(mediaDia)}
+              </span>
+            </td>
+          `;
+        }).join('');
+
+        return `
+          <tr>
+            <td>
+              <span class="attendant-name">${escapeHtml(item.atendente)}</span>
+              <span class="attendant-count">${item.total} avaliação(ões)</span>
+            </td>
+            ${diasHtml}
+            <td><span class="score ${classeNota(mediaMes)}">${formatarNota(mediaMes)}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderizar() {
+      atualizarResumo();
+      renderizarGrade();
+      status.textContent = `${registros.length} registros carregados • ${dadosAgregados.length} combinações atendente/mês analisadas.`;
+    }
+
+    function escapeHtml(valor) {
+      return String(valor ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeAttribute(valor) {
+      return escapeHtml(valor);
+    }
+
+    function capitalizar(valor) {
+      const texto = String(valor || '');
+      return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    monthSelect.addEventListener('change', () => {
+      mesSelecionado = monthSelect.value;
+      atualizarAtendentes();
+      renderizar();
+    });
+
+    attendantSelect.addEventListener('change', () => {
+      atendenteSelecionado = attendantSelect.value;
+      renderizar();
+    });
+
+    async function iniciar() {
+      try {
+        await buscarTodosRegistros();
+        gerarDadosAgregados();
+        preencherFiltros();
+        renderizar();
+      } catch (error) {
+        console.error(error);
+        status.textContent = 'Erro ao carregar os dados da API.';
+        gridBody.innerHTML = `<tr><td colspan="35" class="empty">Não foi possível carregar o dashboard. Verifique o acesso à API.</td></tr>`;
+      }
+    }
+
+    iniciar();
+  </script>
+</body>
+</html>
