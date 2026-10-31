@@ -418,7 +418,12 @@
       const mapa = new Map();
 
       registros.forEach(registro => {
-        normalizarAuditorias(registro).forEach(auditoria => {
+        // Um mesmo atendimento pode possuir mais de uma entrada em auditorias.
+        // Para o dashboard, cada atendimento + atendente deve contar somente uma vez.
+        const auditorias = normalizarAuditorias(registro);
+        const porAtendente = new Map();
+
+        auditorias.forEach(auditoria => {
           const atendente = normalizarNome(auditoria?.atendente);
           const nota = numeroValido(auditoria?.nota_final);
           const dataBr = extrairDataAtendimento(auditoria, registro);
@@ -427,6 +432,18 @@
           if (!atendente || !dataIso || nota === null) return;
           if (atendente.toLocaleLowerCase('pt-BR') === 'não informado no atendimento') return;
 
+          // Se houver duplicidade do mesmo atendente dentro do mesmo atendimento,
+          // mantém apenas a primeira avaliação válida.
+          if (!porAtendente.has(atendente)) {
+            porAtendente.set(atendente, {
+              atendente,
+              nota,
+              dataIso
+            });
+          }
+        });
+
+        porAtendente.forEach(({ atendente, nota, dataIso }) => {
           const mes = dataIso.slice(0, 7);
           const chave = `${mes}|${atendente}`;
 
@@ -442,12 +459,18 @@
           }
 
           const item = mapa.get(chave);
+
+          // 1 atendimento = 1 avaliação para aquele atendente.
           item.total++;
           item.soma += nota;
           item.registros.add(String(registro?.id ?? `${dataIso}-${atendente}-${item.total}`));
 
           if (!item.dias.has(dataIso)) {
-            item.dias.set(dataIso, { total: 0, soma: 0, registros: new Set() });
+            item.dias.set(dataIso, {
+              total: 0,
+              soma: 0,
+              registros: new Set()
+            });
           }
 
           const dia = item.dias.get(dataIso);
@@ -529,12 +552,26 @@
       const ids = new Set();
 
       registros.forEach(registro => {
-        normalizarAuditorias(registro).forEach(auditoria => {
+        const auditorias = normalizarAuditorias(registro);
+        let possuiAvaliacao = false;
+
+        for (const auditoria of auditorias) {
           const dataIso = dataParaIso(extrairDataAtendimento(auditoria, registro));
           const nota = numeroValido(auditoria?.nota_final);
-          if (!dataIso || !dataIso.startsWith(mesSelecionado) || nota === null) return;
-          ids.add(String(registro?.id ?? `${dataIso}-${auditoria?.atendente}`));
-        });
+          const atendente = normalizarNome(auditoria?.atendente);
+
+          if (!dataIso || !dataIso.startsWith(mesSelecionado) || nota === null) continue;
+          if (!atendente || atendente.toLocaleLowerCase('pt-BR') === 'não informado no atendimento') continue;
+
+          if (atendenteSelecionado && atendente !== atendenteSelecionado) continue;
+
+          possuiAvaliacao = true;
+          break;
+        }
+
+        if (possuiAvaliacao) {
+          ids.add(String(registro?.id ?? JSON.stringify(registro)));
+        }
       });
 
       return ids.size;
