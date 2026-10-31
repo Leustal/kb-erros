@@ -414,14 +414,43 @@
       });
     }
 
+    function extrairIdAtendimento(auditoria, registro) {
+      const textos = [
+        auditoria?.relatorio_markdown,
+        registro?.relatorio_markdown
+      ];
+
+      for (const texto of textos) {
+        const markdown = String(texto || '');
+        const match = markdown.match(
+          /\|\s*\*\*ID da conversa\*\*\s*\|\s*(\d+)\s*\|/i
+        );
+
+        if (match) return `conversa:${match[1]}`;
+      }
+
+      if (registro?.conversation_id !== undefined && registro?.conversation_id !== null) {
+        const id = String(registro.conversation_id).trim();
+        if (id && id !== 'null') return `conversa:${id}`;
+      }
+
+      if (registro?.id !== undefined && registro?.id !== null) {
+        return `registro:${String(registro.id)}`;
+      }
+
+      return null;
+    }
+
     function gerarDadosAgregados() {
       const mapa = new Map();
+      // Evita contar novamente o mesmo atendimento + atendente caso a API
+      // possua registros duplicados da mesma conversa.
+      const avaliacaoProcessada = new Set();
 
       registros.forEach(registro => {
-        // Um mesmo atendimento pode possuir mais de uma entrada em auditorias.
-        // Para o dashboard, cada atendimento + atendente deve contar somente uma vez.
         const auditorias = normalizarAuditorias(registro);
         const porAtendente = new Map();
+        const atendimentoFallback = extrairIdAtendimento(null, registro);
 
         auditorias.forEach(auditoria => {
           const atendente = normalizarNome(auditoria?.atendente);
@@ -432,18 +461,21 @@
           if (!atendente || !dataIso || nota === null) return;
           if (atendente.toLocaleLowerCase('pt-BR') === 'não informado no atendimento') return;
 
-          // Se houver duplicidade do mesmo atendente dentro do mesmo atendimento,
-          // mantém apenas a primeira avaliação válida.
+          // Dentro do mesmo registro, o mesmo atendente deve aparecer apenas uma vez.
           if (!porAtendente.has(atendente)) {
-            porAtendente.set(atendente, {
-              atendente,
-              nota,
-              dataIso
-            });
+            porAtendente.set(atendente, { atendente, nota, dataIso });
           }
         });
 
         porAtendente.forEach(({ atendente, nota, dataIso }) => {
+          const atendimentoId = atendimentoFallback || `sem-id:${dataIso}|${atendente}|${String(registro?.id ?? '')}`;
+          const chaveAvaliacao = `${atendimentoId}|${atendente}`;
+
+          // Se a mesma conversa foi salva em mais de um registro da API,
+          // ela continua sendo apenas 1 avaliação para esse atendente.
+          if (avaliacaoProcessada.has(chaveAvaliacao)) return;
+          avaliacaoProcessada.add(chaveAvaliacao);
+
           const mes = dataIso.slice(0, 7);
           const chave = `${mes}|${atendente}`;
 
@@ -454,16 +486,17 @@
               total: 0,
               soma: 0,
               dias: new Map(),
-              registros: new Set()
+              registros: new Set(),
+              atendimentos: new Set()
             });
           }
 
           const item = mapa.get(chave);
 
-          // 1 atendimento = 1 avaliação para aquele atendente.
           item.total++;
           item.soma += nota;
-          item.registros.add(String(registro?.id ?? `${dataIso}-${atendente}-${item.total}`));
+          item.registros.add(atendimentoId);
+          item.atendimentos.add(atendimentoId);
 
           if (!item.dias.has(dataIso)) {
             item.dias.set(dataIso, {
@@ -476,7 +509,7 @@
           const dia = item.dias.get(dataIso);
           dia.total++;
           dia.soma += nota;
-          dia.registros.add(String(registro?.id ?? `${dataIso}-${atendente}-${dia.total}`));
+          dia.registros.add(atendimentoId);
         });
       });
 
@@ -553,28 +586,67 @@
 
       registros.forEach(registro => {
         const auditorias = normalizarAuditorias(registro);
-        let possuiAvaliacao = false;
+        const atendimentoId = extrairIdAtendimento(null, registro);
+        const porAtendente = new Set();
 
-        for (const auditoria of auditorias) {
+        auditorias.forEach(auditoria => {
           const dataIso = dataParaIso(extrairDataAtendimento(auditoria, registro));
           const nota = numeroValido(auditoria?.nota_final);
           const atendente = normalizarNome(auditoria?.atendente);
 
-          if (!dataIso || !dataIso.startsWith(mesSelecionado) || nota === null) continue;
-          if (!atendente || atendente.toLocaleLowerCase('pt-BR') === 'não informado no atendimento') continue;
+          if (!dataIso || !dataIso.startsWith(mesSelecionado) || nota === null) return;
+          if (!atendente || atendente.toLocaleLowerCase('pt-BR') === 'não informado no atendimento') return;
+          if (atendenteSelecionado && atendente !== atendenteSelecionado) return;
 
-          if (atendenteSelecionado && atendente !== atendenteSelecionado) continue;
+          porAtendente.add(atendente);
+        });
 
-          possuiAvaliacao = true;
-          break;
-        }
-
-        if (possuiAvaliacao) {
-          ids.add(String(registro?.id ?? JSON.stringify(registro)));
-        }
+        porAtendente.forEach(atendente => {
+          const chave = atendimentoId || `registro:${String(registro?.id ?? JSON.stringify(registro))}`;
+          ids.add(`${chave}|${atendente}`);
+        });
       });
 
-      return ids.size;
+      // Aqui contamos atendimentos, não avaliações. Se o filtro for "Todos",
+      // uma conversa conjunta com 2 atendentes deve continuar sendo apenas 1 atendimento.
+      if (!atendenteSelecionado) {
+        const atendimentos = new Set();
+
+        registros.forEach(registro => {
+          const auditorias = normalizarAuditorias(registro);
+          let possuiAvaliacao = false;
+
+          for (const auditoria of auditorias) {
+            const dataIso = dataParaIso(extrairDataAtendimento(auditoria, registro));
+            const nota = numeroValido(auditoria?.nota_final);
+            const atendente = normalizarNome(auditoria?.atendente);
+
+            if (!dataIso || !dataIso.startsWith(mesSelecionado) || nota === null) continue;
+            if (!atendente || atendente.toLocaleLowerCase('pt-BR') === 'não informado no atendimento') continue;
+
+            possuiAvaliacao = true;
+            break;
+          }
+
+          if (possuiAvaliacao) {
+            atendimentos.add(
+              extrairIdAtendimento(null, registro) ||
+              `registro:${String(registro?.id ?? JSON.stringify(registro))}`
+            );
+          }
+        });
+
+        return atendimentos.size;
+      }
+
+      // Com um atendente selecionado, contamos somente as conversas daquele atendente.
+      const atendimentosDoAtendente = new Set();
+      ids.forEach(chave => {
+        const separador = chave.lastIndexOf('|');
+        atendimentosDoAtendente.add(chave.slice(0, separador));
+      });
+
+      return atendimentosDoAtendente.size;
     }
 
     function atualizarResumo() {
