@@ -339,19 +339,26 @@
     }
 
     function extrairDataAtendimento(auditoria, registro) {
+      // A data oficial do atendimento fica no relatório individual da auditoria.
+      // O relatório geral é usado somente como fallback.
       const textos = [
         auditoria?.relatorio_markdown,
         registro?.relatorio_markdown
       ];
 
       for (const texto of textos) {
-        const markdown = String(texto || '');
+        const markdown = String(texto || '').replace(/\\n/g, '\n');
         const match = markdown.match(
-          /\|\s*\*\*Data\*\*\s*\|\s*(\d{2}\/\d{2}\/\d{4})\s*\|/i
+          /\|\s*(?:\*\*)?Data(?:\s+do\s+atendimento)?(?:\*\*)?\s*\|\s*(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})\s*\|/i
         );
 
         if (match) {
-          return match[1];
+          const valor = match[1];
+          if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+            const [ano, mes, dia] = valor.split('-');
+            return `${dia}/${mes}/${ano}`;
+          }
+          return valor;
         }
       }
 
@@ -362,6 +369,19 @@
       if (!dataBr) return null;
       const match = String(dataBr).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
       if (!match) return null;
+
+      const dia = Number(match[1]);
+      const mes = Number(match[2]);
+      const ano = Number(match[3]);
+      const data = new Date(Date.UTC(ano, mes - 1, dia));
+
+      // Impede datas inválidas de entrarem no mês errado.
+      if (
+        data.getUTCFullYear() !== ano ||
+        data.getUTCMonth() !== mes - 1 ||
+        data.getUTCDate() !== dia
+      ) return null;
+
       return `${match[3]}-${match[2]}-${match[1]}`;
     }
 
@@ -370,8 +390,11 @@
     }
 
     function numeroValido(valor) {
-      const numero = Number(valor);
-      return Number.isFinite(numero) ? numero : null;
+      if (valor === null || valor === undefined || String(valor).trim() === '') {
+        return null;
+      }
+      const numero = Number(String(valor).replace(',', '.'));
+      return Number.isFinite(numero) && numero >= 0 && numero <= 5 ? numero : null;
     }
 
     async function buscarTodosRegistros() {
@@ -450,8 +473,6 @@
       registros.forEach(registro => {
         const auditorias = normalizarAuditorias(registro);
         const porAtendente = new Map();
-        const atendimentoFallback = extrairIdAtendimento(null, registro);
-
         auditorias.forEach(auditoria => {
           const atendente = normalizarNome(auditoria?.atendente);
           const nota = numeroValido(auditoria?.nota_final);
@@ -468,7 +489,12 @@
         });
 
         porAtendente.forEach(({ atendente, nota, dataIso }) => {
-          const atendimentoId = atendimentoFallback || `sem-id:${dataIso}|${atendente}|${String(registro?.id ?? '')}`;
+          // O ID pode estar no relatório da própria auditoria, não apenas
+          // no relatório geral do registro. Isso evita duplicar a mesma conversa.
+          const atendimentoId = extrairIdAtendimento(
+            auditorias.find(a => normalizarNome(a?.atendente) === atendente),
+            registro
+          ) || `sem-id:${dataIso}|${atendente}|${String(registro?.id ?? '')}`;
           const chaveAvaliacao = `${atendimentoId}|${atendente}`;
 
           // Se a mesma conversa foi salva em mais de um registro da API,
@@ -582,12 +608,10 @@
     }
 
     function registrosUnicosNoMes() {
-      const ids = new Set();
+      const atendimentos = new Set();
 
       registros.forEach(registro => {
         const auditorias = normalizarAuditorias(registro);
-        const atendimentoId = extrairIdAtendimento(null, registro);
-        const porAtendente = new Set();
 
         auditorias.forEach(auditoria => {
           const dataIso = dataParaIso(extrairDataAtendimento(auditoria, registro));
@@ -598,55 +622,15 @@
           if (!atendente || atendente.toLocaleLowerCase('pt-BR') === 'não informado no atendimento') return;
           if (atendenteSelecionado && atendente !== atendenteSelecionado) return;
 
-          porAtendente.add(atendente);
-        });
-
-        porAtendente.forEach(atendente => {
-          const chave = atendimentoId || `registro:${String(registro?.id ?? JSON.stringify(registro))}`;
-          ids.add(`${chave}|${atendente}`);
+          // O total de atendimentos conta a conversa uma única vez,
+          // mesmo quando ela possui auditorias de mais de um atendente.
+          const atendimentoId = extrairIdAtendimento(auditoria, registro) ||
+            `registro:${String(registro?.id ?? JSON.stringify(registro))}`;
+          atendimentos.add(atendimentoId);
         });
       });
 
-      // Aqui contamos atendimentos, não avaliações. Se o filtro for "Todos",
-      // uma conversa conjunta com 2 atendentes deve continuar sendo apenas 1 atendimento.
-      if (!atendenteSelecionado) {
-        const atendimentos = new Set();
-
-        registros.forEach(registro => {
-          const auditorias = normalizarAuditorias(registro);
-          let possuiAvaliacao = false;
-
-          for (const auditoria of auditorias) {
-            const dataIso = dataParaIso(extrairDataAtendimento(auditoria, registro));
-            const nota = numeroValido(auditoria?.nota_final);
-            const atendente = normalizarNome(auditoria?.atendente);
-
-            if (!dataIso || !dataIso.startsWith(mesSelecionado) || nota === null) continue;
-            if (!atendente || atendente.toLocaleLowerCase('pt-BR') === 'não informado no atendimento') continue;
-
-            possuiAvaliacao = true;
-            break;
-          }
-
-          if (possuiAvaliacao) {
-            atendimentos.add(
-              extrairIdAtendimento(null, registro) ||
-              `registro:${String(registro?.id ?? JSON.stringify(registro))}`
-            );
-          }
-        });
-
-        return atendimentos.size;
-      }
-
-      // Com um atendente selecionado, contamos somente as conversas daquele atendente.
-      const atendimentosDoAtendente = new Set();
-      ids.forEach(chave => {
-        const separador = chave.lastIndexOf('|');
-        atendimentosDoAtendente.add(chave.slice(0, separador));
-      });
-
-      return atendimentosDoAtendente.size;
+      return atendimentos.size;
     }
 
     function atualizarResumo() {
@@ -663,7 +647,7 @@
       document.getElementById('total-attendances').textContent =
         registrosUnicosNoMes();
       document.getElementById('total-attendances-detail').textContent =
-        atendenteSelecionado ? `Registros do mês com avaliação válida` : 'Registros únicos com avaliação válida';
+        atendenteSelecionado ? 'Conversas únicas com avaliação válida para este atendente' : 'Conversas únicas com avaliação válida';
       document.getElementById('total-evaluations').textContent = totalAvaliacoes;
       document.getElementById('overall-average').textContent =
         totalAvaliacoes ? `${media.toFixed(2).replace('.', ',')} / 5` : '—';
