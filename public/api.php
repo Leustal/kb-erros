@@ -21,6 +21,49 @@ function responder(array $dados, int $status = 200): void
     exit;
 }
 
+/*
+|--------------------------------------------------------------------------
+| NORMALIZAR VEREDITO
+|--------------------------------------------------------------------------
+*/
+function normalizarVereditoBanco($valor, $nota = null): string
+{
+    $texto = trim((string)$valor);
+
+    if ($texto === '') {
+        if ($nota !== null && is_numeric($nota)) {
+            $nota = (float)$nota;
+            if ($nota >= 4.5) return 'Excelente';
+            if ($nota >= 4.0) return 'Muito bom';
+            if ($nota >= 3.0) return 'Bom';
+            if ($nota >= 2.0) return 'Regular';
+            return 'Insatisfatório';
+        }
+        return '';
+    }
+
+    $normalizado = mb_strtolower($texto, 'UTF-8');
+
+    if (str_contains($normalizado, 'excelente')) return 'Excelente';
+    if (str_contains($normalizado, 'muito bom') || str_contains($normalizado, 'muito boa')) return 'Muito bom';
+    if (str_contains($normalizado, 'muito ruim')) return 'Muito ruim';
+    if (str_contains($normalizado, 'insatisf')) return 'Insatisfatório';
+    if (str_contains($normalizado, 'regular')) return 'Regular';
+    if (preg_match('/\b(bom|boa)\b/u', $normalizado)) return 'Bom';
+    if (str_contains($normalizado, 'ruim')) return 'Ruim';
+
+    if ($nota !== null && is_numeric($nota)) {
+        $nota = (float)$nota;
+        if ($nota >= 4.5) return 'Excelente';
+        if ($nota >= 4.0) return 'Muito bom';
+        if ($nota >= 3.0) return 'Bom';
+        if ($nota >= 2.0) return 'Regular';
+        return 'Insatisfatório';
+    }
+
+    return mb_substr($texto, 0, 100, 'UTF-8');
+}
+
 
 /*
 |--------------------------------------------------------------------------
@@ -373,6 +416,36 @@ switch ($action) {
             }
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | RECUPERAR CONVERSATION_ID PELO RELATÓRIO
+        |--------------------------------------------------------------------------
+        */
+        if ($conversation_id === null) {
+            $textosId = [];
+
+            if (isset($data['relatorio_markdown'])) {
+                $textosId[] = (string)$data['relatorio_markdown'];
+            }
+
+            if (isset($data['aba_auditoria']['relatorio_markdown'])) {
+                $textosId[] = (string)$data['aba_auditoria']['relatorio_markdown'];
+            }
+
+            foreach ($auditorias as $auditoria) {
+                if (is_array($auditoria) && isset($auditoria['relatorio_markdown'])) {
+                    $textosId[] = (string)$auditoria['relatorio_markdown'];
+                }
+            }
+
+            foreach ($textosId as $textoId) {
+                if (preg_match('/(?:\*{0,2}ID da conversa\*{0,2}\s*[:|]\s*|\|\s*\*{0,2}ID da conversa\*{0,2}\s*\|\s*)([0-9]+)/i', $textoId, $match)) {
+                    $conversation_id = (int)$match[1];
+                    break;
+                }
+            }
+        }
+
         $auditoriasNormalizadas = [];
 
         foreach ($auditorias as $auditoria) {
@@ -387,16 +460,14 @@ switch ($action) {
             $auditoriasNormalizadas[] = [
                 'atendente' => trim((string)($auditoria['atendente'] ?? 'Não informado no atendimento')),
                 'nota_final' => $notaAuditoria,
-                'veredito' => trim((string)($auditoria['veredito'] ?? '')),
+                'veredito' => normalizarVereditoBanco(
+                    $auditoria['veredito'] ?? '',
+                    $notaAuditoria
+                ),
                 'objetivo' => trim((string)($auditoria['objetivo'] ?? '')),
                 'oportunidade_ps' => trim((string)($auditoria['oportunidade_ps'] ?? '')),
                 'oferta_ps' => trim((string)($auditoria['oferta_ps'] ?? '')),
-                'relatorio_markdown' => trim((string)($auditoria['relatorio_markdown'] ?? '')),
-                'avaliacoes' => is_array($auditoria['avaliacoes'] ?? null) ? $auditoria['avaliacoes'] : [],
-                'inicio_participacao' => $auditoria['inicio_participacao'] ?? null,
-                'fim_participacao' => $auditoria['fim_participacao'] ?? null,
-                'duracao_participacao' => $auditoria['duracao_participacao'] ?? null,
-                'duracao_participacao_segundos' => isset($auditoria['duracao_participacao_segundos']) && is_numeric($auditoria['duracao_participacao_segundos']) ? (int)$auditoria['duracao_participacao_segundos'] : null
+                'relatorio_markdown' => trim((string)($auditoria['relatorio_markdown'] ?? ''))
             ];
         }
 
@@ -582,7 +653,6 @@ switch ($action) {
 
                     VALUES
                     (
-                        ?,
                         ?,
                         ?,
                         ?,
@@ -1326,117 +1396,6 @@ switch ($action) {
     |--------------------------------------------------------------------------
     */
 
-    /*
-     |--------------------------------------------------------------------------
-     | RELATÓRIO FINAL
-     |--------------------------------------------------------------------------
-     | Estatísticas calculadas em tempo real a partir da tabela erros.
-     | Não cria nem altera tabelas/colunas.
-     |--------------------------------------------------------------------------
-     */
-
-    case 'relatorio':
-
-        try {
-            $stmtRelatorio = $pdo->query("SELECT id, conversation_id, auditorias, nota_final, veredito, objetivo, oportunidade_ps, relatorio_markdown FROM erros ORDER BY id DESC");
-            $recordsRelatorio = $stmtRelatorio->fetchAll();
-
-            $totalAtendimentos = count($recordsRelatorio);
-            $totalAuditorias = 0;
-            $totalParticipacoesAtendentes = 0;
-            $somaNotas = 0.0;
-            $quantidadeNotas = 0;
-            $atendentesMap = [];
-            $atendimentosUmAtendente = 0;
-            $atendimentosMultiplosAtendentes = 0;
-            $atendimentosSemAtendente = 0;
-            $distribuicaoNotas = ['0_1'=>0,'1_2'=>0,'2_3'=>0,'3_4'=>0,'4_5'=>0];
-            $psCounts = ['SEM_OPORTUNIDADE'=>0,'OPORTUNIDADE_FRACA'=>0,'OPORTUNIDADE_MODERADA'=>0,'OPORTUNIDADE_CLARA'=>0,'NAO_INFORMADO'=>0];
-
-            $normalizarAtendente = static function($nome): string {
-                $nome = trim((string)$nome);
-                if ($nome === '') return 'Não informado no atendimento';
-                return trim(preg_replace('/\s+/', ' ', $nome));
-            };
-            $chaveAtendente = static function(string $nome): string {
-                return function_exists('mb_strtolower') ? mb_strtolower($nome, 'UTF-8') : strtolower($nome);
-            };
-
-            foreach ($recordsRelatorio as $record) {
-                $auditoriasRecord = [];
-                if (isset($record['auditorias']) && $record['auditorias'] !== null && trim((string)$record['auditorias']) !== '') {
-                    $decoded = json_decode($record['auditorias'], true);
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) $auditoriasRecord = $decoded;
-                }
-                if (empty($auditoriasRecord)) {
-                    $temLegada = $record['nota_final'] !== null || trim((string)($record['veredito']??'')) !== '' || trim((string)($record['objetivo']??'')) !== '' || trim((string)($record['oportunidade_ps']??'')) !== '' || trim((string)($record['relatorio_markdown']??'')) !== '';
-                    if ($temLegada) $auditoriasRecord[] = [
-                        'atendente'=>'Não informado no atendimento',
-                        'nota_final'=>$record['nota_final'] !== null ? (float)$record['nota_final'] : null,
-                        'veredito'=>$record['veredito']??'', 'objetivo'=>$record['objetivo']??'',
-                        'oportunidade_ps'=>$record['oportunidade_ps']??'', 'relatorio_markdown'=>$record['relatorio_markdown']??'',
-                        'avaliacoes'=>[]
-                    ];
-                }
-
-                $atendentesDoAtendimento = [];
-                foreach ($auditoriasRecord as $auditoria) {
-                    if (!is_array($auditoria)) continue;
-                    $totalAuditorias++;
-                    $nome = $normalizarAtendente($auditoria['atendente'] ?? 'Não informado no atendimento');
-                    if ($chaveAtendente($nome) === $chaveAtendente('Não informado no atendimento')) continue;
-                    $chave = $chaveAtendente($nome);
-                    $atendentesDoAtendimento[$chave] = $nome;
-                    if (!isset($atendentesMap[$chave])) $atendentesMap[$chave] = [
-                        'atendente'=>$nome, 'atendimentos'=>0, 'participacoes'=>0,
-                        'soma_notas'=>0.0, 'quantidade_notas'=>0, 'media_nota'=>null,
-                        'ps'=>['SEM_OPORTUNIDADE'=>0,'OPORTUNIDADE_FRACA'=>0,'OPORTUNIDADE_MODERADA'=>0,'OPORTUNIDADE_CLARA'=>0,'NAO_INFORMADO'=>0]
-                    ];
-                    $atendentesMap[$chave]['participacoes']++;
-                    $totalParticipacoesAtendentes++;
-                    $nota = (isset($auditoria['nota_final']) && $auditoria['nota_final'] !== '' && $auditoria['nota_final'] !== null) ? (float)$auditoria['nota_final'] : null;
-                    if ($nota !== null) {
-                        $somaNotas += $nota; $quantidadeNotas++;
-                        $atendentesMap[$chave]['soma_notas'] += $nota; $atendentesMap[$chave]['quantidade_notas']++;
-                        if ($nota < 1) $distribuicaoNotas['0_1']++; elseif ($nota < 2) $distribuicaoNotas['1_2']++; elseif ($nota < 3) $distribuicaoNotas['2_3']++; elseif ($nota < 4) $distribuicaoNotas['3_4']++; else $distribuicaoNotas['4_5']++;
-                    }
-                    $ps = strtoupper(trim((string)($auditoria['oportunidade_ps'] ?? '')));
-                    if (!in_array($ps, ['SEM_OPORTUNIDADE','OPORTUNIDADE_FRACA','OPORTUNIDADE_MODERADA','OPORTUNIDADE_CLARA'], true)) $ps='NAO_INFORMADO';
-                    $psCounts[$ps]++; $atendentesMap[$chave]['ps'][$ps]++;
-                }
-                $qtd=count($atendentesDoAtendimento);
-                if ($qtd===0) $atendimentosSemAtendente++;
-                elseif ($qtd===1) $atendimentosUmAtendente++;
-                else $atendimentosMultiplosAtendentes++;
-                foreach ($atendentesDoAtendimento as $chave=>$nome) $atendentesMap[$chave]['atendimentos']++;
-            }
-
-            foreach ($atendentesMap as &$a) {
-                $a['media_nota']=$a['quantidade_notas']>0 ? round($a['soma_notas']/$a['quantidade_notas'],2) : null;
-                unset($a['soma_notas'], $a['quantidade_notas']);
-            }
-            unset($a);
-            $atendentes=array_values($atendentesMap);
-            usort($atendentes, static function($a,$b){ return $a['participacoes']===$b['participacoes'] ? strcasecmp($a['atendente'],$b['atendente']) : ($b['participacoes']<=>$a['participacoes']); });
-
-            responder(['success'=>true,'action'=>'relatorio','data'=>[
-                'total_atendimentos'=>$totalAtendimentos,
-                'total_auditorias'=>$totalAuditorias,
-                'total_participacoes_atendentes'=>$totalParticipacoesAtendentes,
-                'total_atendentes'=>count($atendentes),
-                'atendimentos_um_atendente'=>$atendimentosUmAtendente,
-                'atendimentos_multiplos_atendentes'=>$atendimentosMultiplosAtendentes,
-                'atendimentos_sem_atendente'=>$atendimentosSemAtendente,
-                'media_nota_geral'=>$quantidadeNotas>0 ? round($somaNotas/$quantidadeNotas,2) : null,
-                'distribuicao_notas'=>$distribuicaoNotas,
-                'oportunidades_ps'=>$psCounts,
-                'atendentes'=>$atendentes
-            ]]);
-        } catch (PDOException $e) {
-            responder(['success'=>false,'action'=>'relatorio','error'=>'Erro MySQL ao gerar relatório: '.$e->getMessage()],500);
-        }
-        break;
-
     case 'read':
     default:
 
@@ -1732,6 +1691,7 @@ switch ($action) {
                     if ($temAuditoriaLegada) {
                         $auditoriasRecord[] = [
                             'atendente' =>
+                                $record['atendente'] ??
                                 'Não informado no atendimento',
                             'nota_final' =>
                                 $record['nota_final'] !== null

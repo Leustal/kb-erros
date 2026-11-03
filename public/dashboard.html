@@ -332,27 +332,61 @@
 
     function normalizarAuditorias(registro) {
       if (Array.isArray(registro?.auditorias)) {
-        return registro.auditorias;
+        return registro.auditorias.filter(Boolean);
+      }
+
+      if (registro?.auditorias && typeof registro.auditorias === 'string') {
+        try {
+          const parsed = JSON.parse(registro.auditorias);
+          return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      if (registro?.auditorias && typeof registro.auditorias === 'object') {
+        return [registro.auditorias];
       }
 
       return [];
     }
 
     function extrairDataAtendimento(auditoria, registro) {
-      // A data oficial do atendimento fica no relatório individual da auditoria.
-      // O relatório geral é usado somente como fallback.
       const textos = [
         auditoria?.relatorio_markdown,
         registro?.relatorio_markdown
       ];
 
       for (const texto of textos) {
-        const markdown = String(texto || '').replace(/\\n/g, '\n');
-        const match = markdown.match(
-          /\|\s*(?:\*\*)?Data(?:\s+do\s+atendimento)?(?:\*\*)?\s*\|\s*(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})\s*\|/i
+        let markdown = String(texto || '');
+        if (!markdown.trim()) continue;
+
+        markdown = markdown
+          .replace(/\\n/g, '\n')
+          .replace(/\r/g, '');
+
+        const padraoTabela = markdown.match(
+          /\|\s*\*{0,2}\s*Data(?:\s+do\s+atendimento)?\s*\*{0,2}\s*\|\s*(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})\s*\|/i
         );
 
-        if (match) {
+        if (padraoTabela) {
+          const valor = padraoTabela[1];
+          if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+            const [ano, mes, dia] = valor.split('-');
+            return `${dia}/${mes}/${ano}`;
+          }
+          return valor;
+        }
+
+        const padroesTexto = [
+          /(?:^|[\n|])\s*\*{0,2}\s*Data(?:\s+do\s+atendimento)?\s*\*{0,2}\s*[:\-]\s*(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})/i,
+          /\*{0,2}Data(?:\s+do\s+atendimento)?\*{0,2}\s*\|\s*(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})/i
+        ];
+
+        for (const padrao of padroesTexto) {
+          const match = markdown.match(padrao);
+          if (!match) continue;
+
           const valor = match[1];
           if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
             const [ano, mes, dia] = valor.split('-');
@@ -438,24 +472,34 @@
     }
 
     function extrairIdAtendimento(auditoria, registro) {
+      const ids = [];
+
+      if (registro?.conversation_id !== undefined && registro?.conversation_id !== null) {
+        const id = String(registro.conversation_id).trim();
+        if (id && id !== 'null' && id !== '0') ids.push(`conversa:${id}`);
+      }
+
       const textos = [
         auditoria?.relatorio_markdown,
         registro?.relatorio_markdown
       ];
 
       for (const texto of textos) {
-        const markdown = String(texto || '');
-        const match = markdown.match(
-          /\|\s*\*\*ID da conversa\*\*\s*\|\s*(\d+)\s*\|/i
-        );
+        const markdown = String(texto || '').replace(/\\n/g, '\n');
+        if (!markdown.trim()) continue;
 
-        if (match) return `conversa:${match[1]}`;
+        const padroes = [
+          /\|\s*\*{0,2}\s*ID da conversa\s*\*{0,2}\s*\|\s*([0-9]+)\s*\|/i,
+          /\*{0,2}ID da conversa\*{0,2}\s*[:\-]\s*([0-9]+)/i
+        ];
+
+        for (const padrao of padroes) {
+          const match = markdown.match(padrao);
+          if (match?.[1]) return `conversa:${String(match[1]).trim()}`;
+        }
       }
 
-      if (registro?.conversation_id !== undefined && registro?.conversation_id !== null) {
-        const id = String(registro.conversation_id).trim();
-        if (id && id !== 'null') return `conversa:${id}`;
-      }
+      if (ids.length) return ids[0];
 
       if (registro?.id !== undefined && registro?.id !== null) {
         return `registro:${String(registro.id)}`;
@@ -543,18 +587,26 @@
     }
 
     function descobrirMeses() {
-      const meses = new Set(dadosAgregados.map(item => item.mes));
+      const meses = new Set(
+        dadosAgregados
+          .map(item => item.mes)
+          .filter(mes => /^\d{4}-\d{2}$/.test(mes))
+      );
 
-      const agora = new Intl.DateTimeFormat('en-CA', {
-        timeZone: TIME_ZONE,
-        year: 'numeric',
-        month: '2-digit'
-      }).formatToParts(new Date());
+      // O dashboard deve priorizar o mês mais recente que realmente possui
+      // atendimentos. Não usamos o mês atual do navegador como padrão quando
+      // existe dado histórico mais recente na KB.
+      if (!meses.size) {
+        const agora = new Intl.DateTimeFormat('en-CA', {
+          timeZone: TIME_ZONE,
+          year: 'numeric',
+          month: '2-digit'
+        }).formatToParts(new Date());
 
-      const ano = agora.find(p => p.type === 'year')?.value;
-      const mes = agora.find(p => p.type === 'month')?.value;
-      const atual = `${ano}-${mes}`;
-      meses.add(atual);
+        const ano = agora.find(p => p.type === 'year')?.value;
+        const mes = agora.find(p => p.type === 'month')?.value;
+        if (ano && mes) meses.add(`${ano}-${mes}`);
+      }
 
       return Array.from(meses).sort().reverse();
     }
