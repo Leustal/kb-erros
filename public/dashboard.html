@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -411,13 +410,11 @@
           —
         </div>
 
-        <div id="total-attendances-detail" class="card-detail">
-        </div>
+        <div id="total-attendances-detail" class="card-detail"></div>
       </div>
 
 
       <div class="card">
-
         <div class="card-label">
           Avaliações no mês
         </div>
@@ -429,12 +426,10 @@
         <div class="card-detail">
           Avaliações consideradas no cálculo
         </div>
-
       </div>
 
 
       <div class="card">
-
         <div class="card-label">
           Média geral
         </div>
@@ -446,12 +441,10 @@
         <div class="card-detail">
           Somente avaliações com nota válida
         </div>
-
       </div>
 
 
       <div class="card">
-
         <div class="card-label">
           Atendentes avaliados
         </div>
@@ -463,7 +456,6 @@
         <div class="card-detail">
           No período selecionado
         </div>
-
       </div>
 
     </section>
@@ -562,9 +554,6 @@
       document.getElementById('grid-body');
 
 
-    /*
-     * Normaliza o campo auditorias.
-     */
     function normalizarAuditorias(registro) {
 
       if (Array.isArray(registro?.auditorias)) {
@@ -611,30 +600,20 @@
 
 
     /*
-     * Extrai a data REAL do atendimento.
+     * A data oficial do atendimento vem do
+     * relatorio_markdown.
      *
-     * IMPORTANTE:
+     * Não usamos criado_em.
      *
-     * Não usamos Date() aqui.
-     *
-     * Se o relatório possui:
-     *
-     * | Data | 01/11/2026 |
-     *
-     * o retorno será exatamente:
-     *
-     * 01/11/2026
-     *
-     * Sem conversão de timezone.
+     * Também não usamos new Date() para interpretar
+     * DD/MM/YYYY, evitando problemas de timezone.
      */
+
     function extrairDataAtendimento(auditoria, registro) {
 
       const textos = [
-
         auditoria?.relatorio_markdown,
-
         registro?.relatorio_markdown
-
       ];
 
 
@@ -642,7 +621,6 @@
 
         let markdown =
           String(texto || '');
-
 
         if (!markdown.trim()) {
           continue;
@@ -655,14 +633,11 @@
 
 
         /*
-         * Formato de tabela Markdown:
+         * Formato principal:
          *
-         * | **Data** | 01/11/2026 |
-         *
-         * Também aceita:
-         *
-         * | Data | 2026-11-01 |
+         * | **Data** | 03/11/2026 |
          */
+
         const padraoTabela =
           markdown.match(
             /\|\s*\*{0,2}\s*Data(?:\s+do\s+atendimento)?\s*\*{0,2}\s*\|\s*(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})\s*\|/i
@@ -697,8 +672,9 @@
 
 
         /*
-         * Outros formatos possíveis.
+         * Formatos alternativos.
          */
+
         const padroesTexto = [
 
           /(?:^|[\n|])\s*\*{0,2}\s*Data(?:\s+do\s+atendimento)?\s*\*{0,2}\s*[:\-]\s*(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})/i,
@@ -752,13 +728,10 @@
 
 
     /*
-     * Converte DD/MM/YYYY para YYYY-MM-DD.
-     *
-     * NÃO usa new Date().
-     *
-     * Isso evita o problema de timezone
-     * que estava jogando Novembro para Outubro.
+     * Converte DD/MM/YYYY para YYYY-MM-DD
+     * sem criar objeto Date.
      */
+
     function dataParaIso(dataBr) {
 
       if (!dataBr) {
@@ -802,22 +775,7 @@
       }
 
 
-      /*
-       * Retorna diretamente a string.
-       *
-       * Exemplo:
-       *
-       * 01/11/2026
-       *
-       * vira:
-       *
-       * 2026-11-01
-       */
-      return (
-        `${String(ano).padStart(4, '0')}-` +
-        `${String(mes).padStart(2, '0')}-` +
-        `${String(dia).padStart(2, '0')}`
-      );
+      return `${String(ano).padStart(4, '0')}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
 
     }
 
@@ -829,9 +787,6 @@
     }
 
 
-    /*
-     * Aceita somente notas entre 0 e 5.
-     */
     function numeroValido(valor) {
 
       if (
@@ -851,11 +806,9 @@
         );
 
 
-      return (
-        Number.isFinite(numero) &&
+      return Number.isFinite(numero) &&
         numero >= 0 &&
         numero <= 5
-      )
         ? numero
         : null;
 
@@ -863,8 +816,9 @@
 
 
     /*
-     * Busca TODOS os registros da API.
+     * Busca todas as páginas da API.
      */
+
     async function buscarTodosRegistros() {
 
       const todos = [];
@@ -881,13 +835,10 @@
 
 
         const response =
-          await fetch(
-            url,
-            {
-              method: 'GET',
-              cache: 'no-store'
-            }
-          );
+          await fetch(url, {
+            method: 'GET',
+            cache: 'no-store'
+          });
 
 
         if (!response.ok) {
@@ -915,9 +866,7 @@
 
         if (Array.isArray(json.data)) {
 
-          todos.push(
-            ...json.data
-          );
+          todos.push(...json.data);
 
         }
 
@@ -933,16 +882,15 @@
 
         pagina++;
 
-
       } while (
         pagina <= totalPaginas
       );
 
 
       /*
-       * Remove registros duplicados pelo ID
-       * da própria tabela.
+       * Remove registros duplicados pelo ID.
        */
+
       const ids =
         new Set();
 
@@ -965,9 +913,7 @@
 
 
           if (ids.has(id)) {
-
             return false;
-
           }
 
 
@@ -984,23 +930,48 @@
      * Identifica a conversa.
      *
      * Prioridade:
-     *
-     * 1. ID da conversa no Markdown da auditoria
-     * 2. ID da conversa no Markdown do registro
-     * 3. conversation_id do registro
-     * 4. ID do registro da KB
+     * 1. conversation_id da API
+     * 2. ID da conversa no markdown
+     * 3. ID do registro
      */
+
     function extrairIdAtendimento(
       auditoria,
       registro
     ) {
 
+      const ids = [];
+
+
+      if (
+        registro?.conversation_id !== undefined &&
+        registro?.conversation_id !== null
+      ) {
+
+        const id =
+          String(
+            registro.conversation_id
+          ).trim();
+
+
+        if (
+          id &&
+          id !== 'null' &&
+          id !== '0'
+        ) {
+
+          ids.push(
+            `conversa:${id}`
+          );
+
+        }
+
+      }
+
+
       const textos = [
-
         auditoria?.relatorio_markdown,
-
         registro?.relatorio_markdown
-
       ];
 
 
@@ -1033,9 +1004,7 @@
 
           if (match?.[1]) {
 
-            return (
-              `conversa:${String(match[1]).trim()}`
-            );
+            return `conversa:${String(match[1]).trim()}`;
 
           }
 
@@ -1044,46 +1013,17 @@
       }
 
 
-      /*
-       * Fallback para conversation_id
-       * armazenado diretamente no registro.
-       */
-      if (
-        registro?.conversation_id !== undefined &&
-        registro?.conversation_id !== null
-      ) {
-
-        const id =
-          String(
-            registro.conversation_id
-          ).trim();
-
-
-        if (
-          id &&
-          id !== 'null' &&
-          id !== '0'
-        ) {
-
-          return `conversa:${id}`;
-
-        }
-
+      if (ids.length) {
+        return ids[0];
       }
 
 
-      /*
-       * Último fallback:
-       * ID do registro da KB.
-       */
       if (
         registro?.id !== undefined &&
         registro?.id !== null
       ) {
 
-        return (
-          `registro:${String(registro.id)}`
-        );
+        return `registro:${String(registro.id)}`;
 
       }
 
@@ -1094,34 +1034,32 @@
 
 
     /*
-     * GERA AS AVALIAÇÕES.
+     * Gera os dados agregados.
      *
-     * REGRA:
+     * Regra:
      *
      * 1 conversa + 1 atendente = 1 avaliação.
      *
-     * Portanto:
+     * Portanto, se uma conversa tiver:
      *
-     * conversa 100 + Abraão = 1
-     * conversa 100 + Leonardo = 1
+     * Leonardo
+     * Rhuan
      *
-     * Mas:
+     * serão contabilizadas:
      *
-     * conversa 100 + Abraão duplicada = continua 1.
+     * Leonardo = 1 avaliação
+     * Rhuan = 1 avaliação
+     *
+     * A mesma avaliação duplicada na API não
+     * é contabilizada novamente.
      */
+
     function gerarDadosAgregados() {
 
       const mapa =
         new Map();
 
 
-      /*
-       * Guarda avaliações já processadas.
-       *
-       * Chave:
-       *
-       * conversa + atendente
-       */
       const avaliacaoProcessada =
         new Set();
 
@@ -1129,212 +1067,161 @@
       registros.forEach(registro => {
 
         const auditorias =
-          normalizarAuditorias(
-            registro
+          normalizarAuditorias(registro);
+
+
+        auditorias.forEach(auditoria => {
+
+          const atendente =
+            normalizarNome(
+              auditoria?.atendente
+            );
+
+
+          const nota =
+            numeroValido(
+              auditoria?.nota_final
+            );
+
+
+          const dataBr =
+            extrairDataAtendimento(
+              auditoria,
+              registro
+            );
+
+
+          const dataIso =
+            dataParaIso(dataBr);
+
+
+          if (
+            !atendente ||
+            !dataIso ||
+            nota === null
+          ) {
+
+            return;
+
+          }
+
+
+          if (
+            atendente.toLocaleLowerCase('pt-BR') ===
+            'não informado no atendimento'
+          ) {
+
+            return;
+
+          }
+
+
+          const atendimentoId =
+            extrairIdAtendimento(
+              auditoria,
+              registro
+            ) ||
+            `registro:${String(
+              registro?.id ?? ''
+            )}`;
+
+
+          const chaveAvaliacao =
+            `${atendimentoId}|atendente:${atendente}`;
+
+
+          if (
+            avaliacaoProcessada.has(
+              chaveAvaliacao
+            )
+          ) {
+
+            return;
+
+          }
+
+
+          avaliacaoProcessada.add(
+            chaveAvaliacao
           );
 
 
-        auditorias.forEach(
-          auditoria => {
+          /*
+           * YYYY-MM
+           *
+           * Exemplo:
+           * 2026-11
+           */
 
-            const atendente =
-              normalizarNome(
-                auditoria?.atendente
-              );
-
-
-            const nota =
-              numeroValido(
-                auditoria?.nota_final
-              );
+          const mes =
+            dataIso.slice(0, 7);
 
 
-            const dataBr =
-              extrairDataAtendimento(
-                auditoria,
-                registro
-              );
+          const chave =
+            `${mes}|${atendente}`;
 
 
-            const dataIso =
-              dataParaIso(
-                dataBr
-              );
+          if (!mapa.has(chave)) {
+
+            mapa.set(chave, {
+
+              mes,
+
+              atendente,
+
+              total: 0,
+
+              soma: 0,
+
+              dias: new Map(),
+
+              atendimentos: new Set()
+
+            });
+
+          }
 
 
-            /*
-             * Só entra se tiver:
-             *
-             * - atendente
-             * - data
-             * - nota
-             */
-            if (
-              !atendente ||
-              !dataIso ||
-              nota === null
-            ) {
-
-              return;
-
-            }
+          const item =
+            mapa.get(chave);
 
 
-            if (
-              atendente.toLocaleLowerCase('pt-BR') ===
-              'não informado no atendimento'
-            ) {
+          item.total += 1;
 
-              return;
+          item.soma += nota;
 
-            }
-
-
-            const atendimentoId =
-              extrairIdAtendimento(
-                auditoria,
-                registro
-              );
+          item.atendimentos.add(
+            atendimentoId
+          );
 
 
-            if (!atendimentoId) {
-              return;
-            }
+          if (!item.dias.has(dataIso)) {
 
-
-            /*
-             * CHAVE DEFINITIVA DA AVALIAÇÃO.
-             */
-            const chaveAvaliacao =
-              `${atendimentoId}|atendente:${atendente}`;
-
-
-            /*
-             * Evita duplicação.
-             */
-            if (
-              avaliacaoProcessada.has(
-                chaveAvaliacao
-              )
-            ) {
-
-              return;
-
-            }
-
-
-            avaliacaoProcessada.add(
-              chaveAvaliacao
-            );
-
-
-            /*
-             * O mês vem DIRETAMENTE da data.
-             *
-             * 2026-11-01
-             *
-             * vira:
-             *
-             * 2026-11
-             */
-            const mes =
-              dataIso.slice(0, 7);
-
-
-            const chave =
-              `${mes}|${atendente}`;
-
-
-            if (!mapa.has(chave)) {
-
-              mapa.set(
-                chave,
-                {
-                  mes,
-                  atendente,
-
-                  /*
-                   * Quantidade REAL de notas.
-                   */
-                  total: 0,
-
-                  /*
-                   * Soma REAL das notas.
-                   */
-                  soma: 0,
-
-                  /*
-                   * Dados por dia.
-                   */
-                  dias: new Map(),
-
-                  /*
-                   * Conversas avaliadas.
-                   */
-                  atendimentos: new Set()
-
-                }
-              );
-
-            }
-
-
-            const item =
-              mapa.get(chave);
-
-
-            /*
-             * UMA NOTA = UMA AVALIAÇÃO.
-             */
-            item.total += 1;
-
-            item.soma += nota;
-
-
-            /*
-             * Guarda a conversa.
-             */
-            item.atendimentos.add(
-              atendimentoId
-            );
-
-
-            /*
-             * Cria o dia caso ainda não exista.
-             */
-            if (
-              !item.dias.has(dataIso)
-            ) {
-
-              item.dias.set(
-                dataIso,
-                {
-                  total: 0,
-                  soma: 0,
-                  atendimentos: new Set()
-                }
-              );
-
-            }
-
-
-            const dia =
-              item.dias.get(dataIso);
-
-
-            /*
-             * UMA NOTA = UMA AVALIAÇÃO NO DIA.
-             */
-            dia.total += 1;
-
-            dia.soma += nota;
-
-            dia.atendimentos.add(
-              atendimentoId
+            item.dias.set(
+              dataIso,
+              {
+                total: 0,
+                soma: 0,
+                atendimentos: new Set()
+              }
             );
 
           }
-        );
+
+
+          const dia =
+            item.dias.get(dataIso);
+
+
+          dia.total += 1;
+
+          dia.soma += nota;
+
+          dia.atendimentos.add(
+            atendimentoId
+          );
+
+        });
 
       });
 
@@ -1348,23 +1235,27 @@
 
 
     /*
-     * Descobre somente os meses que
-     * realmente possuem avaliações.
+     * Retorna os meses existentes nos dados.
+     *
+     * Exemplo:
+     *
+     * 2026-11
+     * 2026-10
+     * 2026-09
+     *
+     * O mais recente fica primeiro.
      */
+
     function descobrirMeses() {
 
       const meses =
         new Set(
-
           dadosAgregados
-            .map(
-              item => item.mes
-            )
+            .map(item => item.mes)
             .filter(
               mes =>
                 /^\d{4}-\d{2}$/.test(mes)
             )
-
         );
 
 
@@ -1377,34 +1268,45 @@
 
 
     /*
-     * Nome do mês SEM Date().
+     * Converte diretamente YYYY-MM para
+     * "Novembro de 2026".
      *
-     * Isso evita novamente qualquer
-     * problema de timezone.
+     * Não utiliza new Date().
      */
+
     function nomeMes(mes) {
 
       const nomes = [
 
         'Janeiro',
+
         'Fevereiro',
+
         'Março',
+
         'Abril',
+
         'Maio',
+
         'Junho',
+
         'Julho',
+
         'Agosto',
+
         'Setembro',
+
         'Outubro',
+
         'Novembro',
+
         'Dezembro'
 
       ];
 
 
       const partes =
-        String(mes || '')
-          .split('-');
+        String(mes || '').split('-');
 
 
       if (
@@ -1435,16 +1337,24 @@
       }
 
 
-      return (
-        `${nomes[numero - 1]} de ${ano}`
-      );
+      return `${nomes[numero - 1]} de ${ano}`;
 
     }
 
 
     /*
      * Preenche o seletor de meses.
+     *
+     * Como descobrirMeses() retorna:
+     *
+     * 2026-11
+     * 2026-10
+     * 2026-09
+     *
+     * o primeiro será automaticamente
+     * Novembro de 2026.
      */
+
     function preencherFiltros() {
 
       const meses =
@@ -1452,18 +1362,23 @@
 
 
       monthSelect.innerHTML =
-        meses
-          .map(
-            mes =>
-              `<option value="${mes}">
-                ${escapeHtml(nomeMes(mes))}
-              </option>`
-          )
-          .join('');
+        meses.map(mes => {
 
+          return `
+            <option value="${mes}">
+              ${escapeHtml(nomeMes(mes))}
+            </option>
+          `;
+
+        }).join('');
+
+
+      /*
+       * Primeiro mês da lista = mês mais recente.
+       */
 
       const mesAtual =
-        meses[0];
+        meses[0] || '';
 
 
       mesSelecionado =
@@ -1480,9 +1395,10 @@
 
 
     /*
-     * Lista somente atendentes que possuem
-     * avaliação no mês selecionado.
+     * Atualiza o filtro de atendentes
+     * conforme o mês selecionado.
      */
+
     function atualizarAtendentes() {
 
       const nomes =
@@ -1495,12 +1411,13 @@
             item.mes ===
             mesSelecionado
         )
-        .forEach(
-          item =>
-            nomes.add(
-              item.atendente
-            )
-        );
+        .forEach(item => {
+
+          nomes.add(
+            item.atendente
+          );
+
+        });
 
 
       const ordenados =
@@ -1519,12 +1436,15 @@
         '<option value="">Todos os atendentes</option>' +
 
         ordenados
-          .map(
-            nome =>
-              `<option value="${escapeAttribute(nome)}">
+          .map(nome => {
+
+            return `
+              <option value="${escapeAttribute(nome)}">
                 ${escapeHtml(nome)}
-              </option>`
-          )
+              </option>
+            `;
+
+          })
           .join('');
 
 
@@ -1552,9 +1472,9 @@
 
 
     /*
-     * Retorna a quantidade REAL de dias
-     * do mês, sem usar Date().
+     * Quantidade real de dias do mês.
      */
+
     function quantidadeDiasDoMes(mes) {
 
       const [
@@ -1587,16 +1507,27 @@
       const diasPorMes = [
 
         31,
+
         28,
+
         31,
+
         30,
+
         31,
+
         30,
+
         31,
+
         31,
+
         30,
+
         31,
+
         30,
+
         31
 
       ];
@@ -1611,17 +1542,12 @@
       }
 
 
-      /*
-       * Ano bissexto.
-       */
       const bissexto =
         (
           ano % 4 === 0 &&
           ano % 100 !== 0
         ) ||
-        (
-          ano % 400 === 0
-        );
+        ano % 400 === 0;
 
 
       return bissexto
@@ -1632,57 +1558,52 @@
 
 
     /*
-     * Conta conversas únicas no mês.
+     * Conta atendimentos únicos no mês.
      *
-     * Se uma conversa possui dois atendentes:
-     *
-     * conversa 100 + Abraão
-     * conversa 100 + Leonardo
-     *
-     * continua sendo UM atendimento.
+     * A conversa é contabilizada uma única vez,
+     * mesmo que tenha dois atendentes.
      */
+
     function registrosUnicosNoMes() {
 
       const atendimentos =
         new Set();
 
 
-      dadosAgregados.forEach(
-        item => {
+      dadosAgregados.forEach(item => {
 
-          if (
-            item.mes !==
-            mesSelecionado
-          ) {
+        if (
+          item.mes !==
+          mesSelecionado
+        ) {
 
-            return;
-
-          }
-
-
-          if (
-            atendenteSelecionado &&
-            item.atendente !==
-            atendenteSelecionado
-          ) {
-
-            return;
-
-          }
-
-
-          item.atendimentos.forEach(
-            atendimentoId => {
-
-              atendimentos.add(
-                atendimentoId
-              );
-
-            }
-          );
+          return;
 
         }
-      );
+
+
+        if (
+          atendenteSelecionado &&
+          item.atendente !==
+          atendenteSelecionado
+        ) {
+
+          return;
+
+        }
+
+
+        item.atendimentos.forEach(
+          atendimentoId => {
+
+            atendimentos.add(
+              atendimentoId
+            );
+
+          }
+        );
+
+      });
 
 
       return atendimentos.size;
@@ -1691,30 +1612,26 @@
 
 
     /*
-     * Atualiza os cards.
+     * Atualiza os cards superiores.
      */
+
     function atualizarResumo() {
 
       const itens =
-        dadosAgregados.filter(
-          item =>
+        dadosAgregados.filter(item =>
 
-            item.mes ===
-            mesSelecionado &&
+          item.mes ===
+          mesSelecionado &&
 
-            (
-              !atendenteSelecionado ||
-              item.atendente ===
-              atendenteSelecionado
-            )
+          (
+            !atendenteSelecionado ||
+            item.atendente ===
+            atendenteSelecionado
+          )
+
         );
 
 
-      /*
-       * Aqui está a regra mais importante:
-       *
-       * total = quantidade de notas.
-       */
       const totalAvaliacoes =
         itens.reduce(
           (soma, item) =>
@@ -1723,9 +1640,6 @@
         );
 
 
-      /*
-       * Soma de todas as notas.
-       */
       const somaNotas =
         itens.reduce(
           (soma, item) =>
@@ -1734,12 +1648,6 @@
         );
 
 
-      /*
-       * Média ponderada correta:
-       *
-       * soma de todas as notas /
-       * quantidade de notas.
-       */
       const media =
         totalAvaliacoes
           ? somaNotas /
@@ -1747,10 +1655,6 @@
           : 0;
 
 
-      /*
-       * Quantidade de atendentes
-       * realmente avaliados.
-       */
       const atendentes =
         new Set(
           itens.map(
@@ -1760,61 +1664,42 @@
         );
 
 
-      document
-        .getElementById(
-          'total-attendances'
-        )
-        .textContent =
-          registrosUnicosNoMes();
+      document.getElementById(
+        'total-attendances'
+      ).textContent =
+        registrosUnicosNoMes();
 
 
-      document
-        .getElementById(
-          'total-attendances-detail'
-        )
-        .textContent =
-
-          atendenteSelecionado
-
-            ? 'Conversas únicas com avaliação válida para este atendente'
-
-            : 'Conversas únicas com avaliação válida';
+      document.getElementById(
+        'total-attendances-detail'
+      ).textContent =
+        atendenteSelecionado
+          ? 'Conversas únicas com avaliação válida para este atendente'
+          : 'Conversas únicas com avaliação válida';
 
 
-      document
-        .getElementById(
-          'total-evaluations'
-        )
-        .textContent =
-          totalAvaliacoes;
+      document.getElementById(
+        'total-evaluations'
+      ).textContent =
+        totalAvaliacoes;
 
 
-      document
-        .getElementById(
-          'overall-average'
-        )
-        .textContent =
-
-          totalAvaliacoes
-
-            ? `${media.toFixed(2).replace('.', ',')} / 5`
-
-            : '—';
+      document.getElementById(
+        'overall-average'
+      ).textContent =
+        totalAvaliacoes
+          ? `${media.toFixed(2).replace('.', ',')} / 5`
+          : '—';
 
 
-      document
-        .getElementById(
-          'attendant-count'
-        )
-        .textContent =
-          atendentes.size;
+      document.getElementById(
+        'attendant-count'
+      ).textContent =
+        atendentes.size;
 
     }
 
 
-    /*
-     * Define a cor da nota.
-     */
     function classeNota(nota) {
 
       if (nota >= 4.5) {
@@ -1847,8 +1732,9 @@
 
 
     /*
-     * Renderiza a tabela.
+     * Renderiza a grade diária.
      */
+
     function renderizarGrade() {
 
       const dias =
@@ -1860,17 +1746,17 @@
       const itens =
         dadosAgregados
 
-          .filter(
-            item =>
+          .filter(item =>
 
-              item.mes ===
-              mesSelecionado &&
+            item.mes ===
+            mesSelecionado &&
 
-              (
-                !atendenteSelecionado ||
-                item.atendente ===
-                atendenteSelecionado
-              )
+            (
+              !atendenteSelecionado ||
+              item.atendente ===
+              atendenteSelecionado
+            )
+
           )
 
           .sort(
@@ -1882,34 +1768,23 @@
           );
 
 
-      /*
-       * Cabeçalho dos dias.
-       */
       gridHead.innerHTML = `
 
         <tr>
 
-          <th>
-            Atendente
-          </th>
+          <th>Atendente</th>
 
           ${
-
             Array
               .from(
                 { length: dias },
                 (_, i) =>
-                  `<th>
-                    ${String(i + 1).padStart(2, '0')}
-                  </th>`
+                  `<th>${String(i + 1).padStart(2, '0')}</th>`
               )
               .join('')
-
           }
 
-          <th>
-            Média mês
-          </th>
+          <th>Média mês</th>
 
         </tr>
 
@@ -1940,163 +1815,117 @@
 
 
       gridBody.innerHTML =
+        itens.map(item => {
 
-        itens
-          .map(item => {
+          /*
+           * Média mensal ponderada:
+           *
+           * soma de todas as notas /
+           * quantidade total de avaliações.
+           */
 
-
-            /*
-             * Média mensal do atendente.
-             *
-             * Soma das notas /
-             * quantidade de avaliações.
-             */
-            const mediaMes =
-              item.soma /
-              item.total;
+          const mediaMes =
+            item.soma /
+            item.total;
 
 
-            /*
-             * Gera os dias.
-             */
-            const diasHtml =
+          const diasHtml =
+            Array
+              .from(
+                { length: dias },
+                (_, index) => {
 
-              Array
-                .from(
-                  { length: dias },
-                  (_, index) => {
-
-
-                    const diaNumero =
-                      String(
-                        index + 1
-                      ).padStart(
-                        2,
-                        '0'
-                      );
+                  const diaNumero =
+                    String(index + 1)
+                      .padStart(2, '0');
 
 
-                    /*
-                     * Exemplo:
-                     *
-                     * 2026-11-01
-                     */
-                    const dataIso =
-                      `${mesSelecionado}-${diaNumero}`;
+                  const dataIso =
+                    `${mesSelecionado}-${diaNumero}`;
 
 
-                    const dadosDia =
-                      item.dias.get(
-                        dataIso
-                      );
+                  const dadosDia =
+                    item.dias.get(
+                      dataIso
+                    );
 
 
-                    /*
-                     * Nenhuma avaliação
-                     * naquele dia.
-                     */
-                    if (!dadosDia) {
-
-                      return `
-
-                        <td>
-
-                          <span
-                            class="score score-empty"
-                          >
-                            —
-                          </span>
-
-                        </td>
-
-                      `;
-
-                    }
-
-
-                    /*
-                     * Média daquele dia.
-                     */
-                    const mediaDia =
-                      dadosDia.soma /
-                      dadosDia.total;
-
+                  if (!dadosDia) {
 
                     return `
-
-                      <td
-                        title="${dadosDia.total} avaliação(ões)"
-                      >
-
-                        <span
-                          class="score ${classeNota(mediaDia)}"
-                        >
-                          ${formatarNota(mediaDia)}
+                      <td>
+                        <span class="score score-empty">
+                          —
                         </span>
-
                       </td>
-
                     `;
 
                   }
-                )
-                .join('');
 
 
-            /*
-             * Linha do atendente.
-             */
-            return `
-
-              <tr>
-
-                <td>
-
-                  <span
-                    class="attendant-name"
-                  >
-                    ${escapeHtml(
-                      item.atendente
-                    )}
-                  </span>
+                  const mediaDia =
+                    dadosDia.soma /
+                    dadosDia.total;
 
 
-                  <span
-                    class="attendant-count"
-                  >
-                    ${item.total}
-                    avaliação(ões)
-                  </span>
+                  return `
 
-                </td>
+                    <td
+                      title="${dadosDia.total} avaliação(ões)"
+                    >
+
+                      <span
+                        class="score ${classeNota(mediaDia)}"
+                      >
+                        ${formatarNota(mediaDia)}
+                      </span>
+
+                    </td>
+
+                  `;
+
+                }
+              )
+              .join('');
 
 
-                ${diasHtml}
+          return `
 
+            <tr>
 
-                <td>
+              <td>
 
-                  <span
-                    class="score ${classeNota(mediaMes)}"
-                  >
-                    ${formatarNota(mediaMes)}
-                  </span>
+                <span class="attendant-name">
+                  ${escapeHtml(item.atendente)}
+                </span>
 
-                </td>
+                <span class="attendant-count">
+                  ${item.total} avaliação(ões)
+                </span>
 
-              </tr>
+              </td>
 
-            `;
+              ${diasHtml}
 
-          })
-          .join('');
+              <td>
+
+                <span
+                  class="score ${classeNota(mediaMes)}"
+                >
+                  ${formatarNota(mediaMes)}
+                </span>
+
+              </td>
+
+            </tr>
+
+          `;
+
+        }).join('');
 
     }
 
 
-    /*
-     * Renderização geral.
-     */
     function renderizar() {
 
       atualizarResumo();
@@ -2111,9 +1940,6 @@
     }
 
 
-    /*
-     * Segurança para HTML.
-     */
     function escapeHtml(valor) {
 
       return String(valor ?? '')
@@ -2153,9 +1979,22 @@
     }
 
 
+    function capitalizar(valor) {
+
+      const texto =
+        String(valor || '');
+
+
+      return texto.charAt(0).toUpperCase() +
+        texto.slice(1);
+
+    }
+
+
     /*
-     * Mudança de mês.
+     * Alteração do mês.
      */
+
     monthSelect.addEventListener(
       'change',
       () => {
@@ -2164,13 +2003,7 @@
           monthSelect.value;
 
 
-        /*
-         * Quando muda o mês,
-         * recalcula os atendentes
-         * daquele mês.
-         */
         atualizarAtendentes();
-
 
         renderizar();
 
@@ -2179,8 +2012,9 @@
 
 
     /*
-     * Mudança de atendente.
+     * Alteração do atendente.
      */
+
     attendantSelect.addEventListener(
       'change',
       () => {
@@ -2196,8 +2030,9 @@
 
 
     /*
-     * Carregamento do dashboard.
+     * Carrega o dashboard.
      */
+
     async function carregarDashboard(
       preservarFiltros = true
     ) {
@@ -2214,27 +2049,22 @@
 
         status.textContent =
           preservarFiltros
-
             ? 'Atualizando dados da KB...'
-
             : 'Carregando registros...';
 
 
-        /*
-         * Busca os dados.
-         */
         await buscarTodosRegistros();
 
 
-        /*
-         * Calcula as avaliações.
-         */
         gerarDadosAgregados();
 
 
         /*
-         * Primeira carga.
+         * Primeiro carregamento:
+         *
+         * seleciona o mês mais recente.
          */
+
         if (
           !preservarFiltros ||
           !mesAnterior
@@ -2242,35 +2072,34 @@
 
           preencherFiltros();
 
-        }
+        } else {
 
-        /*
-         * Atualização mantendo filtro.
-         */
-        else {
+          /*
+           * Atualiza as opções sem usar
+           * new Date().
+           */
 
           const meses =
             descobrirMeses();
 
 
           monthSelect.innerHTML =
+            meses.map(mes => {
 
-            meses
-              .map(
-                mes =>
-                  `<option value="${mes}">
-                    ${escapeHtml(
-                      nomeMes(mes)
-                    )}
-                  </option>`
-              )
-              .join('');
+              return `
+                <option value="${mes}">
+                  ${escapeHtml(nomeMes(mes))}
+                </option>
+              `;
+
+            }).join('');
 
 
           /*
-           * Mantém o mês selecionado
-           * se ele ainda existir.
+           * Mantém o mês anterior caso
+           * ele ainda exista.
            */
+
           if (
             meses.includes(
               mesAnterior
@@ -2280,9 +2109,7 @@
             mesSelecionado =
               mesAnterior;
 
-          }
-
-          else {
+          } else {
 
             mesSelecionado =
               meses[0] || '';
@@ -2298,11 +2125,11 @@
 
 
           /*
-           * Mantém o atendente
-           * se ele ainda existir.
+           * Mantém o atendente anterior
+           * caso ainda exista no mês.
            */
-          const existeAtendente =
 
+          const existeAtendente =
             Array
               .from(
                 attendantSelect.options
@@ -2326,12 +2153,11 @@
             attendantSelect.value =
               atendenteAnterior;
 
-          }
-
-          else {
+          } else {
 
             atendenteSelecionado =
               '';
+
 
             attendantSelect.value =
               '';
@@ -2344,13 +2170,9 @@
         renderizar();
 
 
-      }
+      } catch (error) {
 
-      catch (error) {
-
-        console.error(
-          error
-        );
+        console.error(error);
 
 
         status.textContent =
@@ -2365,8 +2187,7 @@
               colspan="35"
               class="empty"
             >
-              Não foi possível carregar
-              o dashboard.
+              Não foi possível carregar o dashboard.
               Verifique o acesso à API.
             </td>
 
@@ -2379,14 +2200,9 @@
     }
 
 
-    /*
-     * Inicialização.
-     */
     async function iniciar() {
 
-      await carregarDashboard(
-        false
-      );
+      await carregarDashboard(false);
 
     }
 
@@ -2397,4 +2213,3 @@
 
 </body>
 </html>
-```
