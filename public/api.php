@@ -26,6 +26,7 @@ function responder(array $dados, int $status = 200): void
 | NORMALIZAR VEREDITO
 |--------------------------------------------------------------------------
 */
+
 function normalizarVereditoBanco($valor, $nota = null): string
 {
     $texto = trim((string)$valor);
@@ -39,6 +40,7 @@ function normalizarVereditoBanco($valor, $nota = null): string
             if ($nota >= 2.0) return 'Regular';
             return 'Insatisfatório';
         }
+
         return '';
     }
 
@@ -64,6 +66,69 @@ function normalizarVereditoBanco($valor, $nota = null): string
     return mb_substr($texto, 0, 100, 'UTF-8');
 }
 
+/*
+|--------------------------------------------------------------------------
+| NORMALIZAR AVALIAÇÕES
+|--------------------------------------------------------------------------
+*/
+
+function normalizarAvaliacoesBanco($avaliacoes): array
+{
+    if (is_string($avaliacoes) && trim($avaliacoes) !== '') {
+        $decodificadas = json_decode($avaliacoes, true);
+
+        if (
+            json_last_error() === JSON_ERROR_NONE &&
+            is_array($decodificadas)
+        ) {
+            $avaliacoes = $decodificadas;
+        } else {
+            $avaliacoes = [];
+        }
+    }
+
+    if (!is_array($avaliacoes)) {
+        return [];
+    }
+
+    $avaliacoesNormalizadas = [];
+
+    $statusPermitidos = [
+        'CORRETO',
+        'PARCIALMENTE_CORRETO',
+        'INCORRETO',
+        'NAO_APLICAVEL',
+        'SEM_EVIDENCIA'
+    ];
+
+    foreach ($avaliacoes as $avaliacao) {
+        if (!is_array($avaliacao)) {
+            continue;
+        }
+
+        $item = trim((string)($avaliacao['item'] ?? ''));
+
+        $status = strtoupper(
+            trim((string)($avaliacao['avaliacao'] ?? 'SEM_EVIDENCIA'))
+        );
+
+        $observacao = trim(
+            (string)($avaliacao['observacao'] ?? '')
+        );
+
+        if (!in_array($status, $statusPermitidos, true)) {
+            $status = 'SEM_EVIDENCIA';
+        }
+
+        $avaliacoesNormalizadas[] = [
+            'item' => $item,
+            'avaliacao' => $status,
+            'observacao' => $observacao
+        ];
+    }
+
+    return $avaliacoesNormalizadas;
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -84,7 +149,6 @@ function loadEnv(string $filePath): void
     );
 
     foreach ($lines as $line) {
-
         $line = trim($line);
 
         if (
@@ -98,38 +162,27 @@ function loadEnv(string $filePath): void
             continue;
         }
 
-        [$key, $value] =
-            explode('=', $line, 2);
+        [$key, $value] = explode('=', $line, 2);
 
-        $key =
-            trim($key);
+        $key = trim($key);
 
-        $value =
-            trim(
-                $value,
-                "\"'\t "
-            );
+        $value = trim(
+            $value,
+            "\"'\t "
+        );
 
         if ($key !== '') {
+            putenv("{$key}={$value}");
 
-            putenv(
-                "{$key}={$value}"
-            );
-
-            $_ENV[$key] =
-                $value;
-
-            $_SERVER[$key] =
-                $value;
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
         }
     }
 }
 
-
 loadEnv(
     dirname(__DIR__) . '/.env'
 );
-
 
 /*
 |--------------------------------------------------------------------------
@@ -157,13 +210,9 @@ $charset =
     getenv('DB_CHARSET') ?:
     ($_ENV['DB_CHARSET'] ?? 'utf8mb4');
 
-
-$dsn =
-    "mysql:host={$host};dbname={$db};charset={$charset}";
-
+$dsn = "mysql:host={$host};dbname={$db};charset={$charset}";
 
 $options = [
-
     PDO::ATTR_ERRMODE =>
         PDO::ERRMODE_EXCEPTION,
 
@@ -174,19 +223,15 @@ $options = [
         false
 ];
 
-
 try {
-
-    $pdo =
-        new PDO(
-            $dsn,
-            $user,
-            $pass,
-            $options
-        );
+    $pdo = new PDO(
+        $dsn,
+        $user,
+        $pass,
+        $options
+    );
 
 } catch (PDOException $e) {
-
     responder(
         [
             'success' => false,
@@ -198,43 +243,32 @@ try {
     );
 }
 
-
 /*
 |--------------------------------------------------------------------------
 | LER REQUEST
 |--------------------------------------------------------------------------
 */
 
-$rawInput =
-    file_get_contents(
-        'php://input'
-    );
-
+$rawInput = file_get_contents('php://input');
 
 $data = [];
-
 
 if (
     $rawInput !== false &&
     trim($rawInput) !== ''
 ) {
-
-    $decoded =
-        json_decode(
-            $rawInput,
-            true
-        );
+    $decoded = json_decode(
+        $rawInput,
+        true
+    );
 
     if (
         json_last_error() === JSON_ERROR_NONE &&
         is_array($decoded)
     ) {
-
-        $data =
-            $decoded;
+        $data = $decoded;
     }
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -250,17 +284,13 @@ if (
 |--------------------------------------------------------------------------
 */
 
-$action =
-    trim(
-        $_GET['action']
-        ?? $data['action']
-        ?? 'read'
-    );
+$action = trim(
+    $_GET['action']
+    ?? $data['action']
+    ?? 'read'
+);
 
-
-$action =
-    strtolower($action);
-
+$action = strtolower($action);
 
 /*
 |--------------------------------------------------------------------------
@@ -269,7 +299,6 @@ $action =
 */
 
 switch ($action) {
-
 
     /*
     |--------------------------------------------------------------------------
@@ -283,7 +312,6 @@ switch ($action) {
         $id =
             $data['id']
             ?? ($_GET['id'] ?? null);
-
 
         /*
         |--------------------------------------------------------------------------
@@ -302,22 +330,16 @@ switch ($action) {
             $data['conversation_id']
             ?? null;
 
-
         if (
             $conversation_id !== null &&
             $conversation_id !== '' &&
             is_numeric($conversation_id)
         ) {
-
-            $conversation_id =
-                (int)$conversation_id;
+            $conversation_id = (int)$conversation_id;
 
         } else {
-
-            $conversation_id =
-                null;
+            $conversation_id = null;
         }
-
 
         /*
         |--------------------------------------------------------------------------
@@ -330,18 +352,15 @@ switch ($action) {
             ?? $data['aba_solucao']['titulo']
             ?? '';
 
-
         $solucao =
             $data['solucao']
             ?? $data['aba_solucao']['solucao']
             ?? '';
 
-
         $categoria =
             $data['categoria']
             ?? $data['aba_solucao']['categoria']
             ?? '';
-
 
         $tags =
             $data['tags']
@@ -352,13 +371,11 @@ switch ($action) {
             $tags = implode(', ', $tags);
         }
 
-
         $descricao =
             $data['descricao']
             ?? $data['problema']
             ?? $data['aba_solucao']['problema']
             ?? '';
-
 
         /*
         |--------------------------------------------------------------------------
@@ -376,25 +393,70 @@ switch ($action) {
         if (isset($data['auditorias'])) {
             if (is_array($data['auditorias'])) {
                 $auditorias = $data['auditorias'];
-            } elseif (is_string($data['auditorias']) && trim($data['auditorias']) !== '') {
-                $decodedAuditorias = json_decode($data['auditorias'], true);
-                if (json_last_error() === JSON_ERROR_NONE && is_array($decodedAuditorias)) {
+
+            } elseif (
+                is_string($data['auditorias']) &&
+                trim($data['auditorias']) !== ''
+            ) {
+                $decodedAuditorias = json_decode(
+                    $data['auditorias'],
+                    true
+                );
+
+                if (
+                    json_last_error() === JSON_ERROR_NONE &&
+                    is_array($decodedAuditorias)
+                ) {
                     $auditorias = $decodedAuditorias;
                 }
             }
         }
 
-        // Compatibilidade com o formato antigo de uma única auditoria.
+        /*
+        |--------------------------------------------------------------------------
+        | COMPATIBILIDADE COM O FORMATO ANTIGO
+        |--------------------------------------------------------------------------
+        */
+
         if (empty($auditorias)) {
-            $legacyNota = (isset($data['nota_final']) && $data['nota_final'] !== '' && $data['nota_final'] !== null)
+            $legacyNota = (
+                isset($data['nota_final']) &&
+                $data['nota_final'] !== '' &&
+                $data['nota_final'] !== null
+            )
                 ? (float)$data['nota_final']
                 : null;
 
-            $legacyVeredito = $data['veredito'] ?? $data['aba_auditoria']['veredito'] ?? '';
-            $legacyObjetivo = $data['objetivo'] ?? $data['aba_auditoria']['objetivo'] ?? '';
-            $legacyOportunidade = $data['oportunidade_ps'] ?? $data['oportunidade'] ?? $data['aba_auditoria']['oportunidade_ps'] ?? '';
-            $legacyOferta = $data['oferta_ps'] ?? $data['aba_auditoria']['oferta_ps'] ?? '';
-            $legacyRelatorio = $data['relatorio_markdown'] ?? $data['aba_auditoria']['relatorio_markdown'] ?? '';
+            $legacyVeredito =
+                $data['veredito']
+                ?? $data['aba_auditoria']['veredito']
+                ?? '';
+
+            $legacyObjetivo =
+                $data['objetivo']
+                ?? $data['aba_auditoria']['objetivo']
+                ?? '';
+
+            $legacyOportunidade =
+                $data['oportunidade_ps']
+                ?? $data['oportunidade']
+                ?? $data['aba_auditoria']['oportunidade_ps']
+                ?? '';
+
+            $legacyOferta =
+                $data['oferta_ps']
+                ?? $data['aba_auditoria']['oferta_ps']
+                ?? '';
+
+            $legacyRelatorio =
+                $data['relatorio_markdown']
+                ?? $data['aba_auditoria']['relatorio_markdown']
+                ?? '';
+
+            $legacyAvaliacoes =
+                $data['avaliacoes']
+                ?? $data['aba_auditoria']['avaliacoes']
+                ?? [];
 
             if (
                 $legacyNota !== null ||
@@ -402,16 +464,27 @@ switch ($action) {
                 trim((string)$legacyObjetivo) !== '' ||
                 trim((string)$legacyOportunidade) !== '' ||
                 trim((string)$legacyOferta) !== '' ||
-                trim((string)$legacyRelatorio) !== ''
+                trim((string)$legacyRelatorio) !== '' ||
+                !empty($legacyAvaliacoes)
             ) {
                 $auditorias[] = [
-                    'atendente' => $data['atendente'] ?? 'Não informado no atendimento',
+                    'atendente' =>
+                        $data['atendente'] ??
+                        'Não informado no atendimento',
+
                     'nota_final' => $legacyNota,
+
                     'veredito' => (string)$legacyVeredito,
+
                     'objetivo' => (string)$legacyObjetivo,
+
                     'oportunidade_ps' => (string)$legacyOportunidade,
+
                     'oferta_ps' => (string)$legacyOferta,
-                    'relatorio_markdown' => (string)$legacyRelatorio
+
+                    'relatorio_markdown' => (string)$legacyRelatorio,
+
+                    'avaliacoes' => $legacyAvaliacoes
                 ];
             }
         }
@@ -421,6 +494,7 @@ switch ($action) {
         | RECUPERAR CONVERSATION_ID PELO RELATÓRIO
         |--------------------------------------------------------------------------
         */
+
         if ($conversation_id === null) {
             $textosId = [];
 
@@ -433,18 +507,33 @@ switch ($action) {
             }
 
             foreach ($auditorias as $auditoria) {
-                if (is_array($auditoria) && isset($auditoria['relatorio_markdown'])) {
+                if (
+                    is_array($auditoria) &&
+                    isset($auditoria['relatorio_markdown'])
+                ) {
                     $textosId[] = (string)$auditoria['relatorio_markdown'];
                 }
             }
 
             foreach ($textosId as $textoId) {
-                if (preg_match('/(?:\*{0,2}ID da conversa\*{0,2}\s*[:|]\s*|\|\s*\*{0,2}ID da conversa\*{0,2}\s*\|\s*)([0-9]+)/i', $textoId, $match)) {
+                if (
+                    preg_match(
+                        '/(?:\*{0,2}ID da conversa\*{0,2}\s*[:|]\s*|\|\s*\*{0,2}ID da conversa\*{0,2}\s*\|\s*)([0-9]+)/i',
+                        $textoId,
+                        $match
+                    )
+                ) {
                     $conversation_id = (int)$match[1];
                     break;
                 }
             }
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | NORMALIZAR AUDITORIAS
+        |--------------------------------------------------------------------------
+        */
 
         $auditoriasNormalizadas = [];
 
@@ -453,26 +542,60 @@ switch ($action) {
                 continue;
             }
 
-            $notaAuditoria = (isset($auditoria['nota_final']) && $auditoria['nota_final'] !== '' && $auditoria['nota_final'] !== null)
+            $notaAuditoria = (
+                isset($auditoria['nota_final']) &&
+                $auditoria['nota_final'] !== '' &&
+                $auditoria['nota_final'] !== null
+            )
                 ? (float)$auditoria['nota_final']
                 : null;
 
+            /*
+             * CORREÇÃO:
+             * Preservar os critérios individuais retornados pela TESS.
+             */
+            $avaliacoesNormalizadas = normalizarAvaliacoesBanco(
+                $auditoria['avaliacoes'] ?? []
+            );
+
             $auditoriasNormalizadas[] = [
-                'atendente' => trim((string)($auditoria['atendente'] ?? 'Não informado no atendimento')),
+                'atendente' => trim(
+                    (string)($auditoria['atendente'] ?? 'Não informado no atendimento')
+                ),
+
                 'nota_final' => $notaAuditoria,
+
                 'veredito' => normalizarVereditoBanco(
                     $auditoria['veredito'] ?? '',
                     $notaAuditoria
                 ),
-                'objetivo' => trim((string)($auditoria['objetivo'] ?? '')),
-                'oportunidade_ps' => trim((string)($auditoria['oportunidade_ps'] ?? '')),
-                'oferta_ps' => trim((string)($auditoria['oferta_ps'] ?? '')),
-                'relatorio_markdown' => trim((string)($auditoria['relatorio_markdown'] ?? ''))
+
+                'objetivo' => trim(
+                    (string)($auditoria['objetivo'] ?? '')
+                ),
+
+                'oportunidade_ps' => trim(
+                    (string)($auditoria['oportunidade_ps'] ?? '')
+                ),
+
+                'oferta_ps' => trim(
+                    (string)($auditoria['oferta_ps'] ?? '')
+                ),
+
+                'relatorio_markdown' => trim(
+                    (string)($auditoria['relatorio_markdown'] ?? '')
+                ),
+
+                'avaliacoes' => $avaliacoesNormalizadas
             ];
         }
 
         $auditoriasJson = !empty($auditoriasNormalizadas)
-            ? json_encode($auditoriasNormalizadas, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            ? json_encode(
+                $auditoriasNormalizadas,
+                JSON_UNESCAPED_UNICODE |
+                JSON_UNESCAPED_SLASHES
+            )
             : null;
 
         $primeiraAuditoria = $auditoriasNormalizadas[0] ?? [];
@@ -484,20 +607,14 @@ switch ($action) {
         $oferta_ps = $primeiraAuditoria['oferta_ps'] ?? null;
         $relatorio_markdown = $primeiraAuditoria['relatorio_markdown'] ?? null;
 
-
         /*
         |--------------------------------------------------------------------------
         | NORMALIZAR TÍTULO E SOLUÇÃO
         |--------------------------------------------------------------------------
         */
 
-        $titulo =
-            trim((string)$titulo);
-
-
-        $solucao =
-            trim((string)$solucao);
-
+        $titulo = trim((string)$titulo);
+        $solucao = trim((string)$solucao);
 
         /*
         |--------------------------------------------------------------------------
@@ -507,7 +624,6 @@ switch ($action) {
 
         try {
 
-
             /*
             |--------------------------------------------------------------------------
             | CREATE
@@ -516,7 +632,6 @@ switch ($action) {
 
             if ($action === 'create') {
 
-
                 /*
                 |--------------------------------------------------------------------------
                 | VALIDAR CAMPOS OBRIGATÓRIOS
@@ -524,40 +639,26 @@ switch ($action) {
                 */
 
                 if ($titulo === '') {
-
                     responder(
                         [
-                            'success' =>
-                                false,
-
-                            'error' =>
-                                'O campo titulo é obrigatório.',
-
-                            'action' =>
-                                'create'
+                            'success' => false,
+                            'error' => 'O campo titulo é obrigatório.',
+                            'action' => 'create'
                         ],
                         400
                     );
                 }
-
 
                 if ($solucao === '') {
-
                     responder(
                         [
-                            'success' =>
-                                false,
-
-                            'error' =>
-                                'O campo solucao é obrigatório.',
-
-                            'action' =>
-                                'create'
+                            'success' => false,
+                            'error' => 'O campo solucao é obrigatório.',
+                            'action' => 'create'
                         ],
                         400
                     );
                 }
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -571,61 +672,34 @@ switch ($action) {
                 */
 
                 if ($conversation_id !== null) {
-
                     $checkSql = "
-
                         SELECT id
-
                         FROM erros
-
                         WHERE conversation_id = ?
-
                         LIMIT 1
-
                     ";
 
+                    $checkStmt = $pdo->prepare($checkSql);
 
-                    $checkStmt =
-                        $pdo->prepare(
-                            $checkSql
-                        );
+                    $checkStmt->execute([
+                        $conversation_id
+                    ]);
 
-
-                    $checkStmt->execute(
-                        [
-                            $conversation_id
-                        ]
-                    );
-
-
-                    $existingId =
-                        $checkStmt->fetchColumn();
-
+                    $existingId = $checkStmt->fetchColumn();
 
                     if ($existingId !== false) {
-
                         responder(
                             [
-                                'success' =>
-                                    true,
-
-                                'id' =>
-                                    (int)$existingId,
-
-                                'conversation_id' =>
-                                    $conversation_id,
-
-                                'action' =>
-                                    'duplicate',
-
-                                'created' =>
-                                    false
+                                'success' => true,
+                                'id' => (int)$existingId,
+                                'conversation_id' => $conversation_id,
+                                'action' => 'duplicate',
+                                'created' => false
                             ],
                             200
                         );
                     }
                 }
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -634,7 +708,6 @@ switch ($action) {
                 */
 
                 $sql = "
-
                     INSERT INTO erros
                     (
                         conversation_id,
@@ -650,7 +723,6 @@ switch ($action) {
                         oportunidade_ps,
                         relatorio_markdown
                     )
-
                     VALUES
                     (
                         ?,
@@ -666,70 +738,33 @@ switch ($action) {
                         ?,
                         ?
                     )
-
                 ";
 
+                $stmt = $pdo->prepare($sql);
 
-                $stmt =
-                    $pdo->prepare(
-                        $sql
-                    );
+                $success = $stmt->execute([
+                    $conversation_id,
+                    $titulo,
+                    $categoria,
+                    $tags,
+                    $descricao,
+                    $solucao,
+                    $auditoriasJson,
+                    $nota_final,
+                    $veredito,
+                    $objetivo,
+                    $oportunidade_ps,
+                    $relatorio_markdown
+                ]);
 
-
-                $success =
-                    $stmt->execute(
-                        [
-
-                            $conversation_id,
-
-                            $titulo,
-
-                            $categoria,
-
-                            $tags,
-
-                            $descricao,
-
-                            $solucao,
-
-                            $auditoriasJson,
-
-                            $nota_final,
-
-                            $veredito,
-
-                            $objetivo,
-
-                            $oportunidade_ps,
-
-                            $relatorio_markdown
-
-                        ]
-                    );
-
-
-                responder(
-                    [
-
-                        'success' =>
-                            $success,
-
-                        'id' =>
-                            (int)$pdo->lastInsertId(),
-
-                        'conversation_id' =>
-                            $conversation_id,
-
-                        'action' =>
-                            'create',
-
-                        'created' =>
-                            true
-
-                    ]
-                );
+                responder([
+                    'success' => $success,
+                    'id' => (int)$pdo->lastInsertId(),
+                    'conversation_id' => $conversation_id,
+                    'action' => 'create',
+                    'created' => true
+                ]);
             }
-
 
             /*
             |--------------------------------------------------------------------------
@@ -738,7 +773,6 @@ switch ($action) {
             */
 
             if ($action === 'update') {
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -751,26 +785,17 @@ switch ($action) {
                     !is_numeric($id) ||
                     (int)$id <= 0
                 ) {
-
                     responder(
                         [
-                            'success' =>
-                                false,
-
-                            'error' =>
-                                'ID não informado para atualização.',
-
-                            'action' =>
-                                'update'
+                            'success' => false,
+                            'error' => 'ID não informado para atualização.',
+                            'action' => 'update'
                         ],
                         400
                     );
                 }
 
-
-                $id =
-                    (int)$id;
-
+                $id = (int)$id;
 
                 /*
                 |--------------------------------------------------------------------------
@@ -784,34 +809,19 @@ switch ($action) {
                 */
 
                 $currentSql = "
-
                     SELECT conversation_id
-
                     FROM erros
-
                     WHERE id = ?
-
                     LIMIT 1
-
                 ";
 
+                $currentStmt = $pdo->prepare($currentSql);
 
-                $currentStmt =
-                    $pdo->prepare(
-                        $currentSql
-                    );
+                $currentStmt->execute([
+                    $id
+                ]);
 
-
-                $currentStmt->execute(
-                    [
-                        $id
-                    ]
-                );
-
-
-                $currentConversationId =
-                    $currentStmt->fetchColumn();
-
+                $currentConversationId = $currentStmt->fetchColumn();
 
                 /*
                 |--------------------------------------------------------------------------
@@ -820,25 +830,16 @@ switch ($action) {
                 */
 
                 if ($currentConversationId === false) {
-
                     responder(
                         [
-                            'success' =>
-                                false,
-
-                            'error' =>
-                                'Registro não encontrado.',
-
-                            'action' =>
-                                'update',
-
-                            'id' =>
-                                $id
+                            'success' => false,
+                            'error' => 'Registro não encontrado.',
+                            'action' => 'update',
+                            'id' => $id
                         ],
                         404
                     );
                 }
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -851,28 +852,17 @@ switch ($action) {
                 |--------------------------------------------------------------------------
                 */
 
-                if (
-                    !array_key_exists(
-                        'conversation_id',
-                        $data
-                    )
-                ) {
-
+                if (!array_key_exists('conversation_id', $data)) {
                     if (
                         $currentConversationId !== null &&
                         $currentConversationId !== ''
                     ) {
-
-                        $conversation_id =
-                            (int)$currentConversationId;
+                        $conversation_id = (int)$currentConversationId;
 
                     } else {
-
-                        $conversation_id =
-                            null;
+                        $conversation_id = null;
                     }
                 }
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -881,40 +871,26 @@ switch ($action) {
                 */
 
                 if ($titulo === '') {
-
                     responder(
                         [
-                            'success' =>
-                                false,
-
-                            'error' =>
-                                'O campo titulo é obrigatório.',
-
-                            'action' =>
-                                'update'
+                            'success' => false,
+                            'error' => 'O campo titulo é obrigatório.',
+                            'action' => 'update'
                         ],
                         400
                     );
                 }
-
 
                 if ($solucao === '') {
-
                     responder(
                         [
-                            'success' =>
-                                false,
-
-                            'error' =>
-                                'O campo solucao é obrigatório.',
-
-                            'action' =>
-                                'update'
+                            'success' => false,
+                            'error' => 'O campo solucao é obrigatório.',
+                            'action' => 'update'
                         ],
                         400
                     );
                 }
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -928,66 +904,36 @@ switch ($action) {
                 */
 
                 if ($conversation_id !== null) {
-
                     $checkSql = "
-
                         SELECT id
-
                         FROM erros
-
                         WHERE conversation_id = ?
-
                         AND id <> ?
-
                         LIMIT 1
-
                     ";
 
+                    $checkStmt = $pdo->prepare($checkSql);
 
-                    $checkStmt =
-                        $pdo->prepare(
-                            $checkSql
-                        );
+                    $checkStmt->execute([
+                        $conversation_id,
+                        $id
+                    ]);
 
-
-                    $checkStmt->execute(
-                        [
-                            $conversation_id,
-                            $id
-                        ]
-                    );
-
-
-                    $existingId =
-                        $checkStmt->fetchColumn();
-
+                    $existingId = $checkStmt->fetchColumn();
 
                     if ($existingId !== false) {
-
                         responder(
                             [
-
-                                'success' =>
-                                    false,
-
-                                'error' =>
-                                    'Este conversation_id já está associado a outro registro.',
-
-                                'conversation_id' =>
-                                    $conversation_id,
-
-                                'existing_id' =>
-                                    (int)$existingId,
-
-                                'action' =>
-                                    'update'
-
+                                'success' => false,
+                                'error' => 'Este conversation_id já está associado a outro registro.',
+                                'conversation_id' => $conversation_id,
+                                'existing_id' => (int)$existingId,
+                                'action' => 'update'
                             ],
                             409
                         );
                     }
                 }
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -996,104 +942,51 @@ switch ($action) {
                 */
 
                 $sql = "
-
                     UPDATE erros
-
                     SET
-
                         conversation_id = ?,
-
                         titulo = ?,
-
                         categoria = ?,
-
                         tags = ?,
-
                         descricao = ?,
-
                         solucao = ?,
-
                         auditorias = ?,
-
                         nota_final = ?,
-
                         veredito = ?,
-
                         objetivo = ?,
-
                         oportunidade_ps = ?,
-
                         relatorio_markdown = ?
-
                     WHERE id = ?
-
                 ";
 
+                $stmt = $pdo->prepare($sql);
 
-                $stmt =
-                    $pdo->prepare(
-                        $sql
-                    );
+                $stmt->execute([
+                    $conversation_id,
+                    $titulo,
+                    $categoria,
+                    $tags,
+                    $descricao,
+                    $solucao,
+                    $auditoriasJson,
+                    $nota_final,
+                    $veredito,
+                    $objetivo,
+                    $oportunidade_ps,
+                    $relatorio_markdown,
+                    $id
+                ]);
 
-
-                $stmt->execute(
-                    [
-
-                        $conversation_id,
-
-                        $titulo,
-
-                        $categoria,
-
-                        $tags,
-
-                        $descricao,
-
-                        $solucao,
-
-                        $auditoriasJson,
-
-                        $nota_final,
-
-                        $veredito,
-
-                        $objetivo,
-
-                        $oportunidade_ps,
-
-                        $relatorio_markdown,
-
-                        $id
-
-                    ]
-                );
-
-
-                responder(
-                    [
-
-                        'success' =>
-                            true,
-
-                        'id' =>
-                            $id,
-
-                        'conversation_id' =>
-                            $conversation_id,
-
-                        'action' =>
-                            'update',
-
-                        'affected_rows' =>
-                            $stmt->rowCount()
-
-                    ]
-                );
+                responder([
+                    'success' => true,
+                    'id' => $id,
+                    'conversation_id' => $conversation_id,
+                    'action' => 'update',
+                    'affected_rows' => $stmt->rowCount()
+                ]);
             }
 
-
         } catch (PDOException $e) {
-
 
             /*
             |--------------------------------------------------------------------------
@@ -1107,71 +1000,40 @@ switch ($action) {
             |--------------------------------------------------------------------------
             */
 
-            $mysqlCode =
-                $e->errorInfo[1] ?? null;
-
+            $mysqlCode = $e->errorInfo[1] ?? null;
 
             if (
                 $mysqlCode == 1062 &&
                 $conversation_id !== null
             ) {
-
                 $checkSql = "
-
                     SELECT id
-
                     FROM erros
-
                     WHERE conversation_id = ?
-
                     LIMIT 1
-
                 ";
 
+                $checkStmt = $pdo->prepare($checkSql);
 
-                $checkStmt =
-                    $pdo->prepare(
-                        $checkSql
-                    );
+                $checkStmt->execute([
+                    $conversation_id
+                ]);
 
-
-                $checkStmt->execute(
-                    [
-                        $conversation_id
-                    ]
-                );
-
-
-                $existingId =
-                    $checkStmt->fetchColumn();
-
+                $existingId = $checkStmt->fetchColumn();
 
                 if ($existingId !== false) {
-
                     responder(
                         [
-
-                            'success' =>
-                                true,
-
-                            'id' =>
-                                (int)$existingId,
-
-                            'conversation_id' =>
-                                $conversation_id,
-
-                            'action' =>
-                                'duplicate',
-
-                            'created' =>
-                                false
-
+                            'success' => true,
+                            'id' => (int)$existingId,
+                            'conversation_id' => $conversation_id,
+                            'action' => 'duplicate',
+                            'created' => false
                         ],
                         200
                     );
                 }
             }
-
 
             /*
             |--------------------------------------------------------------------------
@@ -1181,24 +1043,15 @@ switch ($action) {
 
             responder(
                 [
-
-                    'success' =>
-                        false,
-
-                    'error' =>
-                        'Erro MySQL: ' .
-                        $e->getMessage(),
-
-                    'action' =>
-                        $action
-
+                    'success' => false,
+                    'error' => 'Erro MySQL: ' . $e->getMessage(),
+                    'action' => $action
                 ],
                 500
             );
         }
 
         break;
-
 
     /*
     |--------------------------------------------------------------------------
@@ -1213,7 +1066,6 @@ switch ($action) {
 
     case 'delete':
 
-
         /*
         |--------------------------------------------------------------------------
         | PEGAR ID
@@ -1223,7 +1075,6 @@ switch ($action) {
         $id =
             $_GET['id']
             ?? ($data['id'] ?? null);
-
 
         /*
         |--------------------------------------------------------------------------
@@ -1236,54 +1087,30 @@ switch ($action) {
             $id === '' ||
             !is_numeric($id)
         ) {
-
             responder(
                 [
-
-                    'success' =>
-                        false,
-
-                    'error' =>
-                        'ID é obrigatório para exclusão.',
-
-                    'action' =>
-                        'delete',
-
-                    'received_id' =>
-                        $id
-
+                    'success' => false,
+                    'error' => 'ID é obrigatório para exclusão.',
+                    'action' => 'delete',
+                    'received_id' => $id
                 ],
                 400
             );
         }
 
-
-        $id =
-            (int)$id;
-
+        $id = (int)$id;
 
         if ($id <= 0) {
-
             responder(
                 [
-
-                    'success' =>
-                        false,
-
-                    'error' =>
-                        'ID inválido para exclusão.',
-
-                    'action' =>
-                        'delete',
-
-                    'received_id' =>
-                        $id
-
+                    'success' => false,
+                    'error' => 'ID inválido para exclusão.',
+                    'action' => 'delete',
+                    'received_id' => $id
                 ],
                 400
             );
         }
-
 
         /*
         |--------------------------------------------------------------------------
@@ -1292,21 +1119,13 @@ switch ($action) {
         */
 
         try {
-
-            $stmt =
-                $pdo->prepare(
-                    "DELETE FROM erros WHERE id = ?"
-                );
-
-
-            $stmt->execute(
-                [$id]
+            $stmt = $pdo->prepare(
+                "DELETE FROM erros WHERE id = ?"
             );
 
+            $stmt->execute([$id]);
 
-            $affectedRows =
-                $stmt->rowCount();
-
+            $affectedRows = $stmt->rowCount();
 
             /*
             |--------------------------------------------------------------------------
@@ -1315,29 +1134,14 @@ switch ($action) {
             */
 
             if ($affectedRows > 0) {
-
-                responder(
-                    [
-
-                        'success' =>
-                            true,
-
-                        'message' =>
-                            'Registro excluído com sucesso.',
-
-                        'action' =>
-                            'delete',
-
-                        'id' =>
-                            $id,
-
-                        'affected_rows' =>
-                            $affectedRows
-
-                    ]
-                );
+                responder([
+                    'success' => true,
+                    'message' => 'Registro excluído com sucesso.',
+                    'action' => 'delete',
+                    'id' => $id,
+                    'affected_rows' => $affectedRows
+                ]);
             }
-
 
             /*
             |--------------------------------------------------------------------------
@@ -1347,49 +1151,27 @@ switch ($action) {
 
             responder(
                 [
-
-                    'success' =>
-                        false,
-
-                    'error' =>
-                        'Nenhum registro encontrado com este ID.',
-
-                    'action' =>
-                        'delete',
-
-                    'id' =>
-                        $id
-
+                    'success' => false,
+                    'error' => 'Nenhum registro encontrado com este ID.',
+                    'action' => 'delete',
+                    'id' => $id
                 ],
                 404
             );
 
-
         } catch (PDOException $e) {
-
             responder(
                 [
-
-                    'success' =>
-                        false,
-
-                    'error' =>
-                        'Erro MySQL ao excluir: ' .
-                        $e->getMessage(),
-
-                    'action' =>
-                        'delete',
-
-                    'id' =>
-                        $id
-
+                    'success' => false,
+                    'error' => 'Erro MySQL ao excluir: ' . $e->getMessage(),
+                    'action' => 'delete',
+                    'id' => $id
                 ],
                 500
             );
         }
 
         break;
-
 
     /*
     |--------------------------------------------------------------------------
@@ -1400,43 +1182,32 @@ switch ($action) {
     case 'read':
     default:
 
+        $search = trim(
+            $_GET['search'] ?? ''
+        );
 
-        $search =
-            trim(
-                $_GET['search'] ?? ''
-            );
+        $page = max(
+            1,
+            (int)(
+                $_GET['page']
+                ?? 1
+            )
+        );
 
-
-        $page =
-            max(
-                1,
+        $limit = max(
+            1,
+            min(
+                100,
                 (int)(
-                    $_GET['page']
-                    ?? 1
+                    $_GET['limit']
+                    ?? 10
                 )
-            );
+            )
+        );
 
-
-        $limit =
-            max(
-                1,
-                min(
-                    100,
-                    (int)(
-                        $_GET['limit']
-                        ?? 10
-                    )
-                )
-            );
-
-
-        $offset =
-            ($page - 1) *
-            $limit;
-
+        $offset = ($page - 1) * $limit;
 
         try {
-
 
             /*
             |--------------------------------------------------------------------------
@@ -1445,97 +1216,49 @@ switch ($action) {
             */
 
             if ($search !== '') {
-
-                $searchTerm =
-                    "%{$search}%";
-
+                $searchTerm = "%{$search}%";
 
                 $countSql = "
-
                     SELECT COUNT(*)
-
                     FROM erros
-
                     WHERE
-
                         titulo LIKE ?
-
                         OR descricao LIKE ?
-
                         OR solucao LIKE ?
-
                         OR categoria LIKE ?
-
                         OR tags LIKE ?
-
                         OR auditorias LIKE ?
-
                 ";
 
+                $stmtCount = $pdo->prepare($countSql);
 
-                $stmtCount =
-                    $pdo->prepare(
-                        $countSql
-                    );
+                $stmtCount->execute([
+                    $searchTerm,
+                    $searchTerm,
+                    $searchTerm,
+                    $searchTerm,
+                    $searchTerm,
+                    $searchTerm
+                ]);
 
-
-                $stmtCount->execute(
-                    [
-
-                        $searchTerm,
-
-                        $searchTerm,
-
-                        $searchTerm,
-
-                        $searchTerm,
-
-                        $searchTerm,
-
-                        $searchTerm
-
-                    ]
-                );
-
-
-                $totalRows =
-                    (int)$stmtCount->fetchColumn();
-
+                $totalRows = (int)$stmtCount->fetchColumn();
 
                 $dataSql = "
-
                     SELECT *
-
                     FROM erros
-
                     WHERE
-
                         titulo LIKE ?
-
                         OR descricao LIKE ?
-
                         OR solucao LIKE ?
-
                         OR categoria LIKE ?
-
                         OR tags LIKE ?
-
                         OR auditorias LIKE ?
-
                     ORDER BY id DESC
-
                     LIMIT ?
-
                     OFFSET ?
-
                 ";
 
-
-                $stmtData =
-                    $pdo->prepare(
-                        $dataSql
-                    );
-
+                $stmtData = $pdo->prepare($dataSql);
 
                 $stmtData->bindValue(
                     1,
@@ -1543,13 +1266,11 @@ switch ($action) {
                     PDO::PARAM_STR
                 );
 
-
                 $stmtData->bindValue(
                     2,
                     $searchTerm,
                     PDO::PARAM_STR
                 );
-
 
                 $stmtData->bindValue(
                     3,
@@ -1557,13 +1278,11 @@ switch ($action) {
                     PDO::PARAM_STR
                 );
 
-
                 $stmtData->bindValue(
                     4,
                     $searchTerm,
                     PDO::PARAM_STR
                 );
-
 
                 $stmtData->bindValue(
                     5,
@@ -1571,13 +1290,11 @@ switch ($action) {
                     PDO::PARAM_STR
                 );
 
-
                 $stmtData->bindValue(
                     6,
                     $searchTerm,
                     PDO::PARAM_STR
                 );
-
 
                 $stmtData->bindValue(
                     7,
@@ -1585,17 +1302,14 @@ switch ($action) {
                     PDO::PARAM_INT
                 );
 
-
                 $stmtData->bindValue(
                     8,
                     $offset,
                     PDO::PARAM_INT
                 );
 
-
                 $stmtData->execute();
             }
-
 
             /*
             |--------------------------------------------------------------------------
@@ -1604,32 +1318,17 @@ switch ($action) {
             */
 
             else {
+                $totalRows = (int)$pdo
+                    ->query("SELECT COUNT(*) FROM erros")
+                    ->fetchColumn();
 
-                $totalRows =
-                    (int)$pdo
-                        ->query(
-                            "SELECT COUNT(*) FROM erros"
-                        )
-                        ->fetchColumn();
-
-
-                $stmtData =
-                    $pdo->prepare(
-                        "
-
-                        SELECT *
-
-                        FROM erros
-
-                        ORDER BY id DESC
-
-                        LIMIT ?
-
-                        OFFSET ?
-
-                        "
-                    );
-
+                $stmtData = $pdo->prepare("
+                    SELECT *
+                    FROM erros
+                    ORDER BY id DESC
+                    LIMIT ?
+                    OFFSET ?
+                ");
 
                 $stmtData->bindValue(
                     1,
@@ -1637,17 +1336,14 @@ switch ($action) {
                     PDO::PARAM_INT
                 );
 
-
                 $stmtData->bindValue(
                     2,
                     $offset,
                     PDO::PARAM_INT
                 );
 
-
                 $stmtData->execute();
             }
-
 
             /*
             |--------------------------------------------------------------------------
@@ -1655,11 +1351,9 @@ switch ($action) {
             |--------------------------------------------------------------------------
             */
 
-            $records =
-                $stmtData->fetchAll();
+            $records = $stmtData->fetchAll();
 
             foreach ($records as &$record) {
-
                 $auditoriasRecord = [];
 
                 if (
@@ -1680,7 +1374,12 @@ switch ($action) {
                     }
                 }
 
-                // Compatibilidade com registros antigos.
+                /*
+                |--------------------------------------------------------------------------
+                | COMPATIBILIDADE COM REGISTROS ANTIGOS
+                |--------------------------------------------------------------------------
+                */
+
                 if (empty($auditoriasRecord)) {
                     $temAuditoriaLegada =
                         $record['nota_final'] !== null ||
@@ -1694,78 +1393,71 @@ switch ($action) {
                             'atendente' =>
                                 $record['atendente'] ??
                                 'Não informado no atendimento',
+
                             'nota_final' =>
                                 $record['nota_final'] !== null
                                     ? (float)$record['nota_final']
                                     : null,
+
                             'veredito' =>
                                 $record['veredito'] ?? '',
+
                             'objetivo' =>
                                 $record['objetivo'] ?? '',
+
                             'oportunidade_ps' =>
                                 $record['oportunidade_ps'] ?? '',
+
                             'oferta_ps' => '',
+
                             'relatorio_markdown' =>
-                                $record['relatorio_markdown'] ?? ''
+                                $record['relatorio_markdown'] ?? '',
+
+                            'avaliacoes' => []
                         ];
                     }
                 }
 
+                /*
+                 * Garante que registros retornem o campo avaliacoes.
+                 * Não altera os valores já armazenados.
+                 */
+                foreach ($auditoriasRecord as &$auditoriaRecord) {
+                    if (!is_array($auditoriaRecord)) {
+                        continue;
+                    }
+
+                    if (!isset($auditoriaRecord['avaliacoes'])) {
+                        $auditoriaRecord['avaliacoes'] = [];
+                    }
+                }
+
+                unset($auditoriaRecord);
+
                 $record['auditorias'] = $auditoriasRecord;
             }
+
             unset($record);
 
+            $totalPages = $totalRows > 0
+                ? (int)ceil($totalRows / $limit)
+                : 1;
 
-            $totalPages =
-                $totalRows > 0
-
-                    ? (int)ceil(
-                        $totalRows / $limit
-                    )
-
-                    : 1;
-
-
-            responder(
-                [
-
-                    'success' =>
-                        true,
-
-                    'data' =>
-                        $records,
-
-                    'total_pages' =>
-                        $totalPages,
-
-                    'current_page' =>
-                        $page,
-
-                    'total_records' =>
-                        $totalRows,
-
-                    'action' =>
-                        'read'
-
-                ]
-            );
-
+            responder([
+                'success' => true,
+                'data' => $records,
+                'total_pages' => $totalPages,
+                'current_page' => $page,
+                'total_records' => $totalRows,
+                'action' => 'read'
+            ]);
 
         } catch (PDOException $e) {
-
             responder(
                 [
-
-                    'success' =>
-                        false,
-
-                    'error' =>
-                        'Erro MySQL ao carregar: ' .
-                        $e->getMessage(),
-
-                    'action' =>
-                        'read'
-
+                    'success' => false,
+                    'error' => 'Erro MySQL ao carregar: ' . $e->getMessage(),
+                    'action' => 'read'
                 ],
                 500
             );
