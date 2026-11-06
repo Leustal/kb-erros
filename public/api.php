@@ -124,6 +124,7 @@ function normalizarVereditoBanco($valor, $nota = null): string
     );
 }
 
+
 function extrairDataAtendimento(?string $relatorioMarkdown): ?string
 {
     if (!$relatorioMarkdown) {
@@ -168,6 +169,7 @@ function extrairDataAtendimento(?string $relatorioMarkdown): ?string
 
     return null;
 }
+
 
 /*
 |--------------------------------------------------------------------------
@@ -405,12 +407,33 @@ switch ($action) {
         |--------------------------------------------------------------------------
         | CAMPOS DA SOLUÇÃO
         |--------------------------------------------------------------------------
+        |
+        | SOLUÇÃO É OPCIONAL.
+        |
+        | Se não for enviada:
+        | - CREATE: será salva como string vazia.
+        | - UPDATE: preservaremos o valor existente no banco.
+        |
         */
 
         $titulo =
             $data['titulo']
             ?? $data['aba_solucao']['titulo']
             ?? '';
+
+        $solucaoFoiEnviada =
+            array_key_exists(
+                'solucao',
+                $data
+            ) ||
+            (
+                isset($data['aba_solucao']) &&
+                is_array($data['aba_solucao']) &&
+                array_key_exists(
+                    'solucao',
+                    $data['aba_solucao']
+                )
+            );
 
         $solucao =
             $data['solucao']
@@ -780,6 +803,12 @@ switch ($action) {
 
             if ($action === 'create') {
 
+                /*
+                |--------------------------------------------------------------------------
+                | TÍTULO CONTINUA OBRIGATÓRIO
+                |--------------------------------------------------------------------------
+                */
+
                 if ($titulo === '') {
 
                     responder(
@@ -795,19 +824,14 @@ switch ($action) {
                 }
 
 
-                if ($solucao === '') {
-
-                    responder(
-                        [
-                            'success' => false,
-                            'error' =>
-                                'O campo solucao é obrigatório.',
-                            'action' =>
-                                'create'
-                        ],
-                        400
-                    );
-                }
+                /*
+                |--------------------------------------------------------------------------
+                | SOLUÇÃO NÃO É MAIS OBRIGATÓRIA
+                |--------------------------------------------------------------------------
+                |
+                | Não existe mais validação de $solucao.
+                |
+                */
 
 
                 /*
@@ -987,12 +1011,18 @@ switch ($action) {
                 |--------------------------------------------------------------------------
                 | BUSCAR REGISTRO ATUAL
                 |--------------------------------------------------------------------------
+                |
+                | Também carregamos solucao para preservá-la quando
+                | o update não enviar esse campo.
+                |
                 */
 
                 $currentStmt =
                     $pdo->prepare(
                         "
-                        SELECT conversation_id
+                        SELECT
+                            conversation_id,
+                            solucao
                         FROM erros
                         WHERE id = ?
                         LIMIT 1
@@ -1007,11 +1037,11 @@ switch ($action) {
                 );
 
 
-                $currentConversationId =
-                    $currentStmt->fetchColumn();
+                $currentRecord =
+                    $currentStmt->fetch();
 
 
-                if ($currentConversationId === false) {
+                if ($currentRecord === false) {
 
                     responder(
                         [
@@ -1030,6 +1060,11 @@ switch ($action) {
                         404
                     );
                 }
+
+
+                $currentConversationId =
+                    $currentRecord['conversation_id']
+                    ?? null;
 
 
                 /*
@@ -1063,6 +1098,28 @@ switch ($action) {
 
                 /*
                 |--------------------------------------------------------------------------
+                | PRESERVAR SOLUÇÃO EXISTENTE
+                |--------------------------------------------------------------------------
+                |
+                | Se o campo não foi enviado no update,
+                | não apagamos a solução existente.
+                |
+                */
+
+                if (!$solucaoFoiEnviada) {
+
+                    $solucao =
+                        trim(
+                            (string)(
+                                $currentRecord['solucao']
+                                ?? ''
+                            )
+                        );
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
                 | VALIDAR CAMPOS
                 |--------------------------------------------------------------------------
                 */
@@ -1085,22 +1142,14 @@ switch ($action) {
                 }
 
 
-                if ($solucao === '') {
-
-                    responder(
-                        [
-                            'success' =>
-                                false,
-
-                            'error' =>
-                                'O campo solucao é obrigatório.',
-
-                            'action' =>
-                                'update'
-                        ],
-                        400
-                    );
-                }
+                /*
+                |--------------------------------------------------------------------------
+                | SOLUÇÃO NÃO É MAIS OBRIGATÓRIA
+                |--------------------------------------------------------------------------
+                |
+                | A validação anterior de solucao foi removida.
+                |
+                */
 
 
                 /*
@@ -1319,7 +1368,7 @@ switch ($action) {
     | AUDITORIAS
     |--------------------------------------------------------------------------
     |
-    | Endpoint específico para o futuro workflow de relatórios.
+    | Endpoint específico para o workflow de relatórios.
     |
     | Exemplos:
     |
@@ -1466,7 +1515,13 @@ switch ($action) {
                     categoria,
                     criado_em,
                     atualizado_em,
-                    auditorias
+                    auditorias,
+                    nota_final,
+                    veredito,
+                    objetivo,
+                    oportunidade_ps,
+                    oferta_ps,
+                    relatorio_markdown
                 FROM erros
                 WHERE 1 = 1
             ";
@@ -1800,6 +1855,12 @@ switch ($action) {
                                     $auditoria['relatorio_markdown']
                                     ?? ''
                                 )
+                            ),
+
+                        'data_atendimento' =>
+                            extrairDataAtendimento(
+                                $auditoria['relatorio_markdown']
+                                ?? ''
                             )
                     ];
                 }
