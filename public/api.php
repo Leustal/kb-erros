@@ -1532,48 +1532,22 @@ switch ($action) {
 
             /*
             |--------------------------------------------------------------------------
-            | FILTRO INICIAL
-            |--------------------------------------------------------------------------
-            */
-
-            if ($dataInicio !== '') {
-
-                $sql .= "
-                    AND criado_em >= ?
-                ";
-
-                $params[] =
-                    $dataInicio . ' 00:00:00';
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | FILTRO FINAL
+            | FILTRO POR DATA DO ATENDIMENTO
             |--------------------------------------------------------------------------
             |
-            | Usamos < dia seguinte para incluir todo o dia final.
+            | IMPORTANTE:
+            | Não filtramos por criado_em aqui.
+            |
+            | criado_em representa quando a auditoria foi criada/reprocessada,
+            | e não quando o atendimento aconteceu.
+            |
+            | A data correta é extraída do relatorio_markdown de cada auditoria
+            | pela função extrairDataAtendimento().
+            |
+            | Isso também permite que auditorias antigas, reprocessadas hoje,
+            | continuem pertencendo à data original do atendimento.
             |
             */
-
-            if ($dataFim !== '') {
-
-                $proximoDia =
-                    clone $fimDate;
-
-                $proximoDia->modify('+1 day');
-
-
-                $sql .= "
-                    AND criado_em < ?
-                ";
-
-                $params[] =
-                    $proximoDia->format(
-                        'Y-m-d'
-                    ) . ' 00:00:00';
-            }
-
 
             $sql .= "
                 ORDER BY criado_em DESC, id DESC
@@ -1740,6 +1714,54 @@ switch ($action) {
 
                     /*
                     |--------------------------------------------------------------------------
+                    | DATA REAL DO ATENDIMENTO
+                    |--------------------------------------------------------------------------
+                    |
+                    | A data usada pelo relatório deve ser a data em que o
+                    | atendimento aconteceu, extraída do relatório da TESS.
+                    |
+                    | Nunca usamos criado_em para esse filtro, pois uma
+                    | auditoria pode ser criada ou reprocessada posteriormente.
+                    |
+                    */
+
+                    $dataAtendimento =
+                        extrairDataAtendimento(
+                            $auditoria['relatorio_markdown']
+                            ?? ''
+                        );
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | FILTRO POR DATA DO ATENDIMENTO
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if ($dataInicio !== '' || $dataFim !== '') {
+
+                        if ($dataAtendimento === null) {
+                            continue;
+                        }
+
+                        if (
+                            $dataInicio !== '' &&
+                            $dataAtendimento < $dataInicio
+                        ) {
+                            continue;
+                        }
+
+                        if (
+                            $dataFim !== '' &&
+                            $dataAtendimento > $dataFim
+                        ) {
+                            continue;
+                        }
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
                     | FILTRO POR ATENDENTE
                     |--------------------------------------------------------------------------
                     */
@@ -1858,10 +1880,7 @@ switch ($action) {
                             ),
 
                         'data_atendimento' =>
-                            extrairDataAtendimento(
-                                $auditoria['relatorio_markdown']
-                                ?? ''
-                            )
+                            $dataAtendimento
                     ];
                 }
             }
