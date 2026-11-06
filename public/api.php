@@ -124,6 +124,50 @@ function normalizarVereditoBanco($valor, $nota = null): string
     );
 }
 
+function extrairDataAtendimento(?string $relatorioMarkdown): ?string
+{
+    if (!$relatorioMarkdown) {
+        return null;
+    }
+
+    /*
+     * Formato esperado no relatório:
+     *
+     * | **Data** | 01/11/2026 |
+     */
+    if (preg_match(
+        '/\|\s*\*{0,2}Data\*{0,2}\s*\|\s*(\d{2})\/(\d{2})\/(\d{4})\s*\|/iu',
+        $relatorioMarkdown,
+        $match
+    )) {
+        $dia = $match[1];
+        $mes = $match[2];
+        $ano = $match[3];
+
+        if (checkdate((int)$mes, (int)$dia, (int)$ano)) {
+            return "{$ano}-{$mes}-{$dia}";
+        }
+    }
+
+    /*
+     * Fallback para possíveis formatos sem tabela.
+     */
+    if (preg_match(
+        '/(?:^|\n)\s*\*{0,2}Data\*{0,2}\s*[:\-]\s*(\d{2})\/(\d{2})\/(\d{4})/iu',
+        $relatorioMarkdown,
+        $match
+    )) {
+        $dia = $match[1];
+        $mes = $match[2];
+        $ano = $match[3];
+
+        if (checkdate((int)$mes, (int)$dia, (int)$ano)) {
+            return "{$ano}-{$mes}-{$dia}";
+        }
+    }
+
+    return null;
+}
 
 /*
 |--------------------------------------------------------------------------
